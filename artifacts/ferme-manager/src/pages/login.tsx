@@ -120,10 +120,6 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        <div className="text-center text-sm text-muted-foreground">
-          <p>Admin: admin / admin123</p>
-          <p>Employé: employe / emp123</p>
-        </div>
       </div>
     </div>
   );
