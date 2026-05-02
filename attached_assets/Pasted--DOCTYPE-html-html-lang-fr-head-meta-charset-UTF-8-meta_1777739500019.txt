@@ -1,0 +1,1905 @@
+!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FermeManager Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --green:#1A9E6F;--green-light:#E6F7F0;--green-dark:#0F6349;
+  --red:#E0443A;--red-light:#FDECEA;
+  --amber:#E8A020;--amber-light:#FEF3DC;
+  --blue:#2E7FD9;--blue-light:#E8F1FB;
+  --purple:#7C5CDB;--purple-light:#EEE9FF;
+  --bg:#F7F6F2;--bg2:#EEECEA;--white:#FFFFFF;
+  --border:#E0DDD8;--border2:#D0CCC6;
+  --text:#1A1916;--text2:#6B6860;--text3:#9E9B96;
+  --sidebar:220px;
+  --radius:10px;--radius-sm:6px;--radius-lg:14px;
+  --shadow:0 1px 4px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px}
+
+/* ══ LOGIN ══ */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0F3D2E 0%,#1A6B4A 50%,#0F3D2E 100%);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-card{background:var(--white);border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.login-logo{text-align:center;margin-bottom:6px}
+.login-emoji{font-size:44px;display:block;margin-bottom:8px}
+.login-brand{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.5px}
+.login-tagline{font-size:12px;color:var(--text3);margin-bottom:24px;text-align:center}
+.tab-row{display:flex;background:var(--bg);border-radius:var(--radius-sm);padding:3px;margin-bottom:20px;gap:3px}
+.tab-pill{flex:1;padding:7px 10px;border-radius:5px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--text2);text-align:center;transition:all .15s}
+.tab-pill.active{background:var(--white);color:var(--text);box-shadow:var(--shadow)}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-field input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font);color:var(--text);background:var(--white);transition:border-color .15s}
+.form-field input:focus{outline:none;border-color:var(--green)}
+.btn-login{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s}
+.btn-login:hover{background:var(--green-dark)}
+.login-error{display:none;background:var(--red-light);color:var(--red);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;margin-bottom:12px}
+.login-hint{text-align:center;font-size:11px;color:var(--text3);margin-top:12px}
+
+/* ══ APP LAYOUT ══ */
+#app{display:none;height:100vh;flex-direction:column}
+.topbar{height:52px;background:var(--white);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;color:var(--text);letter-spacing:-.3px}
+.topbar-brand-icon{font-size:20px}
+.topbar-sep{flex:1}
+.topbar-user{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.topbar-user.admin{background:var(--amber-light);color:#7A4A00}
+.topbar-user.user{background:var(--blue-light);color:#1A4D8A}
+.topbar-clock{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.btn-sm{padding:5px 10px;border-radius:var(--radius-sm);font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);font-family:var(--font);transition:all .15s}
+.btn-sm:hover{background:var(--bg);color:var(--text)}
+.btn-sm.red{border-color:var(--red);color:var(--red)}
+.btn-sm.red:hover{background:var(--red);color:#fff}
+
+/* ══ BODY LAYOUT ══ */
+.app-body{display:flex;flex:1;overflow:hidden}
+
+/* ══ SIDEBAR ══ */
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.sidebar-section{padding:8px 10px 4px}
+.sidebar-section-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;padding:0 6px;margin-bottom:4px}
+.sidebar-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);transition:all .12s;margin-bottom:1px;border:none;background:transparent;width:100%;text-align:left;font-family:var(--font)}
+.sidebar-item:hover{background:var(--bg);color:var(--text)}
+.sidebar-item.active{background:var(--green-light);color:var(--green-dark);font-weight:600}
+.sidebar-item .icon{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-item .badge-count{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:20px}
+.sidebar-admin-badge{font-size:9px;background:var(--amber);color:#fff;padding:1px 5px;border-radius:3px;margin-left:auto;font-weight:700}
+
+/* ══ MAIN ══ */
+.main-content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}
+.page.active{display:block}
+.page-title{font-size:18px;font-weight:700;color:var(--text);letter-spacing:-.4px;margin-bottom:4px}
+.page-sub{font-size:12px;color:var(--text3);margin-bottom:16px}
+
+/* ══ COMPONENTS ══ */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.kpi{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;text-align:center}
+.kpi-v{font-size:18px;font-weight:700;color:var(--text)}
+.kpi-l{font-size:10px;color:var(--text3);margin-top:3px;font-weight:500}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:2px}
+label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+input,select,textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:var(--font);color:var(--text);background:var(--white);transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green)}
+.fg{margin-bottom:10px}
+.btn{padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text);font-family:var(--font);transition:all .15s}
+.btn:hover{background:var(--bg)}
+.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.green:hover{background:var(--green-dark)}
+.btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.amber{background:var(--amber);color:#fff;border-color:var(--amber)}
+.btn.red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn.full{width:100%}
+.btn-xs{padding:3px 8px;font-size:10px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);font-family:var(--font)}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
+.b-green{background:#DCFCE7;color:#166534}
+.b-red{background:#FEE2E2;color:#991B1B}
+.b-amber{background:#FEF3C7;color:#92400E}
+.b-blue{background:#DBEAFE;color:#1E40AF}
+.b-gray{background:#F3F4F6;color:#4B5563}
+.b-purple{background:#EDE9FE;color:#5B21B6}
+.b-pink{background:#FCE7F3;color:#9D174D}
+.b-teal{background:#CCFBF1;color:#134E4A}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 10px;text-align:left;background:var(--bg);color:var(--text2);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap;font-size:10px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:var(--radius);font-size:12px;font-weight:600;z-index:9999;display:none;box-shadow:var(--shadow-md);max-width:320px}
+.toast.green{background:#166534;color:#fff}
+.toast.amber{background:#92400E;color:#fff}
+.toast.red{background:#991B1B;color:#fff}
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:8px}
+.alert.red{background:var(--red-light);color:var(--red);border-left:3px solid var(--red)}
+.alert.amber{background:var(--amber-light);color:#7A4A00;border-left:3px solid var(--amber)}
+.alert.green{background:var(--green-light);color:var(--green-dark);border-left:3px solid var(--green)}
+.alert.blue{background:var(--blue-light);color:#1A4D8A;border-left:3px solid var(--blue)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+.chart-wrap{position:relative;height:200px;margin-top:8px}
+canvas{width:100%!important;display:block}
+.pbar{height:7px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:4px}
+.pbar-fill{height:100%;border-radius:4px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--white);border-radius:var(--radius-lg);padding:20px;max-width:500px;width:92%;max-height:88vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-md)}
+.modal-close{position:absolute;top:12px;right:14px;cursor:pointer;font-size:16px;color:var(--text3);background:none;border:none;font-size:18px;line-height:1}
+.modal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:10px;margin:2px;cursor:pointer}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.cap-bar{height:7px;border-radius:4px;background:var(--border);overflow:hidden;margin-top:4px}
+.cap-fill{height:100%;border-radius:4px}
+.maint-card{border-left:3px solid;border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;background:var(--white);border-top:1px solid var(--border);border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.search-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:flex-end}
+.search-bar select,.search-bar input{width:auto;font-size:11px;padding:5px 8px}
+.section-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.stab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--white);color:var(--text2);transition:all .12s}
+.stab.active{background:var(--green);color:#fff;border-color:var(--green)}
+.stab.amber.active{background:var(--amber);color:#fff;border-color:var(--amber)}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="login-emoji">🐷</span>
+      <div class="login-brand">FermeManager Pro</div>
+      <div class="login-tagline">Système de gestion de ferme porcine</div>
+    </div>
+    <div class="tab-row">
+      <div class="tab-pill active" onclick="setLoginTab('admin',this)">👑 Administrateur</div>
+      <div class="tab-pill" onclick="setLoginTab('user',this)">👤 Employé</div>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <div class="form-field"><label>Nom d'utilisateur</label><input type="text" id="l-user" placeholder="Votre identifiant"></div>
+    <div class="form-field"><label>Mot de passe</label><input type="password" id="l-pwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Se connecter →</button>
+    <div class="login-hint" id="login-hint">Administrateur : accès complet à tous les modules</div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app">
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <!-- MODALS -->
+  <div class="modal-bg" id="modal-users" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="document.getElementById('modal-users').classList.remove('open')">✕</button>
+      <div class="modal-title">👥 Gestion des utilisateurs</div>
+      <div class="card">
+        <div class="card-title">Ajouter un utilisateur</div>
+        <div class="grid2">
+          <div class="fg"><label>Nom complet</label><input type="text" id="nu-nom" placeholder="ex: Jean Pierre"></div>
+          <div class="fg"><label>Identifiant</label><input type="text" id="nu-login" placeholder="ex: jean.pierre"></div>
+          <div class="fg"><label>Mot de passe</label><input type="password" id="nu-pwd"></div>
+          <div class="fg"><label>Rôle</label>
+            <select id="nu-role">
+              <option value="user">👤 Employé</option>
+              <option value="admin">👑 Administrateur</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn green full" onclick="addUser()">Créer l'utilisateur</button>
+      </div>
+      <div id="users-list-modal"></div>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="modal-maint-edit" onclick="if(event.target===this)this.classList.remove('open')">
+    <div class="modal-box">
+      <button class="modal-close" onclick="document.getElementById('modal-maint-edit').classList.remove('open')">✕</button>
+      <div class="modal-title" id="maint-edit-title">Modifier la tâche</div>
+      <input type="hidden" id="maint-edit-id">
+      <div class="fg"><label>Titre</label><input type="text" id="me-titre"></div>
+      <div class="grid2">
+        <div class="fg"><label>Catégorie</label><select id="me-cat">
+          <option value="electricite">⚡ Électricité</option><option value="plomberie">🔧 Plomberie</option>
+          <option value="maconnerie">🧱 Maçonnerie</option><option value="reparation">🔨 Réparation</option>
+          <option value="equipement">⚙️ Équipement</option><option value="toiture">🏠 Toiture</option><option value="autre">📦 Autre</option>
+        </select></div>
+        <div class="fg"><label>Priorité</label><select id="me-prio">
+          <option value="urgente">🚨 Urgente</option><option value="normale">⚠️ Normale</option><option value="planifiee">📅 Planifiée</option>
+        </select></div>
+        <div class="fg"><label>Statut</label><select id="me-statut">
+          <option value="en_attente">En attente</option><option value="en_cours">En cours</option>
+          <option value="termine">Terminé</option><option value="annule">Annulé</option>
+        </select></div>
+        <div class="fg"><label>Coût réel (FCFA)</label><input type="number" id="me-cout" min="0"></div>
+      </div>
+      <div class="fg"><label>Description</label><textarea id="me-desc" rows="2"></textarea></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn green" style="flex:1" onclick="saveMaintEdit()">Enregistrer</button>
+        <button class="btn" onclick="document.getElementById('modal-maint-edit').classList.remove('open')">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-brand"><span class="topbar-brand-icon">🐷</span>FermeManager Pro</div>
+    <div class="topbar-sep"></div>
+    <div class="topbar-clock" id="topbar-clock">—</div>
+    <div class="topbar-user" id="topbar-user-badge">—</div>
+    <button class="btn-sm" id="btn-users" onclick="openUsers()" style="display:none">👥 Utilisateurs</button>
+    <button class="btn-sm" id="btn-changepwd" onclick="changePwd()">🔑 Mot de passe</button>
+    <button class="btn-sm red" onclick="logout()">Déconnexion</button>
+  </div>
+
+  <div class="app-body">
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Principal</div>
+        <button class="sidebar-item active" onclick="showPage('accueil',this)"><span class="icon">🏠</span>Accueil</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Animaux</div>
+        <button class="sidebar-item" onclick="showPage('animaux',this)"><span class="icon">🐷</span>Registre</button>
+        <button class="sidebar-item" onclick="showPage('sante',this)"><span class="icon">🏥</span>Santé & Vaccins</button>
+        <button class="sidebar-item" onclick="showPage('reproduction',this)"><span class="icon">🐣</span>Reproduction</button>
+        <button class="sidebar-item" onclick="showPage('alimentation',this)"><span class="icon">🌽</span>Alimentation</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Infrastructure</div>
+        <button class="sidebar-item" onclick="showPage('loges',this)"><span class="icon">🏗️</span>Bâtiments & Loges</button>
+        <button class="sidebar-item" onclick="showPage('maintenance',this)"><span class="icon">🔧</span>Maintenance<span class="badge-count" id="maint-badge">—</span></button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Personnel</div>
+        <button class="sidebar-item" onclick="showPage('employes',this)"><span class="icon">👷</span>Employés</button>
+        <button class="sidebar-item" onclick="showPage('veterinaire',this)"><span class="icon">🩺</span>Vétérinaire</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Commerce</div>
+        <button class="sidebar-item" onclick="showPage('fournisseurs',this)"><span class="icon">🛒</span>Fournisseurs</button>
+      </div>
+      <div class="sidebar-section" id="admin-section" style="display:none">
+        <div class="sidebar-section-label">Administration</div>
+        <button class="sidebar-item" onclick="showPage('budget',this)"><span class="icon">💰</span>Budgétisation<span class="sidebar-admin-badge">ADMIN</span></button>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <!-- ══ ACCUEIL ══ -->
+      <div class="page active" id="page-accueil">
+        <div class="page-title">🏠 Tableau de bord</div>
+        <div class="page-sub" id="dash-date">Bienvenue sur FermeManager Pro</div>
+        <div class="grid5" style="margin-bottom:14px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">142</div><div class="kpi-l">Total animaux</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">4</div><div class="kpi-l">Animaux malades</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">12</div><div class="kpi-l">Employés présents</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)" id="dash-maint-kpi">—</div><div class="kpi-l">Maintenances actives</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">17</div><div class="kpi-l">Naissances ce mois</div></div>
+        </div>
+        <div class="grid2" style="margin-bottom:12px">
+          <div class="card">
+            <div class="card-title">Alertes du jour</div>
+            <div class="alert red">🚨 Vaccin en retard — #P-108, #P-212 (PRRS)</div>
+            <div class="alert amber">⚠️ Visite Dr. Moreau — dans 2 jours</div>
+            <div class="alert amber">⚠️ Stock Maternité critique — 45 kg restants</div>
+            <div class="alert green">✅ Livraison AgroNutrition confirmée — demain</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Activité récente</div>
+            <div class="stat-row"><span>🐷 Naissance — #T-022 (10 porcelets)</span><span class="badge b-green">il y a 2h</span></div>
+            <div class="stat-row"><span>🌽 Repas Bât. A — 35 kg distribués</span><span class="badge b-gray">07h30</span></div>
+            <div class="stat-row"><span>🏥 Fièvre — #P-108 signalée</span><span class="badge b-red">hier</span></div>
+            <div class="stat-row"><span>🔧 Fuite eau — Bât. B en cours</span><span class="badge b-amber">en cours</span></div>
+            <div class="stat-row"><span>👷 Jean-Pierre — arrivée 06h15</span><span class="badge b-blue">présent</span></div>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="card">
+            <div class="card-title">Répartition du troupeau</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="ch-dash-troupeau"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Santé du troupeau</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="ch-dash-sante"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Dépenses du mois</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="ch-dash-depenses"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ANIMAUX ══ -->
+      <div class="page" id="page-animaux">
+        <div class="page-title">🐷 Registre des animaux</div>
+        <div class="page-sub">Gestion et traçabilité complète de tous les animaux</div>
+        <div class="grid5" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v">142</div><div class="kpi-l">Total</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">38</div><div class="kpi-l">Porcelets</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">22</div><div class="kpi-l">Truies</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--purple)">10</div><div class="kpi-l">Verrats</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">72</div><div class="kpi-l">Engraissement</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Ajouter un animal</div>
+          <div class="grid2">
+            <div class="fg"><label>Tag / Boucle d'oreille *</label><input type="text" id="an-tag" placeholder="ex: P-143"></div>
+            <div class="fg"><label>Type *</label><select id="an-type"><option>Porcelet</option><option>Porc</option><option>Truie</option><option>Verrat</option></select></div>
+            <div class="fg"><label>Sexe *</label><select id="an-sexe"><option value="M">Mâle</option><option value="F">Femelle</option></select></div>
+            <div class="fg"><label>Date de naissance</label><input type="date" id="an-naiss"></div>
+            <div class="fg"><label>Mère (tag)</label><input type="text" id="an-mere" placeholder="ex: T-022"></div>
+            <div class="fg"><label>Père (tag)</label><input type="text" id="an-pere" placeholder="ex: B-003"></div>
+            <div class="fg"><label>Poids (kg)</label><input type="number" id="an-poids" placeholder="ex: 8"></div>
+            <div class="fg"><label>Bâtiment</label><select id="an-bat"><option>Bâtiment A</option><option>Bâtiment B</option><option>Bâtiment C</option><option>Bâtiment D</option></select></div>
+          </div>
+          <button class="btn green full" onclick="addAnimal()">Enregistrer l'animal</button>
+        </div>
+        <div class="card">
+          <div class="search-bar">
+            <div><label>Statut</label><select id="an-f-statut" onchange="filterAnimaux()"><option value="">Tous</option><option value="Sain">Sain</option><option value="Malade">Malade</option><option value="Gestante">Gestante</option></select></div>
+            <div><label>Type</label><select id="an-f-type" onchange="filterAnimaux()"><option value="">Tous</option><option value="Porcelet">Porcelet</option><option value="Porc">Porc</option><option value="Truie">Truie</option><option value="Verrat">Verrat</option></select></div>
+            <div><label>Recherche tag</label><input type="text" id="an-f-tag" oninput="filterAnimaux()" placeholder="ex: P-108" style="width:110px"></div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tag</th><th>Type</th><th>Sexe</th><th>Naissance</th><th>Poids</th><th>Mère</th><th>Père</th><th>Bât.</th><th>Statut</th></tr></thead>
+            <tbody id="animaux-table"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ══ SANTÉ ══ -->
+      <div class="page" id="page-sante">
+        <div class="page-title">🏥 Santé & Vaccinations</div>
+        <div class="page-sub">Suivi médical, vaccins, traitements, quarantaine et mortalité</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">4</div><div class="kpi-l">Malades</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">6</div><div class="kpi-l">Vaccins à faire</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">3</div><div class="kpi-l">Quarantaine</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--text2)">2</div><div class="kpi-l">Décès ce mois</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('sante','alertes',this)">Alertes</button>
+          <button class="stab" onclick="showStab('sante','vaccins',this)">Vaccinations</button>
+          <button class="stab" onclick="showStab('sante','traitements',this)">Traitements</button>
+          <button class="stab" onclick="showStab('sante','quarantaine',this)">Quarantaine</button>
+          <button class="stab" onclick="showStab('sante','mortalite',this)">Mortalité</button>
+          <button class="stab" onclick="showStab('sante','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="sante-alertes" class="stab-content">
+          <div class="alert red">🚨 Vaccin PRRS en retard — #P-108, #P-212 (prévu il y a 3 jours)</div>
+          <div class="alert red">🚨 Animal critique — #P-108 — Fièvre persistante 48h</div>
+          <div class="alert amber">⚠️ Vaccin PCV2 aujourd'hui — Lot B (6 animaux)</div>
+          <div class="alert amber">⚠️ Quarantaine se termine — #P-055 demain</div>
+          <div class="alert green">✅ Guérison confirmée — #T-010 le 23/04/2025</div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-title">Vaccins urgents à administrer</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Tag</th><th>Vaccin</th><th>Date prévue</th><th>Urgence</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>#P-108</td><td>PRRS</td><td>22/04/2025</td><td><span class="badge b-red">En retard</span></td><td><button class="btn-xs" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="toast('Vaccin PRRS marqué administré — #P-108','green')">Marquer fait</button></td></tr>
+                <tr><td>Lot B (6)</td><td>PCV2</td><td>25/04/2025</td><td><span class="badge b-amber">Aujourd'hui</span></td><td><button class="btn-xs" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="toast('Vaccin PCV2 Lot B administré','green')">Marquer fait</button></td></tr>
+                <tr><td>#T-015</td><td>Parvo+Ery</td><td>28/04/2025</td><td><span class="badge b-blue">Dans 3j</span></td><td><button class="btn-xs" onclick="toast('Planifié','amber')">Planifier</button></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="sante-vaccins" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un vaccin</div>
+            <div class="grid2">
+              <div class="fg"><label>Animal (tag) *</label><input type="text" id="sv-tag" placeholder="ex: #P-108"></div>
+              <div class="fg"><label>Vaccin *</label><input type="text" id="sv-vaccin" placeholder="ex: PRRS, PCV2..."></div>
+              <div class="fg"><label>Date</label><input type="date" id="sv-date"></div>
+              <div class="fg"><label>Dose</label><input type="text" id="sv-dose" placeholder="ex: 2 ml"></div>
+              <div class="fg"><label>Prochain rappel</label><input type="date" id="sv-rappel"></div>
+              <div class="fg"><label>Administré par</label><select id="sv-par"><option>Dr. Moreau</option><option>Jean-Pierre D.</option><option>Marie K.</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addVaccin()">Enregistrer le vaccin</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Historique vaccinations</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Tag</th><th>Vaccin</th><th>Date</th><th>Dose</th><th>Rappel</th><th>Par</th></tr></thead>
+              <tbody id="vaccins-table">
+                <tr><td>#T-022</td><td>PRRS</td><td>10/04/2025</td><td>2 ml</td><td>10/07/2025</td><td>Dr. Moreau</td></tr>
+                <tr><td>#B-003</td><td>PCV2</td><td>05/04/2025</td><td>1 ml</td><td>05/07/2025</td><td>Dr. Moreau</td></tr>
+                <tr><td>#T-015</td><td>PRRS</td><td>10/04/2025</td><td>2 ml</td><td>10/07/2025</td><td>Dr. Moreau</td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="sante-traitements" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un traitement</div>
+            <div class="grid2">
+              <div class="fg"><label>Animal *</label><input type="text" id="st-tag" placeholder="ex: #P-108"></div>
+              <div class="fg"><label>Type</label><select id="st-type"><option>Antibiotique</option><option>Anti-inflammatoire</option><option>Antiparasitaire</option><option>Vitamine</option><option>Autre</option></select></div>
+              <div class="fg"><label>Produit *</label><input type="text" id="st-produit" placeholder="ex: Amoxicilline 20%"></div>
+              <div class="fg"><label>Dose</label><input type="text" id="st-dose" placeholder="ex: 10 ml / 2x/jour"></div>
+              <div class="fg"><label>Date début</label><input type="date" id="st-date"></div>
+              <div class="fg"><label>Date fin</label><input type="date" id="st-fin"></div>
+            </div>
+            <button class="btn green full" onclick="addTraitement()">Enregistrer le traitement</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tag</th><th>Type</th><th>Produit</th><th>Dose</th><th>Début</th><th>Fin</th><th>Statut</th></tr></thead>
+            <tbody id="traitements-table">
+              <tr><td>#P-108</td><td><span class="badge b-red">Antibiotique</span></td><td>Amoxicilline 20%</td><td>10 ml 2x/j</td><td>24/04/2025</td><td>01/05/2025</td><td><span class="badge b-amber">En cours</span></td></tr>
+              <tr><td>#P-212</td><td><span class="badge b-amber">Anti-inflam.</span></td><td>Métacam</td><td>5 ml/j</td><td>22/04/2025</td><td>27/04/2025</td><td><span class="badge b-amber">En cours</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="sante-quarantaine" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Mettre en quarantaine</div>
+            <div class="grid2">
+              <div class="fg"><label>Tag animal *</label><input type="text" id="sq-tag" placeholder="ex: P-300"></div>
+              <div class="fg"><label>Motif</label><select id="sq-motif"><option>Maladie suspectée</option><option>Nouvel arrivant</option><option>Blessure</option><option>Précaution</option></select></div>
+              <div class="fg"><label>Date début</label><input type="date" id="sq-debut"></div>
+              <div class="fg"><label>Durée</label><select id="sq-duree"><option value="7">7 jours</option><option value="14">14 jours</option><option value="21">21 jours</option></select></div>
+            </div>
+            <button class="btn amber full" onclick="addQuarantaine()">Placer en quarantaine</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Animaux en quarantaine</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Tag</th><th>Motif</th><th>Début</th><th>Fin prévue</th><th>Jours écoulés</th><th>Statut</th></tr></thead>
+              <tbody id="quarantaine-table">
+                <tr><td>#P-108</td><td>Maladie suspectée</td><td>22/04/2025</td><td>29/04/2025</td><td>3/7</td><td><span class="badge b-red">En cours</span></td></tr>
+                <tr><td>#P-055</td><td>Nouvel arrivant</td><td>18/04/2025</td><td>25/04/2025</td><td>6/7</td><td><span class="badge b-amber">Termine demain</span></td></tr>
+                <tr><td>#P-212</td><td>Toux</td><td>22/04/2025</td><td>29/04/2025</td><td>1/7</td><td><span class="badge b-red">En cours</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="sante-mortalite" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un décès</div>
+            <div class="grid2">
+              <div class="fg"><label>Tag animal *</label><input type="text" id="sm-tag" placeholder="ex: P-150"></div>
+              <div class="fg"><label>Date *</label><input type="date" id="sm-date"></div>
+              <div class="fg"><label>Cause</label><select id="sm-cause"><option>Maladie</option><option>Accident</option><option>Mort naturelle</option><option>Mise bas difficile</option><option>Écrasement</option><option>Inconnue</option></select></div>
+              <div class="fg"><label>Confirmé par</label><select id="sm-par"><option>Dr. Moreau</option><option>Jean-Pierre D.</option><option>Carla V.</option></select></div>
+            </div>
+            <div class="fg"><label>Observations</label><textarea id="sm-obs" rows="2" placeholder="Symptômes ou circonstances..."></textarea></div>
+            <button class="btn red full" onclick="addMort()">Enregistrer le décès</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Tag</th><th>Date</th><th>Cause</th><th>Confirmé par</th></tr></thead>
+            <tbody id="mort-table">
+              <tr><td>#P-099</td><td>18/04/2025</td><td>Écrasement</td><td>Jean-Pierre D.</td></tr>
+              <tr><td>#P-041</td><td>05/04/2025</td><td>Maladie</td><td>Dr. Moreau</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="sante-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Statut de santé</div><div class="chart-wrap"><canvas id="ch-s-statut"></canvas></div></div>
+            <div class="card"><div class="card-title">Types de vaccins administrés</div><div class="chart-wrap"><canvas id="ch-s-vaccins"></canvas></div></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="card"><div class="card-title">Traitements par mois</div><div class="chart-wrap"><canvas id="ch-s-trt"></canvas></div></div>
+            <div class="card"><div class="card-title">Mortalité mensuelle</div><div class="chart-wrap"><canvas id="ch-s-mort"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ REPRODUCTION ══ -->
+      <div class="page" id="page-reproduction">
+        <div class="page-title">🐣 Reproduction & Naissances</div>
+        <div class="page-sub">Accouplements, gestations, naissances, traçabilité et sevrage</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">2</div><div class="kpi-l">Mises bas imminentes</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">5</div><div class="kpi-l">Truies gestantes</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">17</div><div class="kpi-l">Naissances ce mois</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">8</div><div class="kpi-l">Porcelets à sevrer</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('repro','alertes',this)">Alertes</button>
+          <button class="stab" onclick="showStab('repro','accouplements',this)">Accouplements</button>
+          <button class="stab" onclick="showStab('repro','naissances',this)">Naissances</button>
+          <button class="stab" onclick="showStab('repro','tracabilite',this)">Traçabilité</button>
+          <button class="stab" onclick="showStab('repro','sevrage',this)">Sevrage</button>
+          <button class="stab" onclick="showStab('repro','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="repro-alertes" class="stab-content">
+          <div class="alert red">🚨 Mise bas imminente — #T-022 (aujourd'hui)</div>
+          <div class="alert amber">⚠️ Mise bas proche — #T-008 dans 4 jours</div>
+          <div class="alert amber">⚠️ Sevrage dû — portée #T-009 (28 jours accomplis)</div>
+          <div class="alert green">✅ Gestation confirmée — #T-015 (35 jours)</div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-title">Mises bas prévues</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Truie</th><th>Verrat</th><th>Accouplement</th><th>Mise bas prévue</th><th>Restant</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td>#T-022</td><td>#B-002</td><td>01/03/2025</td><td>25/04/2025</td><td style="color:var(--red)">Imminente</td><td><span class="badge b-red">🚨 Imminente</span></td></tr>
+                <tr><td>#T-008</td><td>#B-001</td><td>10/04/2025</td><td>29/04/2025</td><td style="color:var(--amber)">4 jours</td><td><span class="badge b-amber">Proche</span></td></tr>
+                <tr><td>#T-015</td><td>#B-003</td><td>24/04/2025</td><td>17/08/2025</td><td>~114 jours</td><td><span class="badge b-blue">En gestation</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="repro-accouplements" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un accouplement</div>
+            <div class="grid2">
+              <div class="fg"><label>Truie (tag) *</label><select id="ra-truie"><option>#T-008</option><option>#T-015</option><option>#T-022</option><option>#T-030</option></select></div>
+              <div class="fg"><label>Verrat (tag) *</label><select id="ra-verrat"><option>#B-001</option><option>#B-002</option><option>#B-003</option></select></div>
+              <div class="fg"><label>Date *</label><input type="date" id="ra-date"></div>
+              <div class="fg"><label>Type</label><select id="ra-type"><option>Saillie naturelle</option><option>Insémination artificielle</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addAccouplement()">Enregistrer l'accouplement</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Truie</th><th>Verrat</th><th>Date</th><th>Type</th><th>Mise bas prévue</th><th>Statut</th></tr></thead>
+            <tbody id="accouplement-table">
+              <tr><td>#T-022</td><td>#B-002</td><td>01/03/2025</td><td>Naturelle</td><td>25/04/2025</td><td><span class="badge b-red">Imminente</span></td></tr>
+              <tr><td>#T-015</td><td>#B-003</td><td>24/04/2025</td><td>Naturelle</td><td>17/08/2025</td><td><span class="badge b-blue">Gestation</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="repro-naissances" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une naissance</div>
+            <div class="grid2">
+              <div class="fg"><label>Truie mère *</label><select id="rn-mere"><option>#T-009</option><option>#T-022</option><option>#T-008</option></select></div>
+              <div class="fg"><label>Verrat père *</label><select id="rn-pere"><option>#B-001</option><option>#B-002</option><option>#B-003</option></select></div>
+              <div class="fg"><label>Date naissance *</label><input type="date" id="rn-date"></div>
+              <div class="fg"><label>Heure</label><input type="time" id="rn-heure"></div>
+              <div class="fg"><label>Nés total</label><input type="number" id="rn-total" placeholder="ex: 10" min="0"></div>
+              <div class="fg"><label>Nés vivants</label><input type="number" id="rn-vivants" placeholder="ex: 9" min="0"></div>
+              <div class="fg"><label>Mort-nés</label><input type="number" id="rn-morts" placeholder="ex: 1" min="0"></div>
+              <div class="fg"><label>Poids moyen (kg)</label><input type="number" id="rn-poids" placeholder="ex: 1.4" step="0.1"></div>
+            </div>
+            <button class="btn green full" onclick="addNaissance()">Enregistrer la naissance</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Mère</th><th>Père</th><th>Date</th><th>Total nés</th><th>Vivants</th><th>Mort-nés</th><th>Poids moy.</th></tr></thead>
+            <tbody id="naissances-table">
+              <tr><td>#T-009</td><td>#B-002</td><td>25/04/2025</td><td>10</td><td style="color:var(--green);font-weight:700">9</td><td style="color:var(--red)">1</td><td>1.4 kg</td></tr>
+              <tr><td>#T-010</td><td>#B-001</td><td>18/04/2025</td><td>8</td><td style="color:var(--green);font-weight:700">8</td><td style="color:var(--red)">0</td><td>1.5 kg</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="repro-tracabilite" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Recherche de traçabilité</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <input type="text" id="tr-search" placeholder="Entrer le tag du porcelet (ex: P-130)" style="flex:1">
+              <button class="btn green" onclick="searchTracabilite()">Rechercher</button>
+            </div>
+            <div id="tr-result" style="display:none;background:var(--green-light);border:1px solid var(--green);border-radius:var(--radius);padding:14px">
+              <div id="tr-result-content"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Registre des porcelets</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Tag porcelet</th><th>Sexe</th><th>Naissance</th><th>Mère</th><th>Père</th><th>Poids naiss.</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td><strong>#P-130</strong></td><td>M</td><td>25/04/2025</td><td>#T-009</td><td>#B-002</td><td>1.4 kg</td><td><span class="badge b-green">Sain</span></td></tr>
+                <tr><td><strong>#P-131</strong></td><td>F</td><td>25/04/2025</td><td>#T-009</td><td>#B-002</td><td>1.3 kg</td><td><span class="badge b-green">Sain</span></td></tr>
+                <tr><td><strong>#P-120</strong></td><td>F</td><td>18/04/2025</td><td>#T-010</td><td>#B-001</td><td>1.5 kg</td><td><span class="badge b-green">Sain</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="repro-sevrage" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un sevrage</div>
+            <div class="grid2">
+              <div class="fg"><label>Truie mère *</label><select id="rs-mere"><option>#T-009</option><option>#T-010</option><option>#T-007</option></select></div>
+              <div class="fg"><label>Date sevrage *</label><input type="date" id="rs-date"></div>
+              <div class="fg"><label>Nb porcelets sevrés</label><input type="number" id="rs-nb" placeholder="ex: 8"></div>
+              <div class="fg"><label>Âge (jours)</label><input type="number" id="rs-age" placeholder="ex: 28"></div>
+              <div class="fg"><label>Poids moyen (kg)</label><input type="number" id="rs-poids" placeholder="ex: 7.5" step="0.1"></div>
+              <div class="fg"><label>Destination</label><select id="rs-dest"><option>Bâtiment B — Engraissement</option><option>Bâtiment A — Croissance</option></select></div>
+            </div>
+            <button class="btn amber full" onclick="addSevrage()">Enregistrer le sevrage</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Mère</th><th>Date</th><th>Nb sevrés</th><th>Âge</th><th>Poids moy.</th><th>Destination</th></tr></thead>
+            <tbody id="sevrage-table">
+              <tr><td>#T-005</td><td>10/04/2025</td><td>7</td><td>28 jours</td><td>7.2 kg</td><td>Bât. B</td></tr>
+              <tr><td>#T-003</td><td>25/03/2025</td><td>9</td><td>30 jours</td><td>8.0 kg</td><td>Bât. A</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="repro-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Naissances vs Mort-nés</div><div class="chart-wrap"><canvas id="ch-r-naiss"></canvas></div></div>
+            <div class="card"><div class="card-title">Accouplements par mois</div><div class="chart-wrap"><canvas id="ch-r-acc"></canvas></div></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="card"><div class="card-title">Sevrages par mois</div><div class="chart-wrap"><canvas id="ch-r-sev"></canvas></div></div>
+            <div class="card"><div class="card-title">Performance par verrat</div><div class="chart-wrap"><canvas id="ch-r-verrat"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ ALIMENTATION ══ -->
+      <div class="page" id="page-alimentation">
+        <div class="page-title">🌽 Alimentation</div>
+        <div class="page-sub">Planning des repas, stocks, distribution et livraisons</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">142 kg</div><div class="kpi-l">Distribué aujourd'hui</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">380 kg</div><div class="kpi-l">Stock restant</div></div>
+          <div class="kpi"><div class="kpi-v">3/5</div><div class="kpi-l">Repas effectués</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">98.1%</div><div class="kpi-l">Taux consommation</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('alim','repas',this)">Repas du jour</button>
+          <button class="stab" onclick="showStab('alim','stocks',this)">Stocks</button>
+          <button class="stab" onclick="showStab('alim','enregistrer',this)">Enregistrer</button>
+          <button class="stab" onclick="showStab('alim','livraisons',this)">Livraisons</button>
+          <button class="stab" onclick="showStab('alim','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="alim-repas" class="stab-content">
+          <div class="alert amber">⚠️ Stock Maternité critique — 45 kg (commander d'urgence)</div>
+          <div class="alert green">✅ Livraison AgroNutrition — 500 kg Croissance 3 demain</div>
+          <div class="table-wrap" style="margin-top:10px"><table>
+            <thead><tr><th>Heure</th><th>Bâtiment</th><th>Animaux</th><th>Aliment</th><th>Ration</th><th>Responsable</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td>07h30</td><td>Bât. A</td><td>48</td><td>Croissance 3</td><td>35 kg</td><td>Jean-Pierre D.</td><td><span class="badge b-green">Fait ✓</span></td></tr>
+              <tr><td>07h45</td><td>Bât. B</td><td>62</td><td>Croissance 2</td><td>55 kg</td><td>Marie K.</td><td><span class="badge b-green">Fait ✓</span></td></tr>
+              <tr><td>08h00</td><td>Bât. C</td><td>32</td><td>Maternité</td><td>22 kg</td><td>Hervé M.</td><td><span class="badge b-green">Fait ✓</span></td></tr>
+              <tr><td>13h00</td><td>Bât. A</td><td>48</td><td>Croissance 3</td><td>35 kg</td><td>Jean-Pierre D.</td><td><span class="badge b-amber">À venir</span></td></tr>
+              <tr><td>18h00</td><td>Tous</td><td>145</td><td>—</td><td>~116 kg</td><td>—</td><td><span class="badge b-gray">Planifié</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="alim-stocks" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">État des stocks</div>
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Croissance 3</span><span style="font-size:11px;color:var(--text3)">250 kg / 500 kg</span></div>
+              <div class="cap-bar"><div class="cap-fill" style="width:50%;background:var(--green)"></div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">~4 jours restants — <span class="badge b-green">OK</span></div>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Croissance 2</span><span style="font-size:11px;color:var(--text3)">85 kg / 500 kg</span></div>
+              <div class="cap-bar"><div class="cap-fill" style="width:17%;background:var(--amber)"></div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">~2 jours restants — <span class="badge b-amber">Faible</span></div>
+            </div>
+            <div style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Aliment Maternité</span><span style="font-size:11px;color:var(--text3)">45 kg / 300 kg</span></div>
+              <div class="cap-bar"><div class="cap-fill" style="width:15%;background:var(--red)"></div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">Critique ! — <span class="badge b-red">URGENT</span></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:600">Aliment Gestation</span><span style="font-size:11px;color:var(--text3)">180 kg / 300 kg</span></div>
+              <div class="cap-bar"><div class="cap-fill" style="width:60%;background:var(--green)"></div></div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px">~7 jours restants — <span class="badge b-green">OK</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="alim-enregistrer" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un repas distribué</div>
+            <div class="grid2">
+              <div class="fg"><label>Bâtiment *</label><select id="ae-bat"><option value="A">Bâtiment A</option><option value="B">Bâtiment B</option><option value="C">Bâtiment C</option><option value="D">Bâtiment D</option></select></div>
+              <div class="fg"><label>Heure *</label><input type="time" id="ae-heure"></div>
+              <div class="fg"><label>Aliment *</label><select id="ae-aliment"><option>Croissance 1</option><option>Croissance 2</option><option>Croissance 3</option><option>Maternité</option><option>Gestation</option><option>Verrat</option></select></div>
+              <div class="fg"><label>Quantité distribuée (kg) *</label><input type="number" id="ae-qte" placeholder="ex: 35" min="0" step="0.5"></div>
+              <div class="fg"><label>Quantité refusée (kg)</label><input type="number" id="ae-refuse" placeholder="0" min="0" step="0.5"></div>
+              <div class="fg"><label>Distribué par</label><select id="ae-par"><option>Jean-Pierre D.</option><option>Marie K.</option><option>Hervé M.</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addRepas()">Enregistrer le repas</button>
+          </div>
+          <div class="table-wrap" style="margin-top:12px"><table>
+            <thead><tr><th>Date</th><th>Heure</th><th>Bât.</th><th>Aliment</th><th>Distribué</th><th>Refusé</th><th>Consommé</th><th>Par</th></tr></thead>
+            <tbody id="repas-table">
+              <tr><td>25/04/2025</td><td>07h30</td><td>A</td><td>Croissance 3</td><td>35 kg</td><td>0</td><td style="color:var(--green);font-weight:700">35 kg</td><td>Jean-Pierre D.</td></tr>
+              <tr><td>25/04/2025</td><td>07h45</td><td>B</td><td>Croissance 2</td><td>55 kg</td><td>2 kg</td><td style="color:var(--green);font-weight:700">53 kg</td><td>Marie K.</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="alim-livraisons" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une livraison</div>
+            <div class="grid2">
+              <div class="fg"><label>Fournisseur *</label><select id="al-fourn"><option>AgroNutrition SA</option><option>FermeSupply Haïti</option><option>Autre</option></select></div>
+              <div class="fg"><label>Date *</label><input type="date" id="al-date"></div>
+              <div class="fg"><label>Aliment *</label><select id="al-aliment"><option>Croissance 1</option><option>Croissance 2</option><option>Croissance 3</option><option>Maternité</option><option>Gestation</option></select></div>
+              <div class="fg"><label>Quantité (kg) *</label><input type="number" id="al-qte" placeholder="ex: 500" min="0"></div>
+              <div class="fg"><label>Prix total (FCFA)</label><input type="number" id="al-prix" placeholder="ex: 75000"></div>
+              <div class="fg"><label>Qualité</label><select id="al-qualite"><option>Bonne</option><option>Acceptable</option><option>Mauvaise</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addLivraison()">Enregistrer la livraison</button>
+          </div>
+          <div class="table-wrap" style="margin-top:12px"><table>
+            <thead><tr><th>Date</th><th>Fournisseur</th><th>Aliment</th><th>Quantité</th><th>Prix</th><th>Qualité</th></tr></thead>
+            <tbody id="livraisons-table">
+              <tr><td>24/04/2025</td><td>AgroNutrition SA</td><td>Croissance 3</td><td>500 kg</td><td>75 000 FCFA</td><td><span class="badge b-green">Bonne</span></td></tr>
+              <tr><td>15/04/2025</td><td>AgroNutrition SA</td><td>Maternité</td><td>300 kg</td><td>45 000 FCFA</td><td><span class="badge b-green">Bonne</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="alim-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Consommation par bâtiment</div><div class="chart-wrap"><canvas id="ch-a-bat"></canvas></div></div>
+            <div class="card"><div class="card-title">Répartition par type d'aliment</div><div class="chart-wrap"><canvas id="ch-a-type"></canvas></div></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="card"><div class="card-title">Consommation mensuelle (kg)</div><div class="chart-wrap"><canvas id="ch-a-mens"></canvas></div></div>
+            <div class="card"><div class="card-title">Coût alimentaire mensuel (FCFA)</div><div class="chart-wrap"><canvas id="ch-a-cout"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ LOGES ══ -->
+      <div class="page" id="page-loges">
+        <div class="page-title">🏗️ Bâtiments & Loges</div>
+        <div class="page-sub">Gestion des bâtiments, loges et allocation des animaux</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v">4</div><div class="kpi-l">Bâtiments</div></div>
+          <div class="kpi"><div class="kpi-v">10</div><div class="kpi-l">Loges</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">15</div><div class="kpi-l">Animaux logés</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">68%</div><div class="kpi-l">Taux occupation</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('loges','batiments',this)">Bâtiments</button>
+          <button class="stab" onclick="showStab('loges','liste',this)">Toutes les loges</button>
+          <button class="stab" onclick="showStab('loges','ajouter',this)">+ Nouvelle loge</button>
+          <button class="stab" onclick="showStab('loges','allocation',this)">Allocation</button>
+          <button class="stab" onclick="showStab('loges','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="loges-batiments" class="stab-content">
+          <div class="card">
+            <div class="card-title">Ajouter un bâtiment</div>
+            <div class="grid2">
+              <div class="fg"><label>Nom *</label><input type="text" id="lb-nom" placeholder="ex: Bâtiment E — Nurserie"></div>
+              <div class="fg"><label>Code *</label><input type="text" id="lb-code" placeholder="ex: E" maxlength="4"></div>
+              <div class="fg"><label>Vocation</label><select id="lb-vocation"><option>Reproducteurs</option><option>Engraissement</option><option>Maternité</option><option>Quarantaine</option><option>Post-sevrage</option><option>Mixte</option></select></div>
+              <div class="fg"><label>Superficie (m²)</label><input type="number" id="lb-sup" placeholder="ex: 200" step="1"></div>
+            </div>
+            <button class="btn green full" onclick="addBatiment()">Créer le bâtiment</button>
+          </div>
+          <div id="batiments-list"></div>
+        </div>
+        <div id="loges-liste" class="stab-content" style="display:none">
+          <div id="loges-grid"></div>
+        </div>
+        <div id="loges-ajouter" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Créer une nouvelle loge</div>
+            <div class="grid2">
+              <div class="fg"><label>Nom *</label><input type="text" id="ln-nom" placeholder="ex: Maternité M-05"></div>
+              <div class="fg"><label>Type *</label><select id="ln-type"><option value="maternite">Maternité</option><option value="engraissement">Engraissement</option><option value="quarantaine">Quarantaine</option><option value="verrat">Verrat</option><option value="postsevrage">Post-sevrage</option><option value="autre">Autre</option></select></div>
+              <div class="fg"><label>Bâtiment *</label><select id="ln-bat"></select></div>
+              <div class="fg"><label>Capacité max</label><input type="number" id="ln-cap" placeholder="ex: 10" min="1"></div>
+              <div class="fg"><label>Superficie (m²) — facultatif</label><input type="number" id="ln-sup" placeholder="ex: 12.5" step="0.1"></div>
+              <div class="fg"><label>Statut</label><select id="ln-statut"><option>Active</option><option>Vide</option><option>Maintenance</option></select></div>
+            </div>
+            <div class="fg"><label>Notes</label><textarea id="ln-notes" rows="2" placeholder="Description..."></textarea></div>
+            <button class="btn green full" onclick="addLoge()">Créer la loge</button>
+          </div>
+        </div>
+        <div id="loges-allocation" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Assigner un animal à une loge</div>
+            <div class="grid2">
+              <div class="fg"><label>Animal (tag) *</label><select id="la-animal"><option value="">Choisir...</option><option>#P-001</option><option>#P-044</option><option>#P-108</option><option>#T-015</option><option>#T-022</option><option>#B-001</option><option>#B-003</option></select></div>
+              <div class="fg"><label>Loge *</label><select id="la-loge"></select></div>
+              <div class="fg"><label>Date</label><input type="date" id="la-date"></div>
+              <div class="fg"><label>Raison</label><select id="la-raison"><option>Affectation initiale</option><option>Transfert</option><option>Quarantaine</option><option>Mise bas</option><option>Post-sevrage</option></select></div>
+            </div>
+            <button class="btn green full" onclick="assignerAnimal()">Assigner l'animal</button>
+          </div>
+          <div class="table-wrap" style="margin-top:12px"><table>
+            <thead><tr><th>Date</th><th>Animal</th><th>Loge</th><th>Bâtiment</th><th>Raison</th></tr></thead>
+            <tbody id="allocation-table">
+              <tr><td>22/04/2025</td><td>#P-108</td><td>Quarantaine Q-01</td><td>Bât. D</td><td>Quarantaine</td></tr>
+              <tr><td>24/04/2025</td><td>#T-015</td><td>Maternité M-02</td><td>Bât. C</td><td>Mise bas</td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="loges-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Occupation par type de loge</div><div class="chart-wrap"><canvas id="ch-l-type"></canvas></div></div>
+            <div class="card"><div class="card-title">Capacité vs Occupée</div><div class="chart-wrap"><canvas id="ch-l-capa"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ MAINTENANCE ══ -->
+      <div class="page" id="page-maintenance">
+        <div class="page-title">🔧 Maintenance</div>
+        <div class="page-sub">Suivi de toutes les interventions techniques de la ferme</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)" id="mk-urg">—</div><div class="kpi-l">Urgentes actives</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)" id="mk-enc">—</div><div class="kpi-l">En cours</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)" id="mk-ter">—</div><div class="kpi-l">Terminées</div></div>
+          <div class="kpi"><div class="kpi-v" id="mk-cout">—</div><div class="kpi-l">Coût total FCFA</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('maint','liste',this);renderMaint()">Tâches</button>
+          <button class="stab" onclick="showStab('maint','ajouter',this)">+ Nouvelle tâche</button>
+          <button class="stab" onclick="showStab('maint','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="maint-liste" class="stab-content">
+          <div class="search-bar">
+            <div><label>Priorité</label><select id="mf-prio" onchange="renderMaint()"><option value="">Toutes</option><option value="urgente">Urgente</option><option value="normale">Normale</option><option value="planifiee">Planifiée</option></select></div>
+            <div><label>Statut</label><select id="mf-stat" onchange="renderMaint()"><option value="">Tous</option><option value="en_attente">En attente</option><option value="en_cours">En cours</option><option value="termine">Terminé</option></select></div>
+            <div><label>Catégorie</label><select id="mf-cat" onchange="renderMaint()"><option value="">Toutes</option><option value="electricite">Électricité</option><option value="plomberie">Plomberie</option><option value="maconnerie">Maçonnerie</option><option value="reparation">Réparation</option><option value="equipement">Équipement</option><option value="toiture">Toiture</option></select></div>
+          </div>
+          <div id="maint-list-container"></div>
+        </div>
+        <div id="maint-ajouter" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une tâche de maintenance</div>
+            <div class="grid2">
+              <div class="fg"><label>Titre / Description *</label><input type="text" id="ma-titre" placeholder="ex: Fuite eau Bât. B, Panne électrique..."></div>
+              <div class="fg"><label>Catégorie *</label><select id="ma-cat"><option value="electricite">⚡ Électricité</option><option value="plomberie">🔧 Plomberie</option><option value="maconnerie">🧱 Maçonnerie</option><option value="reparation">🔨 Réparation générale</option><option value="equipement">⚙️ Équipement</option><option value="toiture">🏠 Toiture</option><option value="autre">📦 Autre</option></select></div>
+              <div class="fg"><label>Priorité *</label><select id="ma-prio"><option value="urgente">🚨 Urgente</option><option value="normale">⚠️ Normale</option><option value="planifiee">📅 Planifiée</option></select></div>
+              <div class="fg"><label>Lieu / Bâtiment</label><select id="ma-lieu"><option>Bâtiment A</option><option>Bâtiment B</option><option>Bâtiment C</option><option>Bâtiment D</option><option>Zone extérieure</option><option>Système général</option></select></div>
+              <div class="fg"><label>Date signalement</label><input type="date" id="ma-date"></div>
+              <div class="fg"><label>Coût estimé (FCFA)</label><input type="number" id="ma-cout" placeholder="ex: 50000"></div>
+              <div class="fg"><label>Responsable / Technicien</label><input type="text" id="ma-resp" placeholder="ex: Électricien Dupont"></div>
+              <div class="fg"><label>Date résolution prévue</label><input type="date" id="ma-dateres"></div>
+            </div>
+            <div class="fg"><label>Description détaillée</label><textarea id="ma-desc" rows="2" placeholder="Décrivez le problème..."></textarea></div>
+            <button class="btn green full" onclick="addMaint()">Enregistrer la tâche</button>
+          </div>
+        </div>
+        <div id="maint-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Tâches par catégorie</div><div class="chart-wrap"><canvas id="ch-m-cat"></canvas></div></div>
+            <div class="card"><div class="card-title">Tâches par priorité</div><div class="chart-wrap"><canvas id="ch-m-prio"></canvas></div></div>
+          </div>
+          <div class="grid2" style="margin-top:12px">
+            <div class="card"><div class="card-title">Tâches par statut</div><div class="chart-wrap"><canvas id="ch-m-stat"></canvas></div></div>
+            <div class="card"><div class="card-title">Coûts par catégorie (FCFA)</div><div class="chart-wrap"><canvas id="ch-m-cout"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ EMPLOYÉS ══ -->
+      <div class="page" id="page-employes">
+        <div class="page-title">👷 Gestion des employés</div>
+        <div class="page-sub">Pointage, congés, retards et récapitulatifs des heures</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">12</div><div class="kpi-l">Présents</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">4</div><div class="kpi-l">Absents</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">2</div><div class="kpi-l">Congés</div></div>
+          <div class="kpi"><div class="kpi-v">18</div><div class="kpi-l">Total employés</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('emp','pointage',this)">Pointage</button>
+          <button class="stab" onclick="showStab('emp','conges',this)">Congés</button>
+          <button class="stab" onclick="showStab('emp','recap',this)">Récapitulatif</button>
+          <button class="stab" onclick="showStab('emp','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="emp-pointage" class="stab-content">
+          <div class="card">
+            <div class="card-title">Enregistrer arrivée / départ</div>
+            <div class="grid2">
+              <div class="fg"><label>Employé *</label><select id="ep-emp"><option>Jean-Pierre D.</option><option>Marie K.</option><option>Hervé M.</option><option>Carla V.</option><option>Thomas B.</option><option>Lucie F.</option><option>André R.</option><option>Sophie M.</option></select></div>
+              <div class="fg"><label>Heure (vide = maintenant)</label><input type="time" id="ep-heure"></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn green" style="flex:1" onclick="pointer('arrive')">Enregistrer arrivée</button>
+              <button class="btn red" style="flex:1" onclick="pointer('depart')">Enregistrer départ</button>
+            </div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Employé</th><th>Poste</th><th>Arrivée</th><th>Départ</th><th>Heures</th><th>Statut</th></tr></thead>
+            <tbody id="pointage-table">
+              <tr><td>Jean-Pierre D.</td><td>Soigneur</td><td>06h15</td><td>—</td><td>—</td><td><span class="badge b-green">Présent</span></td></tr>
+              <tr><td>Marie K.</td><td>Soigneuse</td><td>06h30</td><td>—</td><td>—</td><td><span class="badge b-green">Présent</span></td></tr>
+              <tr><td>Hervé M.</td><td>Soigneur</td><td>07h00</td><td>—</td><td>—</td><td><span class="badge b-green">Présent</span></td></tr>
+              <tr><td>Thomas B.</td><td>Soigneur</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-red">Absent</span></td></tr>
+              <tr><td>Sophie M.</td><td>Soigneuse</td><td>—</td><td>—</td><td>—</td><td><span class="badge b-blue">Congé</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="emp-conges" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un congé / absence</div>
+            <div class="grid2">
+              <div class="fg"><label>Employé *</label><select id="ec-emp"><option>Jean-Pierre D.</option><option>Marie K.</option><option>Thomas B.</option><option>Sophie M.</option></select></div>
+              <div class="fg"><label>Type *</label><select id="ec-type"><option>Congé payé</option><option>Congé maladie</option><option>Absence justifiée</option><option>Absence injustifiée</option></select></div>
+              <div class="fg"><label>Date début *</label><input type="date" id="ec-debut"></div>
+              <div class="fg"><label>Date fin *</label><input type="date" id="ec-fin"></div>
+            </div>
+            <div class="fg"><label>Motif</label><input type="text" id="ec-motif" placeholder="Raison du congé ou de l'absence..."></div>
+            <button class="btn blue full" onclick="addConge()">Enregistrer</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Employé</th><th>Type</th><th>Début</th><th>Fin</th><th>Jours</th><th>Motif</th><th>Statut</th></tr></thead>
+            <tbody id="conges-table">
+              <tr><td>Sophie M.</td><td><span class="badge b-blue">Congé payé</span></td><td>21/04/2025</td><td>27/04/2025</td><td>7</td><td>Vacances</td><td><span class="badge b-green">Approuvé</span></td></tr>
+              <tr><td>André R.</td><td><span class="badge b-red">Maladie</span></td><td>24/04/2025</td><td>25/04/2025</td><td>2</td><td>Grippe</td><td><span class="badge b-amber">En cours</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="emp-recap" class="stab-content" style="display:none">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Employé</th><th>Poste</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Total</th><th>Retards</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Jean-Pierre D.</strong></td><td style="color:var(--text2)">Soigneur</td><td>8h</td><td>8h</td><td>8h</td><td>8h</td><td>8h</td><td>4h</td><td style="color:var(--green);font-weight:700">44h</td><td><span class="badge b-green">0</span></td></tr>
+              <tr><td><strong>Marie K.</strong></td><td style="color:var(--text2)">Soigneuse</td><td>8h</td><td>8h</td><td>8h</td><td>8h</td><td>8h</td><td>—</td><td style="color:var(--green);font-weight:700">40h</td><td><span class="badge b-green">0</span></td></tr>
+              <tr><td><strong>Thomas B.</strong></td><td style="color:var(--text2)">Soigneur</td><td>6h</td><td>8h</td><td>8h</td><td>8h</td><td>—</td><td>—</td><td style="color:var(--amber);font-weight:700">30h</td><td><span class="badge b-amber">1</span></td></tr>
+              <tr><td><strong>Sophie M.</strong></td><td style="color:var(--text2)">Soigneuse</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td style="color:var(--red);font-weight:700">0h</td><td><span class="badge b-blue">Congé</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="emp-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Présences cette semaine</div><div class="chart-wrap"><canvas id="ch-e-pres"></canvas></div></div>
+            <div class="card"><div class="card-title">Types d'absences</div><div class="chart-wrap"><canvas id="ch-e-abs"></canvas></div></div>
+          </div>
+          <div class="card" style="margin-top:12px"><div class="card-title">Heures travaillées par employé</div><div class="chart-wrap"><canvas id="ch-e-hrs"></canvas></div></div>
+        </div>
+      </div>
+
+      <!-- ══ VÉTÉRINAIRE ══ -->
+      <div class="page" id="page-veterinaire">
+        <div class="page-title">🩺 Vétérinaire</div>
+        <div class="page-sub">Fiches vétérinaires, visites, ordonnances et suivi des coûts</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">2</div><div class="kpi-l">Visites dans 7 jours</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">18</div><div class="kpi-l">Visites 2025</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)">4</div><div class="kpi-l">Animaux sous suivi</div></div>
+          <div class="kpi"><div class="kpi-v">32 500 FCFA</div><div class="kpi-l">Coût total 2025</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('vet','alertes',this)">Alertes</button>
+          <button class="stab" onclick="showStab('vet','fiches',this)">Vétérinaires</button>
+          <button class="stab" onclick="showStab('vet','visites',this)">Planifier visite</button>
+          <button class="stab" onclick="showStab('vet','compterendu',this)">Compte rendu</button>
+          <button class="stab" onclick="showStab('vet','ordonnances',this)">Ordonnances</button>
+          <button class="stab" onclick="showStab('vet','couts',this)">Coûts</button>
+        </div>
+        <div id="vet-alertes" class="stab-content">
+          <div class="alert red">🚨 Visite Dr. Moreau dans 2 jours — 27/04/2025</div>
+          <div class="alert amber">⚠️ Ordonnance à renouveler — #P-108 (Amoxicilline, fin 01/05)</div>
+          <div class="alert blue">ℹ️ Contrôle #P-212 — 26/04/2025</div>
+          <div class="alert green">✅ Guérison #T-010 confirmée</div>
+          <div class="card" style="margin-top:12px">
+            <div class="card-title">Prochaines visites</div>
+            <div class="table-wrap"><table>
+              <thead><tr><th>Date</th><th>Vétérinaire</th><th>Objet</th><th>Animaux</th><th>Coût prévu</th><th>Statut</th></tr></thead>
+              <tbody>
+                <tr><td><strong>27/04/2025</strong></td><td>Dr. Moreau</td><td>Vaccinations + suivi</td><td>#P-108, Lot B</td><td>3 500 FCFA</td><td><span class="badge b-red">Dans 2 jours</span></td></tr>
+                <tr><td>10/05/2025</td><td>Dr. Moreau</td><td>Visite bimensuelle</td><td>À définir</td><td>2 500 FCFA</td><td><span class="badge b-amber">Planifiée</span></td></tr>
+              </tbody>
+            </table></div>
+          </div>
+        </div>
+        <div id="vet-fiches" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Ajouter un vétérinaire</div>
+            <div class="grid2">
+              <div class="fg"><label>Nom complet *</label><input type="text" id="vf-nom" placeholder="ex: Dr. Jean-François Moreau"></div>
+              <div class="fg"><label>Spécialité *</label><select id="vf-spec"><option>Médecine porcine</option><option>Médecine générale</option><option>Reproduction</option><option>Chirurgie</option></select></div>
+              <div class="fg"><label>Téléphone *</label><input type="text" id="vf-tel" placeholder="ex: +509 3322-1144"></div>
+              <div class="fg"><label>Tarif visite (FCFA)</label><input type="number" id="vf-tarif" placeholder="ex: 2500"></div>
+              <div class="fg"><label>Fréquence</label><select id="vf-freq"><option>Tous les 15 jours</option><option>Mensuelle</option><option>Sur appel</option></select></div>
+              <div class="fg"><label>Clinique</label><input type="text" id="vf-clinique" placeholder="ex: VetClinique"></div>
+            </div>
+            <button class="btn green full" onclick="addVet()">Enregistrer</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Dr. Jean-François Moreau — Médecine porcine</div>
+            <div class="grid3">
+              <div class="stat-row"><span style="color:var(--text2)">Téléphone</span><span>+509 3322-1144</span></div>
+              <div class="stat-row"><span style="color:var(--text2)">Fréquence</span><span>Tous les 15 jours</span></div>
+              <div class="stat-row"><span style="color:var(--text2)">Tarif</span><span style="color:var(--green);font-weight:700">2 500 FCFA</span></div>
+              <div class="stat-row"><span style="color:var(--text2)">Visites 2025</span><span>18</span></div>
+              <div class="stat-row"><span style="color:var(--text2)">Dernière visite</span><span>10/04/2025</span></div>
+              <div class="stat-row"><span style="color:var(--text2)">Total facturé</span><span style="color:var(--green);font-weight:700">32 500 FCFA</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="vet-visites" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Planifier une visite</div>
+            <div class="grid2">
+              <div class="fg"><label>Vétérinaire *</label><select id="vv-vet"><option>Dr. Jean-François Moreau</option><option>Dr. Marie-Claire Dupont</option></select></div>
+              <div class="fg"><label>Date *</label><input type="date" id="vv-date"></div>
+              <div class="fg"><label>Type</label><select id="vv-type"><option>Routine bimensuelle</option><option>Urgence</option><option>Vaccination</option><option>Bilan mensuel</option><option>Reproduction</option></select></div>
+              <div class="fg"><label>Coût prévu (FCFA)</label><input type="number" id="vv-cout" placeholder="ex: 2500"></div>
+            </div>
+            <div class="fg"><label>Animaux à examiner</label><input type="text" id="vv-animaux" placeholder="ex: #P-108, #P-212 — ou vide = tous"></div>
+            <button class="btn blue full" onclick="addVisite()">Planifier la visite</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Vétérinaire</th><th>Type</th><th>Animaux</th><th>Coût</th><th>Statut</th></tr></thead>
+            <tbody id="visites-table">
+              <tr><td>27/04/2025</td><td>Dr. Moreau</td><td>Vaccination</td><td>#P-108, Lot B</td><td>3 500 FCFA</td><td><span class="badge b-red">Dans 2 jours</span></td></tr>
+              <tr><td>10/05/2025</td><td>Dr. Moreau</td><td>Bimensuelle</td><td>À définir</td><td>2 500 FCFA</td><td><span class="badge b-amber">Planifiée</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="vet-compterendu" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un compte rendu</div>
+            <div class="grid2">
+              <div class="fg"><label>Vétérinaire *</label><select id="vcr-vet"><option>Dr. Jean-François Moreau</option><option>Dr. Marie-Claire Dupont</option></select></div>
+              <div class="fg"><label>Date *</label><input type="date" id="vcr-date"></div>
+              <div class="fg"><label>Nb animaux examinés</label><input type="number" id="vcr-nb" placeholder="ex: 8"></div>
+              <div class="fg"><label>Coût réel (FCFA)</label><input type="number" id="vcr-cout" placeholder="ex: 3200"></div>
+              <div class="fg"><label>Résultat global</label><select id="vcr-resultat"><option>Bon — troupeau sain</option><option>Moyen — à surveiller</option><option>Préoccupant</option></select></div>
+              <div class="fg"><label>Paiement</label><select id="vcr-pay"><option>Payé</option><option>En attente</option><option>Partiel</option></select></div>
+            </div>
+            <div class="fg"><label>Interventions réalisées *</label><textarea id="vcr-inter" rows="2" placeholder="Vaccinations, traitements, examens..."></textarea></div>
+            <div class="fg"><label>Recommandations</label><textarea id="vcr-reco" rows="2" placeholder="Conseils et suivi recommandé..."></textarea></div>
+            <button class="btn green full" onclick="addCR()">Enregistrer le compte rendu</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Vétérinaire</th><th>Animaux</th><th>Interventions</th><th>Coût</th><th>Résultat</th><th>Paiement</th></tr></thead>
+            <tbody id="cr-table">
+              <tr><td>10/04/2025</td><td>Dr. Moreau</td><td>8</td><td>Vaccinations PRRS</td><td>3 200 FCFA</td><td><span class="badge b-green">Bon</span></td><td><span class="badge b-green">Payé</span></td></tr>
+              <tr><td>27/03/2025</td><td>Dr. Moreau</td><td>5</td><td>Traitement #P-088</td><td>2 800 FCFA</td><td><span class="badge b-amber">Moyen</span></td><td><span class="badge b-green">Payé</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="vet-ordonnances" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Créer une ordonnance</div>
+            <div class="grid2">
+              <div class="fg"><label>Vétérinaire *</label><select id="vo-vet"><option>Dr. Jean-François Moreau</option><option>Dr. Marie-Claire Dupont</option></select></div>
+              <div class="fg"><label>Date *</label><input type="date" id="vo-date"></div>
+              <div class="fg"><label>Animal (tag) *</label><input type="text" id="vo-animal" placeholder="ex: #P-108"></div>
+              <div class="fg"><label>Diagnostic</label><input type="text" id="vo-diag" placeholder="ex: Pneumonie bactérienne"></div>
+              <div class="fg"><label>Médicament 1 *</label><input type="text" id="vo-med1" placeholder="ex: Amoxicilline 20%"></div>
+              <div class="fg"><label>Dose / Fréquence</label><input type="text" id="vo-dose1" placeholder="ex: 10 ml / 2x/jour"></div>
+              <div class="fg"><label>Médicament 2</label><input type="text" id="vo-med2" placeholder="optionnel"></div>
+              <div class="fg"><label>Durée traitement</label><input type="text" id="vo-duree" placeholder="ex: 7 jours"></div>
+            </div>
+            <div class="fg"><label>Instructions</label><textarea id="vo-instruct" rows="2" placeholder="Isolement, délai abattage..."></textarea></div>
+            <button class="btn blue full" onclick="addOrdonnance()">Créer l'ordonnance</button>
+          </div>
+          <div id="ordonnances-list">
+            <div style="border:2px solid var(--border);border-left:4px solid var(--green);border-radius:var(--radius);padding:14px;margin-bottom:10px;position:relative">
+              <div style="font-size:13px;font-weight:700;margin-bottom:6px">Ordonnance — #P-108 — 24/04/2025</div>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:8px">Diagnostic : <strong>Fièvre — infection bactérienne</strong></div>
+              <div style="font-size:12px;margin-bottom:4px"><strong>1.</strong> Amoxicilline 20% — <span style="color:var(--text2)">10 ml / 2x par jour — 7 jours</span></div>
+              <div style="font-size:12px;margin-bottom:8px"><strong>2.</strong> Métacam — <span style="color:var(--text2)">5 ml / 1x par jour — 3 jours</span></div>
+              <div class="alert red" style="font-size:11px">⚠️ Isolement obligatoire — délai abattage 28 jours</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px">Fin traitement : 01/05/2025 — Dr. Moreau</div>
+            </div>
+          </div>
+        </div>
+        <div id="vet-couts" class="stab-content" style="display:none">
+          <div class="grid3" style="margin-bottom:12px">
+            <div class="kpi"><div class="kpi-v" style="color:var(--green)">32 500 FCFA</div><div class="kpi-l">Total 2025</div></div>
+            <div class="kpi"><div class="kpi-v">1 806 FCFA</div><div class="kpi-l">Moy. / visite</div></div>
+            <div class="kpi"><div class="kpi-v" style="color:var(--red)">4 000 FCFA</div><div class="kpi-l">En attente</div></div>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Vétérinaire</th><th>Type</th><th>Animaux</th><th>Coût</th><th>Payé</th><th>Reste</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr><td>10/04/2025</td><td>Dr. Moreau</td><td>Vaccination</td><td>8</td><td>3 200</td><td style="color:var(--green)">3 200</td><td>0</td><td><span class="badge b-green">Soldé</span></td></tr>
+              <tr><td>10/03/2025</td><td>Dr. Moreau</td><td>Bilan</td><td>12</td><td>4 000</td><td style="color:var(--amber)">0</td><td style="color:var(--red)">4 000</td><td><span class="badge b-red">En attente</span></td></tr>
+              <tr><td>15/03/2025</td><td>Dr. Dupont</td><td>Reproduction</td><td>4</td><td>3 500</td><td style="color:var(--green)">3 500</td><td>0</td><td><span class="badge b-green">Soldé</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- ══ FOURNISSEURS ══ -->
+      <div class="page" id="page-fournisseurs">
+        <div class="page-title">🛒 Fournisseurs & Achats</div>
+        <div class="page-sub">Gestion des fournisseurs, commandes, paiements et comparaison des prix</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)">45 800 FCFA</div><div class="kpi-l">Dépenses avril</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)">12 500 FCFA</div><div class="kpi-l">En attente</div></div>
+          <div class="kpi"><div class="kpi-v">3</div><div class="kpi-l">Fournisseurs actifs</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)">2</div><div class="kpi-l">À renouveler</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('fourn','liste',this)">Fournisseurs</button>
+          <button class="stab" onclick="showStab('fourn','commandes',this)">Commandes</button>
+          <button class="stab" onclick="showStab('fourn','paiements',this)">Paiements</button>
+          <button class="stab" onclick="showStab('fourn','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="fourn-liste" class="stab-content">
+          <div class="card">
+            <div class="card-title">Ajouter un fournisseur</div>
+            <div class="grid2">
+              <div class="fg"><label>Nom *</label><input type="text" id="fn-nom" placeholder="ex: AgroNutrition SA"></div>
+              <div class="fg"><label>Catégorie</label><select id="fn-cat"><option>Aliments</option><option>Médicaments/Vaccins</option><option>Équipements</option><option>Services</option><option>Autre</option></select></div>
+              <div class="fg"><label>Téléphone</label><input type="text" id="fn-tel" placeholder="+509..."></div>
+              <div class="fg"><label>Délai livraison</label><select id="fn-delai"><option>24h</option><option>2-3 jours</option><option>1 semaine</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addFournisseur()">Enregistrer le fournisseur</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Nom</th><th>Catégorie</th><th>Téléphone</th><th>Délai</th><th>Total achats</th><th>Statut</th></tr></thead>
+            <tbody id="fourn-table">
+              <tr><td><strong>AgroNutrition SA</strong></td><td>Aliments</td><td>+509 3344-5566</td><td>24h</td><td style="color:var(--green)">32 000 FCFA</td><td><span class="badge b-green">Actif</span></td></tr>
+              <tr><td><strong>VetSupply Haïti</strong></td><td>Médicaments</td><td>+509 4455-6677</td><td>2-3 jours</td><td style="color:var(--green)">10 500 FCFA</td><td><span class="badge b-green">Actif</span></td></tr>
+              <tr><td><strong>FermeQuip</strong></td><td>Équipements</td><td>+509 2233-4455</td><td>1 semaine</td><td style="color:var(--text3)">3 300 FCFA</td><td><span class="badge b-gray">Inactif</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="fourn-commandes" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une commande</div>
+            <div class="grid2">
+              <div class="fg"><label>Fournisseur *</label><select id="cm-fourn"><option>AgroNutrition SA</option><option>VetSupply Haïti</option><option>FermeQuip</option></select></div>
+              <div class="fg"><label>Produit *</label><input type="text" id="cm-produit" placeholder="ex: Aliment Croissance 3"></div>
+              <div class="fg"><label>Date *</label><input type="date" id="cm-date"></div>
+              <div class="fg"><label>Montant (FCFA) *</label><input type="number" id="cm-montant" placeholder="ex: 75000"></div>
+              <div class="fg"><label>Montant payé (FCFA)</label><input type="number" id="cm-paye" placeholder="ex: 75000"></div>
+              <div class="fg"><label>Statut paiement</label><select id="cm-statut"><option>Payé</option><option>Partiel</option><option>En attente</option></select></div>
+            </div>
+            <button class="btn green full" onclick="addCommande()">Enregistrer la commande</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Fournisseur</th><th>Produit</th><th>Montant</th><th>Payé</th><th>Reste</th><th>Statut</th></tr></thead>
+            <tbody id="commandes-table">
+              <tr><td>24/04/2025</td><td>AgroNutrition SA</td><td>Croissance 3</td><td>75 000</td><td style="color:var(--green)">75 000</td><td>0</td><td><span class="badge b-green">Payé</span></td></tr>
+              <tr><td>15/04/2025</td><td>AgroNutrition SA</td><td>Maternité</td><td>45 000</td><td style="color:var(--amber)">22 500</td><td style="color:var(--red)">22 500</td><td><span class="badge b-amber">Partiel</span></td></tr>
+              <tr><td>10/04/2025</td><td>VetSupply Haïti</td><td>Antibiotiques</td><td>32 500</td><td style="color:var(--amber)">0</td><td style="color:var(--red)">32 500</td><td><span class="badge b-red">En attente</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="fourn-paiements" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer un paiement</div>
+            <div class="grid2">
+              <div class="fg"><label>Fournisseur *</label><select id="py-fourn"><option>AgroNutrition SA</option><option>VetSupply Haïti</option><option>FermeQuip</option></select></div>
+              <div class="fg"><label>Montant payé (FCFA) *</label><input type="number" id="py-montant" placeholder="ex: 22500"></div>
+              <div class="fg"><label>Date *</label><input type="date" id="py-date"></div>
+              <div class="fg"><label>Mode</label><select id="py-mode"><option>Espèces</option><option>Virement</option><option>Chèque</option><option>Mobile Money</option></select></div>
+            </div>
+            <button class="btn blue full" onclick="addPaiement()">Enregistrer le paiement</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Fournisseur</th><th>Montant</th><th>Mode</th><th>Statut</th></tr></thead>
+            <tbody id="paiements-table">
+              <tr><td>24/04/2025</td><td>AgroNutrition SA</td><td style="color:var(--green);font-weight:700">75 000 FCFA</td><td>Espèces</td><td><span class="badge b-green">Soldé</span></td></tr>
+              <tr><td>15/04/2025</td><td>AgroNutrition SA</td><td style="color:var(--amber);font-weight:700">22 500 FCFA</td><td>Virement</td><td><span class="badge b-amber">Partiel</span></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="fourn-graphiques" class="stab-content" style="display:none">
+          <div class="grid2">
+            <div class="card"><div class="card-title">Dépenses par fournisseur</div><div class="chart-wrap"><canvas id="ch-f-fourn"></canvas></div></div>
+            <div class="card"><div class="card-title">Dépenses mensuelles (FCFA)</div><div class="chart-wrap"><canvas id="ch-f-mens"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ BUDGET (ADMIN) ══ -->
+      <div class="page" id="page-budget">
+        <div class="page-title">💰 Budgétisation</div>
+        <div class="page-sub">🔒 Module administrateur — Finances et planification globale de la ferme</div>
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)" id="bk-rec">—</div><div class="kpi-l">Recettes totales</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)" id="bk-dep">—</div><div class="kpi-l">Dépenses totales</div></div>
+          <div class="kpi"><div class="kpi-v" id="bk-solde">—</div><div class="kpi-l">Solde net</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)" id="bk-plan">710 000 FCFA</div><div class="kpi-l">Budget planifié</div></div>
+        </div>
+        <div class="section-tabs">
+          <button class="stab active" onclick="showStab('budget','apercu',this);updateBudget()">Aperçu</button>
+          <button class="stab" onclick="showStab('budget','recettes',this)">Recettes</button>
+          <button class="stab" onclick="showStab('budget','depenses',this)">Dépenses</button>
+          <button class="stab" onclick="showStab('budget','planification',this)">Planification</button>
+          <button class="stab" onclick="showStab('budget','graphiques',this)">Graphiques</button>
+        </div>
+        <div id="budget-apercu" class="stab-content">
+          <div class="grid2">
+            <div class="card">
+              <div class="card-title">Résumé financier 2025</div>
+              <div class="stat-row"><span>Ventes animaux</span><span style="color:var(--green);font-weight:700">531 000 FCFA</span></div>
+              <div class="stat-row"><span>Autres recettes</span><span style="color:var(--green);font-weight:700">281 000 FCFA</span></div>
+              <div class="stat-row"><span style="font-weight:700">TOTAL RECETTES</span><span style="color:var(--green);font-weight:700" id="bu-total-rec">—</span></div>
+              <div style="margin:8px 0;border-top:1px dashed var(--border)"></div>
+              <div class="stat-row"><span>Alimentation</span><span style="color:var(--red)">120 000 FCFA</span></div>
+              <div class="stat-row"><span>Santé/Vétérinaire</span><span style="color:var(--red)">32 500 FCFA</span></div>
+              <div class="stat-row"><span>Salaires</span><span style="color:var(--red)">180 000 FCFA</span></div>
+              <div class="stat-row"><span>Maintenance</span><span style="color:var(--red)">35 000 FCFA</span></div>
+              <div class="stat-row"><span style="font-weight:700">TOTAL DÉPENSES</span><span style="color:var(--red);font-weight:700" id="bu-total-dep">—</span></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Alertes budgétaires</div>
+              <div class="alert red">🚨 Salaires : 90% du budget consommé</div>
+              <div class="alert amber">⚠️ Maintenance : 70% du budget consommé</div>
+              <div class="alert green">✅ Alimentation dans les limites</div>
+              <div class="alert green">✅ Solde net positif ce mois</div>
+              <div class="card-title" style="margin-top:12px">Budget vs Réalisé</div>
+              <div class="stat-row"><span>Alimentation</span><span><strong>120 000</strong> / 350 000 FCFA</span></div>
+              <div class="stat-row"><span>Salaires</span><span><strong>180 000</strong> / 200 000 FCFA</span></div>
+              <div class="stat-row"><span>Maintenance</span><span><strong>35 000</strong> / 50 000 FCFA</span></div>
+              <div class="stat-row"><span>Santé</span><span><strong>32 500</strong> / 80 000 FCFA</span></div>
+            </div>
+          </div>
+        </div>
+        <div id="budget-recettes" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une recette</div>
+            <div class="grid2">
+              <div class="fg"><label>Source *</label><select id="br-source"><option>Vente animaux</option><option>Vente produits</option><option>Subvention</option><option>Prêt/Financement</option><option>Autre</option></select></div>
+              <div class="fg"><label>Montant (FCFA) *</label><input type="number" id="br-montant" placeholder="ex: 500000"></div>
+              <div class="fg"><label>Date *</label><input type="date" id="br-date"></div>
+              <div class="fg"><label>Référence</label><input type="text" id="br-ref" placeholder="ex: M. Dupont, Marché..."></div>
+            </div>
+            <button class="btn green full" onclick="addRecette()">Enregistrer la recette</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Source</th><th>Montant</th><th>Référence</th><th>Saisi par</th><th id="admin-col-rec" style="display:none">Action</th></tr></thead>
+            <tbody id="recettes-table">
+              <tr><td>20/04/2025</td><td>Vente animaux</td><td style="color:var(--green);font-weight:700">186 000 FCFA</td><td>Marché Pétion-Ville</td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Recette supprimée','amber')">Suppr.</button></td></tr>
+              <tr><td>15/04/2025</td><td>Vente animaux</td><td style="color:var(--green);font-weight:700">95 000 FCFA</td><td>M. Jean-Paul</td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Recette supprimée','amber')">Suppr.</button></td></tr>
+              <tr><td>01/04/2025</td><td>Subvention</td><td style="color:var(--green);font-weight:700">250 000 FCFA</td><td>Ministère Agriculture</td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Recette supprimée','amber')">Suppr.</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="budget-depenses" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Enregistrer une dépense</div>
+            <div class="grid2">
+              <div class="fg"><label>Catégorie *</label><select id="bd-cat"><option>Alimentation</option><option>Santé/Vétérinaire</option><option>Salaires</option><option>Maintenance</option><option>Équipements</option><option>Transport</option><option>Énergie/Eau</option><option>Autre</option></select></div>
+              <div class="fg"><label>Montant (FCFA) *</label><input type="number" id="bd-montant" placeholder="ex: 75000"></div>
+              <div class="fg"><label>Date *</label><input type="date" id="bd-date"></div>
+              <div class="fg"><label>Fournisseur</label><input type="text" id="bd-fourn" placeholder="ex: AgroNutrition SA"></div>
+              <div class="fg"><label>N° Facture</label><input type="text" id="bd-facture" placeholder="ex: FAC-042"></div>
+              <div class="fg"><label>Paiement</label><select id="bd-pay"><option>Payé</option><option>En attente</option><option>Partiel</option></select></div>
+            </div>
+            <button class="btn red full" onclick="addDepense()">Enregistrer la dépense</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Catégorie</th><th>Montant</th><th>Fournisseur</th><th>Paiement</th><th>Saisi par</th><th class="adm-col" style="display:none">Action</th></tr></thead>
+            <tbody id="depenses-table">
+              <tr><td>24/04/2025</td><td>Alimentation</td><td style="color:var(--red);font-weight:700">45 800 FCFA</td><td>AgroNutrition SA</td><td><span class="badge b-green">Payé</span></td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Dépense supprimée','amber')">Suppr.</button></td></tr>
+              <tr><td>20/04/2025</td><td>Santé/Vétérinaire</td><td style="color:var(--red);font-weight:700">32 500 FCFA</td><td>VetSupply</td><td><span class="badge b-green">Payé</span></td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Dépense supprimée','amber')">Suppr.</button></td></tr>
+              <tr><td>15/04/2025</td><td>Salaires</td><td style="color:var(--red);font-weight:700">180 000 FCFA</td><td>Employés</td><td><span class="badge b-green">Payé</span></td><td>Admin</td><td class="adm-col" style="display:none"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Dépense supprimée','amber')">Suppr.</button></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="budget-planification" class="stab-content" style="display:none">
+          <div class="card">
+            <div class="card-title">Ajouter un budget prévisionnel</div>
+            <div class="grid2">
+              <div class="fg"><label>Poste *</label><select id="bp-poste"><option>Alimentation</option><option>Santé/Vétérinaire</option><option>Salaires</option><option>Maintenance</option><option>Équipements</option><option>Autre</option></select></div>
+              <div class="fg"><label>Montant alloué (FCFA) *</label><input type="number" id="bp-montant" placeholder="ex: 200000"></div>
+              <div class="fg"><label>Période</label><select id="bp-periode"><option>Mensuel</option><option>Trimestriel</option><option>Annuel</option></select></div>
+              <div class="fg"><label>Mois / Période</label><select id="bp-mois"><option>Avril 2025</option><option>Mai 2025</option><option>T2 2025</option><option>Année 2025</option></select></div>
+            </div>
+            <div class="fg"><label>Notes</label><input type="text" id="bp-notes" placeholder="Objectifs ou justification..."></div>
+            <button class="btn blue full" onclick="addPlan()">Ajouter au plan budgétaire</button>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Poste</th><th>Période</th><th>Budget alloué</th><th>Dépensé</th><th>Reste</th><th>Avancement</th></tr></thead>
+            <tbody id="plan-table">
+              <tr><td>Alimentation</td><td>Avril 2025</td><td>350 000</td><td style="color:var(--red)">120 000</td><td style="color:var(--green)">230 000</td><td><div class="pbar"><div class="pbar-fill" style="width:34%;background:var(--green)"></div></div></td></tr>
+              <tr><td>Santé/Vétérinaire</td><td>Avril 2025</td><td>80 000</td><td style="color:var(--red)">32 500</td><td style="color:var(--green)">47 500</td><td><div class="pbar"><div class="pbar-fill" style="width:41%;background:var(--amber)"></div></div></td></tr>
+              <tr><td>Salaires</td><td>Avril 2025</td><td>200 000</td><td style="color:var(--red)">180 000</td><td style="color:var(--amber)">20 000</td><td><div class="pbar"><div class="pbar-fill" style="width:90%;background:var(--amber)"></div></div></td></tr>
+              <tr><td>Maintenance</td><td>Avril 2025</td><td>50 000</td><td style="color:var(--red)">35 000</td><td style="color:var(--green)">15 000</td><td><div class="pbar"><div class="pbar-fill" style="width:70%;background:var(--amber)"></div></div></td></tr>
+            </tbody>
+          </table></div>
+        </div>
+        <div id="budget-graphiques" class="stab-content" style="display:none">
+          <div class="grid2" style="margin-bottom:12px">
+            <div class="card"><div class="card-title">Recettes vs Dépenses (6 mois)</div><div class="chart-wrap"><canvas id="ch-b-rd"></canvas></div></div>
+            <div class="card"><div class="card-title">Répartition des dépenses</div><div class="chart-wrap"><canvas id="ch-b-dep"></canvas></div></div>
+          </div>
+          <div class="grid2">
+            <div class="card"><div class="card-title">Budget vs Réalisé</div><div class="chart-wrap"><canvas id="ch-b-bvr"></canvas></div></div>
+            <div class="card"><div class="card-title">Évolution du solde net</div><div class="chart-wrap"><canvas id="ch-b-solde"></canvas></div></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end main-content -->
+  </div><!-- end app-body -->
+</div><!-- end app -->
+
+<script>
+const C=['#1A9E6F','#E0443A','#E8A020','#2E7FD9','#7C5CDB','#C0547A','#14B8A6','#F59E0B'];
+const M6=['Nov','Déc','Jan','Fév','Mar','Avr'];
+
+/* ══ AUTH ══ */
+let users=[
+  {id:1,nom:'Administrateur',login:'admin',pwd:'admin123',role:'admin'},
+  {id:2,nom:'Jean-Pierre D.',login:'jean.pierre',pwd:'ferme2025',role:'user'},
+  {id:3,nom:'Marie K.',login:'marie.k',pwd:'ferme2025',role:'user'},
+];
+let nextUID=4;
+let CU=null;
+let loginTab='admin';
+
+function setLoginTab(tab,el){
+  loginTab=tab;
+  document.querySelectorAll('.tab-pill').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('login-hint').textContent=tab==='admin'?'Administrateur : accès complet à tous les modules':'Employé : enregistrement uniquement, suppression non autorisée';
+}
+
+function doLogin(){
+  const u=document.getElementById('l-user').value.trim();
+  const p=document.getElementById('l-pwd').value;
+  const err=document.getElementById('login-error');
+  const found=users.find(x=>x.login===u&&x.pwd===p);
+  if(!found){err.style.display='block';err.textContent='Identifiants incorrects.';return;}
+  if(loginTab==='admin'&&found.role!=='admin'){err.style.display='block';err.textContent='Ce compte n\'a pas les droits administrateur.';return;}
+  if(loginTab==='user'&&found.role==='admin'){err.style.display='block';err.textContent='Les admins doivent utiliser l\'onglet Administrateur.';return;}
+  err.style.display='none';
+  CU=found;
+  launchApp();
+}
+
+function launchApp(){
+  document.getElementById('login-screen').style.display='none';
+  const app=document.getElementById('app');
+  app.style.display='flex';app.style.flexDirection='column';
+  const isAdmin=CU.role==='admin';
+  const badge=document.getElementById('topbar-user-badge');
+  badge.className='topbar-user '+(isAdmin?'admin':'user');
+  badge.textContent=(isAdmin?'👑 ':'👤 ')+CU.nom;
+  document.getElementById('btn-users').style.display=isAdmin?'':'none';
+  if(isAdmin)document.getElementById('admin-section').style.display='';
+  document.querySelectorAll('.adm-col').forEach(el=>el.style.display=isAdmin?'':'none');
+  updateClock();setInterval(updateClock,30000);
+  renderAnimaux();renderMaint();updateBudget();renderBatiments();renderLoges();populateLogeSelect();
+  initDashCharts();
+  const today=new Date().toISOString().split('T')[0];
+  ['ma-date','ma-dateres','sv-date','st-date','st-fin','rn-date','rn-heure','ra-date','rs-date','vcr-date','vv-date','vf-date','al-date','ae-heure','cm-date','py-date','br-date','bd-date','sq-debut','sm-date','vo-date','la-date','an-naiss'].forEach(id=>{const el=document.getElementById(id);if(el&&el.type==='date')el.value=today;if(el&&el.type==='time')el.value=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});});
+}
+
+function logout(){
+  CU=null;
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-user').value='';document.getElementById('l-pwd').value='';
+  document.getElementById('login-error').style.display='none';
+}
+
+function changePwd(){
+  const np=prompt('Nouveau mot de passe (min. 6 caractères) :');
+  if(!np||np.length<6){if(np!==null)alert('Mot de passe trop court.');return;}
+  CU.pwd=np;toast('Mot de passe modifié avec succès','green');
+}
+
+function updateClock(){
+  const n=new Date();
+  document.getElementById('topbar-clock').textContent=n.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'})+' '+n.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ══ NAVIGATION ══ */
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='budget')updateBudget();
+  if(id==='maintenance')renderMaint();
+}
+
+function showStab(module,tab,btn){
+  const prefix=module===module?module:'';
+  document.querySelectorAll(`#page-${prefix} .stab-content`).forEach(el=>el.style.display='none');
+  const tabEl=document.getElementById(`${prefix}-${tab}`);
+  if(tabEl)tabEl.style.display='';
+  const section=btn.closest('.section-tabs')||btn.parentElement;
+  section.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // Lazy chart init
+  const chartMap={
+    'sante-graphiques':initSanteCharts,'repro-graphiques':initReproCharts,
+    'alim-graphiques':initAlimCharts,'emp-graphiques':initEmpCharts,
+    'maint-graphiques':initMaintCharts,'budget-graphiques':initBudgetCharts,
+    'fourn-graphiques':initFournCharts,'loges-graphiques':initLogesCharts,
+  };
+  const key=`${module}-${tab}`;
+  if(chartMap[key])setTimeout(chartMap[key],80);
+}
+
+/* ══ TOAST ══ */
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.className='toast '+type;t.textContent=msg;t.style.display='block';
+  clearTimeout(t._to);t._to=setTimeout(()=>t.style.display='none',3500);
+}
+
+/* ══ USERS ══ */
+function openUsers(){
+  document.getElementById('modal-users').classList.add('open');
+  renderUserList();
+}
+function addUser(){
+  const nom=document.getElementById('nu-nom').value.trim();
+  const login=document.getElementById('nu-login').value.trim();
+  const pwd=document.getElementById('nu-pwd').value;
+  const role=document.getElementById('nu-role').value;
+  if(!nom||!login||!pwd){alert('Veuillez remplir tous les champs.');return;}
+  if(users.find(u=>u.login===login)){alert('Cet identifiant existe déjà.');return;}
+  users.push({id:nextUID++,nom,login,pwd,role});
+  toast('Utilisateur "'+nom+'" créé','green');
+  ['nu-nom','nu-login','nu-pwd'].forEach(id=>document.getElementById(id).value='');
+  renderUserList();
+}
+function renderUserList(){
+  document.getElementById('users-list-modal').innerHTML=users.map(u=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div style="width:32px;height:32px;border-radius:50%;background:${u.role==='admin'?'var(--amber-light)':'var(--blue-light)'};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:${u.role==='admin'?'#7A4A00':'#1A4D8A'};">${u.nom.charAt(0)}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600">${u.nom}</div><div style="font-size:11px;color:var(--text3)">@${u.login} — ${u.role==='admin'?'👑 Admin':'👤 Employé'}</div></div>
+      ${u.id!==1?`<button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="delUser(${u.id})">Supprimer</button>`:'<span class="badge b-amber">Principal</span>'}
+    </div>`).join('');
+}
+function delUser(id){
+  if(!confirm('Supprimer cet utilisateur ?'))return;
+  users=users.filter(u=>u.id!==id);renderUserList();toast('Utilisateur supprimé','amber');
+}
+
+/* ══ ANIMAUX ══ */
+let animaux=[
+  {tag:'P-001',type:'Porcelet',sexe:'M',naiss:'12/03/2025',poids:'8 kg',mere:'#T-022',pere:'#B-002',bat:'C',statut:'Sain'},
+  {tag:'T-022',type:'Truie',sexe:'F',naiss:'05/01/2023',poids:'180 kg',mere:'Ext.',pere:'Ext.',bat:'A',statut:'Sain'},
+  {tag:'P-108',type:'Porc',sexe:'M',naiss:'20/09/2024',poids:'52 kg',mere:'#T-007',pere:'#B-003',bat:'D',statut:'Malade'},
+  {tag:'B-003',type:'Verrat',sexe:'M',naiss:'10/07/2022',poids:'220 kg',mere:'Ext.',pere:'Ext.',bat:'A',statut:'Sain'},
+  {tag:'T-015',type:'Truie',sexe:'F',naiss:'18/04/2023',poids:'165 kg',mere:'Ext.',pere:'Ext.',bat:'A',statut:'Gestante'},
+  {tag:'P-212',type:'Porc',sexe:'M',naiss:'15/10/2024',poids:'45 kg',mere:'#T-005',pere:'#B-002',bat:'D',statut:'Malade'},
+  {tag:'B-001',type:'Verrat',sexe:'M',naiss:'20/03/2022',poids:'235 kg',mere:'Ext.',pere:'Ext.',bat:'A',statut:'Sain'},
+  {tag:'P-130',type:'Porcelet',sexe:'M',naiss:'25/04/2025',poids:'1.4 kg',mere:'#T-009',pere:'#B-002',bat:'C',statut:'Sain'},
+];
+function addAnimal(){
+  const tag=document.getElementById('an-tag').value.trim();
+  if(!tag){alert('Le tag est obligatoire.');return;}
+  const a={tag,type:document.getElementById('an-type').value,sexe:document.getElementById('an-sexe').value,naiss:document.getElementById('an-naiss').value||'—',poids:(document.getElementById('an-poids').value||'—')+' kg',mere:document.getElementById('an-mere').value||'Ext.',pere:document.getElementById('an-pere').value||'Ext.',bat:document.getElementById('an-bat').value.charAt(9),statut:'Sain'};
+  animaux.unshift(a);renderAnimaux();toast('Animal #'+tag+' enregistré','green');
+  ['an-tag','an-poids','an-mere','an-pere'].forEach(id=>document.getElementById(id).value='');
+}
+const SC={Sain:'b-green',Malade:'b-red',Gestante:'b-pink',Quarantaine:'b-blue'};
+function renderAnimaux(){
+  const fs=document.getElementById('an-f-statut').value;
+  const ft=document.getElementById('an-f-type').value;
+  const ftag=document.getElementById('an-f-tag').value.toUpperCase();
+  const filtered=animaux.filter(a=>(!fs||a.statut===fs)&&(!ft||a.type===ft)&&(!ftag||a.tag.includes(ftag)));
+  document.getElementById('animaux-table').innerHTML=filtered.map(a=>`<tr><td><strong>#${a.tag}</strong></td><td>${a.type}</td><td>${a.sexe==='M'?'Mâle':'Femelle'}</td><td>${a.naiss}</td><td>${a.poids}</td><td>${a.mere}</td><td>${a.pere}</td><td>${a.bat}</td><td><span class="badge ${SC[a.statut]||'b-gray'}">${a.statut}</span></td></tr>`).join('');
+}
+function filterAnimaux(){renderAnimaux();}
+
+/* ══ SANTÉ ══ */
+function addVaccin(){
+  const tag=document.getElementById('sv-tag').value.trim();const vaccin=document.getElementById('sv-vaccin').value.trim();
+  if(!tag||!vaccin){alert('Tag et vaccin obligatoires.');return;}
+  const date=document.getElementById('sv-date').value;const d=date?new Date(date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const rappel=document.getElementById('sv-rappel').value;const r=rappel?new Date(rappel).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const row=`<tr><td>${tag}</td><td>${vaccin}</td><td>${d}</td><td>${document.getElementById('sv-dose').value||'—'}</td><td>${r}</td><td>${document.getElementById('sv-par').value}</td></tr>`;
+  document.getElementById('vaccins-table').insertAdjacentHTML('afterbegin',row);
+  toast('Vaccin enregistré pour '+tag,'green');
+  ['sv-tag','sv-vaccin','sv-dose'].forEach(id=>document.getElementById(id).value='');
+}
+function addTraitement(){
+  const tag=document.getElementById('st-tag').value.trim();const prod=document.getElementById('st-produit').value.trim();
+  if(!tag||!prod){alert('Tag et produit obligatoires.');return;}
+  const d1=document.getElementById('st-date').value;const d2=document.getElementById('st-fin').value;
+  const fmt=v=>v?new Date(v).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const type=document.getElementById('st-type').value;
+  const tCl=type==='Antibiotique'?'b-red':type==='Anti-inflammatoire'?'b-amber':'b-blue';
+  document.getElementById('traitements-table').insertAdjacentHTML('afterbegin',`<tr><td>${tag}</td><td><span class="badge ${tCl}">${type}</span></td><td>${prod}</td><td>${document.getElementById('st-dose').value||'—'}</td><td>${fmt(d1)}</td><td>${fmt(d2)}</td><td><span class="badge b-amber">En cours</span></td></tr>`);
+  toast('Traitement enregistré pour '+tag,'green');
+  ['st-tag','st-produit','st-dose'].forEach(id=>document.getElementById(id).value='');
+}
+function addQuarantaine(){
+  const tag=document.getElementById('sq-tag').value.trim();if(!tag){alert('Tag obligatoire.');return;}
+  const debut=document.getElementById('sq-debut').value;const duree=parseInt(document.getElementById('sq-duree').value);
+  const d=new Date(debut);const fin=new Date(d);fin.setDate(fin.getDate()+duree);
+  const ds=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const fs=fin.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('quarantaine-table').insertAdjacentHTML('afterbegin',`<tr><td>#${tag}</td><td>${document.getElementById('sq-motif').value}</td><td>${ds}</td><td>${fs}</td><td>0/${duree}</td><td><span class="badge b-red">En cours</span></td></tr>`);
+  toast('#'+tag+' placé en quarantaine','amber');document.getElementById('sq-tag').value='';
+}
+function addMort(){
+  const tag=document.getElementById('sm-tag').value.trim();if(!tag){alert('Tag obligatoire.');return;}
+  const d=document.getElementById('sm-date').value;const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  document.getElementById('mort-table').insertAdjacentHTML('afterbegin',`<tr><td>#${tag}</td><td>${ds}</td><td>${document.getElementById('sm-cause').value}</td><td>${document.getElementById('sm-par').value}</td></tr>`);
+  toast('Décès enregistré pour #'+tag,'red');['sm-tag','sm-obs'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ REPRODUCTION ══ */
+function addAccouplement(){
+  const t=document.getElementById('ra-truie').value,v=document.getElementById('ra-verrat').value;
+  const d=document.getElementById('ra-date').value;
+  const dt=new Date(d);dt.setDate(dt.getDate()+114);
+  const fmt=v2=>v2.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('accouplement-table').insertAdjacentHTML('afterbegin',`<tr><td>${t}</td><td>${v}</td><td>${fmt(new Date(d))}</td><td>${document.getElementById('ra-type').value.split(' ')[0]}</td><td>${fmt(dt)}</td><td><span class="badge b-blue">Gestation</span></td></tr>`);
+  toast('Accouplement enregistré — '+t+' × '+v,'green');
+}
+function addNaissance(){
+  const mere=document.getElementById('rn-mere').value,pere=document.getElementById('rn-pere').value;
+  const total=document.getElementById('rn-total').value,vivants=document.getElementById('rn-vivants').value,morts=document.getElementById('rn-morts').value||0;
+  const d=document.getElementById('rn-date').value;const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  document.getElementById('naissances-table').insertAdjacentHTML('afterbegin',`<tr><td>${mere}</td><td>${pere}</td><td>${ds}</td><td>${total||'—'}</td><td style="color:var(--green);font-weight:700">${vivants||'—'}</td><td style="color:var(--red)">${morts}</td><td>${document.getElementById('rn-poids').value||'—'} kg</td></tr>`);
+  toast('Naissance enregistrée — '+mere,'green');['rn-total','rn-vivants','rn-morts','rn-poids'].forEach(id=>document.getElementById(id).value='');
+}
+function searchTracabilite(){
+  const tag=document.getElementById('tr-search').value.trim().toUpperCase().replace('#','');
+  const data={'P-130':{mere:'#T-009',pere:'#B-002',naiss:'25/04/2025',poids:'1.4 kg',statut:'Sain'},'P-131':{mere:'#T-009',pere:'#B-002',naiss:'25/04/2025',poids:'1.3 kg',statut:'Sain'},'P-120':{mere:'#T-010',pere:'#B-001',naiss:'18/04/2025',poids:'1.5 kg',statut:'Sain'},'P-108':{mere:'#T-007',pere:'#B-003',naiss:'20/09/2024',poids:'52 kg',statut:'Malade'}};
+  const r=document.getElementById('tr-result');
+  const p=data[tag];
+  if(!p){r.style.display='none';toast('Aucun porcelet trouvé avec ce tag','red');return;}
+  r.style.display='block';
+  document.getElementById('tr-result-content').innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:8px">🐷 #${tag}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+      <div><span style="color:var(--text2)">Naissance :</span> <strong>${p.naiss}</strong></div>
+      <div><span style="color:var(--text2)">Poids :</span> <strong>${p.poids}</strong></div>
+      <div><span style="color:var(--text2)">Mère :</span> <strong style="color:#C0547A">${p.mere}</strong></div>
+      <div><span style="color:var(--text2)">Père :</span> <strong style="color:var(--blue)">${p.pere}</strong></div>
+      <div><span style="color:var(--text2)">Statut :</span> <span class="badge ${p.statut==='Sain'?'b-green':'b-red'}">${p.statut}</span></div>
+    </div>`;
+}
+function addSevrage(){
+  const mere=document.getElementById('rs-mere').value;
+  const d=document.getElementById('rs-date').value;const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  document.getElementById('sevrage-table').insertAdjacentHTML('afterbegin',`<tr><td>${mere}</td><td>${ds}</td><td>${document.getElementById('rs-nb').value||'—'}</td><td>${document.getElementById('rs-age').value||'—'} j</td><td>${document.getElementById('rs-poids').value||'—'} kg</td><td>${document.getElementById('rs-dest').value}</td></tr>`);
+  toast('Sevrage enregistré — '+mere,'green');['rs-nb','rs-age','rs-poids'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ ALIMENTATION ══ */
+function addRepas(){
+  const bat=document.getElementById('ae-bat').value;const qte=document.getElementById('ae-qte').value;const refuse=parseFloat(document.getElementById('ae-refuse').value)||0;
+  if(!bat||!qte){alert('Bâtiment et quantité obligatoires.');return;}
+  const h=document.getElementById('ae-heure').value;const d=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('repas-table').insertAdjacentHTML('afterbegin',`<tr><td>${d}</td><td>${h||'—'}</td><td>${bat}</td><td>${document.getElementById('ae-aliment').value}</td><td>${qte} kg</td><td>${refuse} kg</td><td style="color:var(--green);font-weight:700">${parseFloat(qte)-refuse} kg</td><td>${document.getElementById('ae-par').value}</td></tr>`);
+  toast('Repas enregistré — Bât. '+bat,'green');['ae-qte','ae-refuse'].forEach(id=>document.getElementById(id).value='');
+}
+function addLivraison(){
+  const fourn=document.getElementById('al-fourn').value;const qte=document.getElementById('al-qte').value;if(!qte){alert('Quantité obligatoire.');return;}
+  const d=document.getElementById('al-date').value;const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const q=document.getElementById('al-qualite').value;const qCl=q==='Bonne'?'b-green':q==='Acceptable'?'b-amber':'b-red';
+  document.getElementById('livraisons-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${fourn}</td><td>${document.getElementById('al-aliment').value}</td><td>${qte} kg</td><td>${(document.getElementById('al-prix').value||0).toLocaleString()} FCFA</td><td><span class="badge ${qCl}">${q}</span></td></tr>`);
+  toast('Livraison enregistrée — '+qte+' kg','green');['al-qte','al-prix'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ LOGES & BÂTIMENTS ══ */
+let batiments=[
+  {id:'A',nom:'Bâtiment A',code:'A',vocation:'Reproducteurs',sup:250},
+  {id:'B',nom:'Bâtiment B',code:'B',vocation:'Engraissement',sup:320},
+  {id:'C',nom:'Bâtiment C',code:'C',vocation:'Maternité',sup:180},
+  {id:'D',nom:'Bâtiment D',code:'D',vocation:'Quarantaine',sup:80},
+];
+let loges=[
+  {id:1,nom:'Maternité M-01',type:'maternite',cap:6,bat:'C',animaux:['#T-022','#T-009']},
+  {id:2,nom:'Engraissement E-01',type:'engraissement',cap:20,bat:'B',animaux:['#P-044','#P-130']},
+  {id:3,nom:'Quarantaine Q-01',type:'quarantaine',cap:5,bat:'D',animaux:['#P-108']},
+  {id:4,nom:'Verrat V-01',type:'verrat',cap:2,bat:'A',animaux:['#B-001','#B-003']},
+];
+let nextLID=5;
+const TI={maternite:{l:'Maternité',i:'🐷',cl:'b-pink'},engraissement:{l:'Engraissement',i:'🌽',cl:'b-teal'},quarantaine:{l:'Quarantaine',i:'🚨',cl:'b-red'},verrat:{l:'Verrat',i:'🐗',cl:'b-blue'},postsevrage:{l:'Post-sevrage',i:'🍼',cl:'b-purple'},autre:{l:'Autre',i:'📦',cl:'b-gray'}};
+
+function addBatiment(){
+  const nom=document.getElementById('lb-nom').value.trim();const code=document.getElementById('lb-code').value.trim().toUpperCase();
+  if(!nom||!code){alert('Nom et code obligatoires.');return;}
+  if(batiments.find(b=>b.code===code)){alert('Ce code existe déjà.');return;}
+  batiments.push({id:code,nom,code,vocation:document.getElementById('lb-vocation').value,sup:parseFloat(document.getElementById('lb-sup').value)||null});
+  toast('"'+nom+'" créé','green');['lb-nom','lb-code','lb-sup'].forEach(id=>document.getElementById(id).value='');
+  renderBatiments();populateBatSelects();
+}
+function renderBatiments(){
+  document.getElementById('batiments-list').innerHTML=batiments.map(b=>{
+    const bl=loges.filter(l=>l.bat===b.code);const anim=bl.reduce((s,l)=>s+l.animaux.length,0);const cap=bl.reduce((s,l)=>s+(l.cap||0),0);const pct=cap>0?Math.round(anim/cap*100):0;
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div><div style="font-size:13px;font-weight:700">🏗️ ${b.nom} <span style="font-size:11px;color:var(--text3)">(${b.code})</span></div><div style="font-size:11px;color:var(--text3)">${b.vocation}${b.sup?' — '+b.sup+' m²':''}</div></div>
+        <button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="delBat('${b.id}')">Suppr.</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:11px;margin-bottom:6px">
+        <div class="kpi" style="padding:6px"><div style="font-size:14px;font-weight:700">${bl.length}</div><div style="font-size:10px;color:var(--text3)">Loges</div></div>
+        <div class="kpi" style="padding:6px"><div style="font-size:14px;font-weight:700;color:var(--green)">${anim}</div><div style="font-size:10px;color:var(--text3)">Animaux</div></div>
+        <div class="kpi" style="padding:6px"><div style="font-size:14px;font-weight:700">${cap}</div><div style="font-size:10px;color:var(--text3)">Capacité</div></div>
+      </div>
+      ${cap>0?`<div class="cap-bar"><div class="cap-fill" style="width:${pct}%;background:${pct>=90?'var(--red)':pct>=70?'var(--amber)':'var(--green)'}"></div></div>`:''}
+    </div>`;
+  }).join('');
+}
+function delBat(id){
+  const b=batiments.find(x=>x.id===id);
+  if(loges.filter(l=>l.bat===b.code).length>0){alert('Supprimez ou déplacez les loges de ce bâtiment d\'abord.');return;}
+  if(!confirm('Supprimer "'+b.nom+'" ?'))return;
+  batiments=batiments.filter(x=>x.id!==id);
+  toast('"'+b.nom+'" supprimé','amber');renderBatiments();populateBatSelects();
+}
+function renderLoges(){
+  document.getElementById('loges-grid').innerHTML=loges.map(l=>{
+    const ti=TI[l.type]||TI.autre;const pct=l.cap>0?Math.round(l.animaux.length/l.cap*100):0;
+    const col=pct>=90?'var(--red)':pct>=70?'var(--amber)':'var(--green)';
+    const batNom=batiments.find(b=>b.code===l.bat)?.nom||'Bât.'+l.bat;
+    return `<div style="border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:700">${ti.i} ${l.nom} <span class="badge ${ti.cl}">${ti.l}</span></div><div style="font-size:11px;color:var(--text3)">${batNom}</div></div>
+        <div style="display:flex;gap:4px">
+          ${CU&&CU.role==='admin'?`<button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="delLoge(${l.id})">🗑️</button>`:''}
+        </div>
+      </div>
+      <div style="font-size:12px;margin-bottom:6px">Animaux : <strong>${l.animaux.length}/${l.cap}</strong> — <strong style="color:${col}">${pct}%</strong></div>
+      ${l.cap>0?`<div class="cap-bar"><div class="cap-fill" style="width:${pct}%;background:${col}"></div></div>`:''}
+      <div style="margin-top:6px">${l.animaux.map(a=>`<span class="chip">${a}</span>`).join('')||'<span style="font-size:11px;color:var(--text3)">Aucun animal</span>'}</div>
+    </div>`;
+  }).join('');
+}
+function addLoge(){
+  const nom=document.getElementById('ln-nom').value.trim();const bat=document.getElementById('ln-bat').value;
+  if(!nom||!bat){alert('Nom et bâtiment obligatoires.');return;}
+  loges.push({id:nextLID++,nom,type:document.getElementById('ln-type').value,cap:parseInt(document.getElementById('ln-cap').value)||10,bat,animaux:[]});
+  toast('"'+nom+'" créée','green');document.getElementById('ln-nom').value='';
+  renderLoges();populateLogeSelect();
+}
+function delLoge(id){
+  const l=loges.find(x=>x.id===id);if(!confirm('Supprimer "'+l.nom+'" ?'))return;
+  loges=loges.filter(x=>x.id!==id);toast('Loge supprimée','amber');renderLoges();populateLogeSelect();
+}
+function populateBatSelects(){
+  const opts=batiments.map(b=>`<option value="${b.code}">${b.nom}</option>`).join('');
+  ['ln-bat','filtre-bat2'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+function populateLogeSelect(){
+  const opts='<option value="">Choisir...</option>'+loges.map(l=>`<option value="${l.id}">${l.nom} (${TI[l.type]?.l||l.type}) — ${l.animaux.length}/${l.cap}</option>`).join('');
+  const el=document.getElementById('la-loge');if(el)el.innerHTML=opts;
+}
+function assignerAnimal(){
+  const tag=document.getElementById('la-animal').value;const lid=parseInt(document.getElementById('la-loge').value);
+  if(!tag||!lid){alert('Animal et loge obligatoires.');return;}
+  const l=loges.find(x=>x.id===lid);if(!l){return;}
+  if(l.animaux.includes(tag)){toast(tag+' déjà dans cette loge','amber');return;}
+  if(l.cap>0&&l.animaux.length>=l.cap){toast('Capacité max atteinte','amber');return;}
+  l.animaux.push(tag);
+  const d=document.getElementById('la-date').value;const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const batNom=batiments.find(b=>b.code===l.bat)?.nom||'Bât.'+l.bat;
+  document.getElementById('allocation-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${tag}</td><td>${l.nom}</td><td>${batNom}</td><td>${document.getElementById('la-raison').value}</td></tr>`);
+  toast(tag+' assigné à '+l.nom,'green');renderLoges();populateLogeSelect();
+  document.getElementById('la-animal').value='';document.getElementById('la-loge').value='';
+}
+
+/* ══ MAINTENANCE ══ */
+const CAT={electricite:{l:'Électricité',i:'⚡',cl:'b-amber'},plomberie:{l:'Plomberie',i:'🔧',cl:'b-blue'},maconnerie:{l:'Maçonnerie',i:'🧱',cl:'b-gray'},reparation:{l:'Réparation',i:'🔨',cl:'b-teal'},equipement:{l:'Équipement',i:'⚙️',cl:'b-purple'},toiture:{l:'Toiture',i:'🏠',cl:'b-pink'},autre:{l:'Autre',i:'📦',cl:'b-gray'}};
+const PRIO={urgente:{l:'Urgente',cl:'b-red',border:'var(--red)'},normale:{l:'Normale',cl:'b-amber',border:'var(--amber)'},planifiee:{l:'Planifiée',cl:'b-blue',border:'var(--blue)'}};
+const STAT={en_attente:{l:'En attente',cl:'b-gray'},en_cours:{l:'En cours',cl:'b-amber'},termine:{l:'Terminé',cl:'b-green'},annule:{l:'Annulé',cl:'b-gray'}};
+let maintenances=[
+  {id:1,titre:'Fuite eau — Bâtiment B',cat:'plomberie',prio:'urgente',lieu:'Bâtiment B',date:'22/04/2025',coutEst:45000,coutReel:null,resp:'Plombier Martin',dateRes:'27/04/2025',desc:'Fuite importante canalisation principale',statut:'en_cours',saisie:'Admin'},
+  {id:2,titre:'Panne éclairage — Bâtiment A',cat:'electricite',prio:'normale',lieu:'Bâtiment A',date:'20/04/2025',coutEst:15000,coutReel:12000,resp:'Électricien Dupont',dateRes:'25/04/2025',desc:'Ampoules et disjoncteur à remplacer',statut:'termine',saisie:'Admin'},
+  {id:3,titre:'Fissure mur — Bâtiment D',cat:'maconnerie',prio:'planifiee',lieu:'Bâtiment D',date:'15/04/2025',coutEst:80000,coutReel:null,resp:'Maçon Henri',dateRes:'10/05/2025',desc:'Fissure structurelle',statut:'en_attente',saisie:'Jean-Pierre D.'},
+  {id:4,titre:'Réparation toiture — Maternité',cat:'toiture',prio:'urgente',lieu:'Bâtiment C',date:'24/04/2025',coutEst:120000,coutReel:null,resp:'Couvreur Pascal',dateRes:'28/04/2025',desc:'Infiltrations eau lors des pluies',statut:'en_attente',saisie:'Marie K.'},
+];
+let nextMID=5;
+
+function addMaint(){
+  const titre=document.getElementById('ma-titre').value.trim();if(!titre){alert('Titre obligatoire.');return;}
+  const d=document.getElementById('ma-date').value;const dr=document.getElementById('ma-dateres').value;
+  const fmt=v=>v?new Date(v).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  maintenances.unshift({id:nextMID++,titre,cat:document.getElementById('ma-cat').value,prio:document.getElementById('ma-prio').value,lieu:document.getElementById('ma-lieu').value,date:fmt(d),coutEst:parseFloat(document.getElementById('ma-cout').value)||null,coutReel:null,resp:document.getElementById('ma-resp').value,dateRes:dr?fmt(dr):null,desc:document.getElementById('ma-desc').value,statut:'en_attente',saisie:CU?CU.nom:'—'});
+  toast('"'+titre+'" enregistrée','green');['ma-titre','ma-cout','ma-resp','ma-desc'].forEach(id=>document.getElementById(id).value='');
+  renderMaint();showStab('maint','liste',document.querySelector('#page-maintenance .stab'));
+}
+function renderMaint(){
+  const fp=document.getElementById('mf-prio').value,fs=document.getElementById('mf-stat').value,fc=document.getElementById('mf-cat').value;
+  const fil=maintenances.filter(m=>(!fp||m.prio===fp)&&(!fs||m.statut===fs)&&(!fc||m.cat===fc));
+  const urg=maintenances.filter(m=>m.prio==='urgente'&&m.statut!=='termine').length;
+  const enc=maintenances.filter(m=>m.statut==='en_cours').length;
+  const ter=maintenances.filter(m=>m.statut==='termine').length;
+  const cout=maintenances.reduce((s,m)=>s+(m.coutReel||m.coutEst||0),0);
+  document.getElementById('mk-urg').textContent=urg;document.getElementById('mk-enc').textContent=enc;document.getElementById('mk-ter').textContent=ter;document.getElementById('mk-cout').textContent=cout.toLocaleString()+' FCFA';
+  const badge=document.getElementById('maint-badge');if(badge)badge.textContent=urg||'';if(badge)badge.style.display=urg?'':'none';
+  document.getElementById('dash-maint-kpi').textContent=urg+enc;
+  const isAdmin=CU&&CU.role==='admin';
+  document.getElementById('maint-list-container').innerHTML=fil.map(m=>{
+    const ci=CAT[m.cat]||CAT.autre;const pi=PRIO[m.prio]||PRIO.normale;const si=STAT[m.statut]||STAT.en_attente;
+    const canEdit=isAdmin||(m.saisie===CU?.nom);
+    return `<div class="maint-card" style="border-left-color:${pi.border}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div><div style="font-size:13px;font-weight:700">${ci.i} ${m.titre}</div><div style="font-size:11px;color:var(--text3)">${m.lieu} — ${m.date}${m.resp?' — '+m.resp:''}</div></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"><span class="badge ${pi.cl}">${pi.l}</span><span class="badge ${si.cl}">${si.l}</span><span class="badge ${ci.cl}">${ci.l}</span></div>
+      </div>
+      ${m.desc?`<div style="font-size:11px;color:var(--text2);margin-bottom:6px">${m.desc}</div>`:''}
+      <div style="display:flex;gap:10px;font-size:11px;color:var(--text3);margin-bottom:8px;flex-wrap:wrap">
+        ${m.coutEst?`<span>Estimé : <strong>${m.coutEst.toLocaleString()} FCFA</strong></span>`:''}
+        ${m.coutReel?`<span>Réel : <strong style="color:var(--green)">${m.coutReel.toLocaleString()} FCFA</strong></span>`:''}
+        ${m.dateRes?`<span>Résolution : <strong>${m.dateRes}</strong></span>`:''}
+        <span>Saisi par : ${m.saisie}</span>
+      </div>
+      <div style="display:flex;gap:6px">
+        ${canEdit?`<button class="btn-xs" style="background:var(--amber);color:#fff;border-color:var(--amber)" onclick="openEditMaint(${m.id})">✏️ Modifier</button>`:''}
+        ${m.statut!=='termine'?`<button class="btn-xs" style="background:var(--green);color:#fff;border-color:var(--green)" onclick="terminerMaint(${m.id})">✓ Terminer</button>`:''}
+        ${isAdmin?`<button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="delMaint(${m.id})">🗑️</button>`:''}
+      </div>
+    </div>`;
+  }).join('') || '<div style="font-size:12px;color:var(--text3);padding:10px 0">Aucune tâche trouvée.</div>';
+}
+function terminerMaint(id){
+  const m=maintenances.find(x=>x.id===id);if(!m)return;
+  if(CU&&CU.role!=='admin'&&m.saisie!==CU.nom){toast('Seul l\'admin peut modifier les tâches des autres','red');return;}
+  m.statut='termine';toast('"'+m.titre+'" terminée','green');renderMaint();
+}
+function delMaint(id){
+  if(CU&&CU.role!=='admin'){toast('Suppression réservée à l\'administrateur','red');return;}
+  if(!confirm('Supprimer cette tâche ?'))return;
+  maintenances=maintenances.filter(x=>x.id!==id);toast('Tâche supprimée','amber');renderMaint();
+}
+function openEditMaint(id){
+  const m=maintenances.find(x=>x.id===id);if(!m)return;
+  document.getElementById('maint-edit-id').value=id;document.getElementById('me-titre').value=m.titre;document.getElementById('me-cat').value=m.cat;document.getElementById('me-prio').value=m.prio;document.getElementById('me-statut').value=m.statut;document.getElementById('me-cout').value=m.coutReel||'';document.getElementById('me-desc').value=m.desc||'';
+  document.getElementById('maint-edit-title').textContent='Modifier — '+m.titre;
+  document.getElementById('modal-maint-edit').classList.add('open');
+}
+function saveMaintEdit(){
+  const id=parseInt(document.getElementById('maint-edit-id').value);const m=maintenances.find(x=>x.id===id);if(!m)return;
+  m.titre=document.getElementById('me-titre').value;m.cat=document.getElementById('me-cat').value;m.prio=document.getElementById('me-prio').value;m.statut=document.getElementById('me-statut').value;m.coutReel=parseFloat(document.getElementById('me-cout').value)||null;m.desc=document.getElementById('me-desc').value;
+  document.getElementById('modal-maint-edit').classList.remove('open');toast('Tâche modifiée','green');renderMaint();
+}
+
+/* ══ EMPLOYÉS ══ */
+const empData=[{nom:'Jean-Pierre D.',poste:'Soigneur',arrive:'06:15',depart:null,statut:'present'},{nom:'Marie K.',poste:'Soigneuse',arrive:'06:30',depart:null,statut:'present'},{nom:'Hervé M.',poste:'Soigneur',arrive:'07:00',depart:null,statut:'present'},{nom:'Thomas B.',poste:'Soigneur',arrive:null,depart:null,statut:'absent'},{nom:'Sophie M.',poste:'Soigneuse',arrive:null,depart:null,statut:'conge'}];
+function pointer(action){
+  const nom=document.getElementById('ep-emp').value;const h=document.getElementById('ep-heure').value||new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const e=empData.find(x=>x.nom===nom);if(!e)return;
+  if(action==='arrive'){if(e.arrive){toast(nom+' déjà arrivé(e)','amber');return;}e.arrive=h;e.statut='present';}
+  else{if(!e.arrive){toast(nom+' pas encore arrivé(e)','amber');return;}if(e.depart){toast('Départ déjà enregistré','amber');return;}e.depart=h;e.statut='parti';}
+  toast((action==='arrive'?'Arrivée':'Départ')+' enregistré — '+nom+' à '+h,'green');
+}
+function addConge(){
+  const emp=document.getElementById('ec-emp').value;const type=document.getElementById('ec-type').value;const debut=document.getElementById('ec-debut').value;const fin=document.getElementById('ec-fin').value;
+  if(!debut||!fin){alert('Dates obligatoires.');return;}
+  const d1=new Date(debut),d2=new Date(fin);const jours=Math.round((d2-d1)/(1000*60*60*24))+1;
+  const fmt=v=>new Date(v).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const tCl=type.includes('maladie')?'b-red':type.includes('payé')?'b-blue':'b-amber';
+  document.getElementById('conges-table').insertAdjacentHTML('afterbegin',`<tr><td>${emp}</td><td><span class="badge ${tCl}">${type}</span></td><td>${fmt(debut)}</td><td>${fmt(fin)}</td><td>${jours}</td><td>${document.getElementById('ec-motif').value||'—'}</td><td><span class="badge b-amber">En cours</span></td></tr>`);
+  toast('Congé enregistré pour '+emp,'green');['ec-debut','ec-fin','ec-motif'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ VÉTÉRINAIRE ══ */
+function addVet(){
+  const nom=document.getElementById('vf-nom').value.trim();if(!nom){alert('Nom obligatoire.');return;}
+  toast('"'+nom+'" enregistré','green');['vf-nom','vf-tel','vf-tarif','vf-clinique'].forEach(id=>document.getElementById(id).value='');
+}
+function addVisite(){
+  const vet=document.getElementById('vv-vet').value;const d=document.getElementById('vv-date').value;if(!d){alert('Date obligatoire.');return;}
+  const ds=new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('visites-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${vet.split(' ')[0]+' '+vet.split(' ')[1]}</td><td>${document.getElementById('vv-type').value}</td><td>${document.getElementById('vv-animaux').value||'À définir'}</td><td>${(document.getElementById('vv-cout').value||0).toLocaleString()} FCFA</td><td><span class="badge b-blue">Planifiée</span></td></tr>`);
+  toast('Visite planifiée','green');['vv-date','vv-cout','vv-animaux'].forEach(id=>document.getElementById(id).value='');
+}
+function addCR(){
+  const vet=document.getElementById('vcr-vet').value;const d=document.getElementById('vcr-date').value;const inter=document.getElementById('vcr-inter').value;if(!inter){alert('Interventions obligatoires.');return;}
+  const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const res=document.getElementById('vcr-resultat').value;const rCl=res.startsWith('Bon')?'b-green':res.startsWith('Moyen')?'b-amber':'b-red';const rL=res.split('—')[0].trim();
+  const pay=document.getElementById('vcr-pay').value;const pCl=pay==='Payé'?'b-green':pay==='Partiel'?'b-amber':'b-red';
+  document.getElementById('cr-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${vet.split(' ')[0]+' '+vet.split(' ')[1]}</td><td>${document.getElementById('vcr-nb').value||'—'}</td><td>${inter.substring(0,30)}</td><td>${(document.getElementById('vcr-cout').value||0).toLocaleString()} FCFA</td><td><span class="badge ${rCl}">${rL}</span></td><td><span class="badge ${pCl}">${pay}</span></td></tr>`);
+  toast('Compte rendu enregistré','green');['vcr-date','vcr-nb','vcr-cout','vcr-inter','vcr-reco'].forEach(id=>document.getElementById(id).value='');
+}
+function addOrdonnance(){
+  const animal=document.getElementById('vo-animal').value.trim();const med1=document.getElementById('vo-med1').value.trim();const d=document.getElementById('vo-date').value;
+  if(!animal||!med1){alert('Animal et médicament obligatoires.');return;}
+  const ds=d?new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+  const vet=document.getElementById('vo-vet').value.split(' ')[1].toUpperCase();
+  const div=document.createElement('div');div.style.cssText='border:2px solid var(--border);border-left:4px solid var(--green);border-radius:var(--radius);padding:14px;margin-bottom:10px';
+  div.innerHTML=`<div style="font-size:13px;font-weight:700;margin-bottom:6px">Ordonnance — ${animal} — ${ds}</div>${document.getElementById('vo-diag').value?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Diagnostic : <strong>${document.getElementById('vo-diag').value}</strong></div>`:''}<div style="font-size:12px;margin-bottom:4px"><strong>1.</strong> ${med1} — <span style="color:var(--text2)">${document.getElementById('vo-dose1').value||'—'}</span></div>${document.getElementById('vo-med2').value?`<div style="font-size:12px;margin-bottom:8px"><strong>2.</strong> ${document.getElementById('vo-med2').value}</div>`:''}<div style="font-size:11px;color:var(--text3);margin-top:6px">Durée : ${document.getElementById('vo-duree').value||'—'} — ${document.getElementById('vo-vet').value.split(' ').slice(0,2).join(' ')}</div>`;
+  document.getElementById('ordonnances-list').insertAdjacentElement('afterbegin',div);
+  toast('Ordonnance créée pour '+animal,'green');['vo-animal','vo-diag','vo-med1','vo-dose1','vo-med2','vo-duree','vo-instruct'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ FOURNISSEURS ══ */
+function addFournisseur(){
+  const nom=document.getElementById('fn-nom').value.trim();if(!nom){alert('Nom obligatoire.');return;}
+  document.getElementById('fourn-table').insertAdjacentHTML('afterbegin',`<tr><td><strong>${nom}</strong></td><td>${document.getElementById('fn-cat').value}</td><td>${document.getElementById('fn-tel').value||'—'}</td><td>${document.getElementById('fn-delai').value}</td><td style="color:var(--text3)">0 FCFA</td><td><span class="badge b-green">Actif</span></td></tr>`);
+  toast('"'+nom+'" enregistré','green');['fn-nom','fn-tel'].forEach(id=>document.getElementById(id).value='');
+}
+function addCommande(){
+  const fourn=document.getElementById('cm-fourn').value;const montant=parseFloat(document.getElementById('cm-montant').value)||0;const paye=parseFloat(document.getElementById('cm-paye').value)||0;
+  const d=document.getElementById('cm-date').value;if(!d||!montant){alert('Date et montant obligatoires.');return;}
+  const ds=new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});const reste=montant-paye;
+  const s=document.getElementById('cm-statut').value;const sCl=s==='Payé'?'b-green':s==='Partiel'?'b-amber':'b-red';
+  document.getElementById('commandes-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${fourn}</td><td>${document.getElementById('cm-produit').value}</td><td>${montant.toLocaleString()}</td><td style="color:var(--green)">${paye.toLocaleString()}</td><td style="color:${reste>0?'var(--red)':'var(--green)'}">${reste.toLocaleString()}</td><td><span class="badge ${sCl}">${s}</span></td></tr>`);
+  toast('Commande enregistrée','green');['cm-produit','cm-montant','cm-paye'].forEach(id=>document.getElementById(id).value='');
+}
+function addPaiement(){
+  const fourn=document.getElementById('py-fourn').value;const montant=parseFloat(document.getElementById('py-montant').value)||0;const d=document.getElementById('py-date').value;
+  if(!montant||!d){alert('Montant et date obligatoires.');return;}
+  const ds=new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});
+  document.getElementById('paiements-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${fourn}</td><td style="color:var(--green);font-weight:700">${montant.toLocaleString()} FCFA</td><td>${document.getElementById('py-mode').value}</td><td><span class="badge b-green">Enregistré</span></td></tr>`);
+  toast('Paiement de '+montant.toLocaleString()+' FCFA enregistré','green');['py-montant'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ BUDGET ══ */
+function updateBudget(){
+  const rec=812000,dep=367300,solde=rec-dep;
+  document.getElementById('bk-rec').textContent=rec.toLocaleString()+' FCFA';
+  document.getElementById('bk-dep').textContent=dep.toLocaleString()+' FCFA';
+  const s=document.getElementById('bk-solde');s.textContent=solde.toLocaleString()+' FCFA';s.style.color=solde>=0?'var(--green)':'var(--red)';
+  if(document.getElementById('bu-total-rec'))document.getElementById('bu-total-rec').textContent=rec.toLocaleString()+' FCFA';
+  if(document.getElementById('bu-total-dep'))document.getElementById('bu-total-dep').textContent=dep.toLocaleString()+' FCFA';
+}
+function addRecette(){
+  const montant=parseFloat(document.getElementById('br-montant').value)||0;const d=document.getElementById('br-date').value;
+  if(!montant||!d){alert('Montant et date obligatoires.');return;}
+  const ds=new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});const isAdmin=CU&&CU.role==='admin';
+  document.getElementById('recettes-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${document.getElementById('br-source').value}</td><td style="color:var(--green);font-weight:700">${montant.toLocaleString()} FCFA</td><td>${document.getElementById('br-ref').value||'—'}</td><td>${CU.nom}</td><td class="adm-col" style="display:${isAdmin?'':'none'}"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Supprimé','amber')">Suppr.</button></td></tr>`);
+  toast('Recette enregistrée','green');['br-montant','br-ref'].forEach(id=>document.getElementById(id).value='');
+}
+function addDepense(){
+  const montant=parseFloat(document.getElementById('bd-montant').value)||0;const d=document.getElementById('bd-date').value;
+  if(!montant||!d){alert('Montant et date obligatoires.');return;}
+  const ds=new Date(d).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});const pay=document.getElementById('bd-pay').value;const pCl=pay==='Payé'?'b-green':pay==='Partiel'?'b-amber':'b-red';const isAdmin=CU&&CU.role==='admin';
+  document.getElementById('depenses-table').insertAdjacentHTML('afterbegin',`<tr><td>${ds}</td><td>${document.getElementById('bd-cat').value}</td><td style="color:var(--red);font-weight:700">${montant.toLocaleString()} FCFA</td><td>${document.getElementById('bd-fourn').value||'—'}</td><td><span class="badge ${pCl}">${pay}</span></td><td>${CU.nom}</td><td class="adm-col" style="display:${isAdmin?'':'none'}"><button class="btn-xs" style="background:var(--red);color:#fff;border-color:var(--red)" onclick="this.closest('tr').remove();toast('Supprimé','amber')">Suppr.</button></td></tr>`);
+  toast('Dépense enregistrée','green');['bd-montant','bd-fourn','bd-facture'].forEach(id=>document.getElementById(id).value='');
+}
+function addPlan(){
+  const montant=parseFloat(document.getElementById('bp-montant').value)||0;if(!montant){alert('Montant obligatoire.');return;}
+  const poste=document.getElementById('bp-poste').value;const periode=document.getElementById('bp-mois').value;
+  document.getElementById('plan-table').insertAdjacentHTML('afterbegin',`<tr><td>${poste}</td><td>${periode}</td><td>${montant.toLocaleString()}</td><td style="color:var(--red)">0</td><td style="color:var(--green)">${montant.toLocaleString()}</td><td><div class="pbar"><div class="pbar-fill" style="width:0%;background:var(--green)"></div></div></td></tr>`);
+  toast('Budget planifié : '+montant.toLocaleString()+' FCFA','green');document.getElementById('bp-montant').value='';
+}
+
+/* ══ CHARTS ══ */
+function mk(id,type,data,opts={}){
+  const el=document.getElementById(id);if(!el)return;if(el._c)el._c.destroy();
+  el._c=new Chart(el,{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},boxWidth:10}}},...opts}});
+}
+function sOpts(){return {scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}};}
+
+function initDashCharts(){
+  setTimeout(()=>{
+    mk('ch-dash-troupeau','doughnut',{labels:['Porcelets','Porcs','Truies','Verrats'],datasets:[{data:[38,72,22,10],backgroundColor:C}]});
+    mk('ch-dash-sante','doughnut',{labels:['Sains','Malades','Quarantaine'],datasets:[{data:[135,4,3],backgroundColor:[C[0],C[1],C[2]]}]});
+    mk('ch-dash-depenses','doughnut',{labels:['Alimentation','Salaires','Santé','Maintenance','Autre'],datasets:[{data:[120000,180000,32500,35000,15000],backgroundColor:C}]});
+  },200);
+}
+function initSanteCharts(){
+  mk('ch-s-statut','doughnut',{labels:['Sains','Malades','Quarantaine'],datasets:[{data:[135,4,3],backgroundColor:[C[0],C[1],C[2]]}]});
+  mk('ch-s-vaccins','doughnut',{labels:['PRRS','PCV2','Parvo','Mycoplasmose'],datasets:[{data:[18,14,8,6],backgroundColor:C}]});
+  mk('ch-s-trt','bar',{labels:M6,datasets:[{label:'Traitements',data:[3,4,5,6,4,5],backgroundColor:C[1],borderRadius:4}]},sOpts());
+  mk('ch-s-mort','bar',{labels:M6,datasets:[{label:'Décès',data:[1,0,2,1,1,2],backgroundColor:C[3],borderRadius:4}]},sOpts());
+}
+function initReproCharts(){
+  mk('ch-r-naiss','bar',{labels:M6,datasets:[{label:'Vivants',data:[8,12,11,15,14,17],backgroundColor:C[0],borderRadius:4},{label:'Mort-nés',data:[1,1,0,2,1,1],backgroundColor:C[1],borderRadius:4}]},sOpts());
+  mk('ch-r-acc','line',{labels:M6,datasets:[{label:'Accouplements',data:[2,3,2,4,3,2],borderColor:C[4],backgroundColor:'rgba(124,92,219,.1)',fill:true,tension:.4,pointRadius:3}]},sOpts());
+  mk('ch-r-sev','bar',{labels:M6,datasets:[{label:'Sevrages',data:[6,9,8,7,6,9],backgroundColor:C[2],borderRadius:4}]},sOpts());
+  mk('ch-r-verrat','bar',{labels:['#B-001','#B-002','#B-003'],datasets:[{label:'Saillies',data:[9,10,12],backgroundColor:C[0],borderRadius:4},{label:'Gestations',data:[8,9,12],backgroundColor:C[2],borderRadius:4}]},sOpts());
+}
+function initAlimCharts(){
+  mk('ch-a-bat','bar',{labels:['Bât. A','Bât. B','Bât. C','Bât. D'],datasets:[{label:'Matin',data:[35,55,22,4],backgroundColor:C[0],borderRadius:4},{label:'Soir',data:[35,55,22,4],backgroundColor:C[2],borderRadius:4}]},{scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,ticks:{font:{size:10}}}}});
+  mk('ch-a-type','doughnut',{labels:['Cr.1','Cr.2','Cr.3','Maternité','Gestation'],datasets:[{data:[8,55,70,22,18],backgroundColor:C}]});
+  mk('ch-a-mens','line',{labels:M6,datasets:[{label:'kg',data:[3800,4100,4200,4350,4100,4420],borderColor:C[0],backgroundColor:'rgba(26,158,111,.1)',fill:true,tension:.4,pointRadius:3}]},sOpts());
+  mk('ch-a-cout','bar',{labels:M6,datasets:[{label:'FCFA',data:[85000,92000,98000,120000,105000,0],backgroundColor:M6.map((_,i)=>i===3?C[0]:'rgba(26,158,111,.4)'),borderRadius:4}]},sOpts());
+}
+function initEmpCharts(){
+  mk('ch-e-pres','bar',{labels:['Lun','Mar','Mer','Jeu','Ven','Sam'],datasets:[{label:'Présents',data:[14,15,14,13,12,8],backgroundColor:C[0],borderRadius:4},{label:'Absents',data:[4,3,4,5,6,2],backgroundColor:C[1],borderRadius:4}]},{scales:{x:{stacked:true,ticks:{font:{size:10}}},y:{stacked:true,max:18,ticks:{font:{size:10}}}}});
+  mk('ch-e-abs','doughnut',{labels:['Congé payé','Maladie','Absence'],datasets:[{data:[7,2,1],backgroundColor:C}]});
+  mk('ch-e-hrs','bar',{labels:['Jean-P.','Marie','Hervé','Carla','Thomas','Lucie'],datasets:[{label:'Heures',data:[44,40,44,50,30,39.5],backgroundColor:v=>v.raw>=40?C[0]:v.raw>0?C[2]:C[1],borderRadius:4}]},sOpts());
+}
+function initMaintCharts(){
+  mk('ch-m-cat','doughnut',{labels:Object.values(CAT).map(c=>c.i+' '+c.l),datasets:[{data:Object.keys(CAT).map(k=>maintenances.filter(m=>m.cat===k).length),backgroundColor:C}]});
+  mk('ch-m-prio','doughnut',{labels:['🚨 Urgente','⚠️ Normale','📅 Planifiée'],datasets:[{data:['urgente','normale','planifiee'].map(p=>maintenances.filter(m=>m.prio===p).length),backgroundColor:[C[1],C[2],C[3]]}]});
+  mk('ch-m-stat','doughnut',{labels:['En attente','En cours','Terminé'],datasets:[{data:['en_attente','en_cours','termine'].map(s=>maintenances.filter(m=>m.statut===s).length),backgroundColor:[C[6],C[2],C[0]]}]});
+  mk('ch-m-cout','bar',{labels:Object.values(CAT).map(c=>c.l),datasets:[{label:'FCFA',data:Object.keys(CAT).map(k=>maintenances.filter(m=>m.cat===k).reduce((s,m)=>s+(m.coutReel||m.coutEst||0),0)),backgroundColor:C,borderRadius:4}]},sOpts());
+}
+function initBudgetCharts(){
+  mk('ch-b-rd','bar',{labels:M6,datasets:[{label:'Recettes',data:[280000,310000,350000,812000,0,0],backgroundColor:C[0],borderRadius:4},{label:'Dépenses',data:[220000,245000,280000,367300,0,0],backgroundColor:C[1],borderRadius:4}]},sOpts());
+  mk('ch-b-dep','doughnut',{labels:['Alimentation','Salaires','Santé','Maintenance','Autre'],datasets:[{data:[120000,180000,32500,35000,15000],backgroundColor:C}]});
+  mk('ch-b-bvr','bar',{labels:['Alim.','Salaires','Santé','Maint.'],datasets:[{label:'Budget',data:[350000,200000,80000,50000],backgroundColor:'rgba(46,127,217,.3)',borderRadius:4},{label:'Réalisé',data:[120000,180000,32500,35000],backgroundColor:C[0],borderRadius:4}]},sOpts());
+  mk('ch-b-solde','line',{labels:M6,datasets:[{label:'Solde FCFA',data:[60000,65000,70000,444700,0,0],borderColor:C[0],backgroundColor:'rgba(26,158,111,.1)',fill:true,tension:.4,pointRadius:4}]},sOpts());
+}
+function initFournCharts(){
+  mk('ch-f-fourn','doughnut',{labels:['AgroNutrition SA','VetSupply Haïti','FermeQuip'],datasets:[{data:[120000,32500,3300],backgroundColor:C}]});
+  mk('ch-f-mens','bar',{labels:M6,datasets:[{label:'FCFA',data:[72000,88000,95000,155800,0,0],backgroundColor:M6.map((_,i)=>i===3?C[0]:'rgba(26,158,111,.4)'),borderRadius:4}]},sOpts());
+}
+function initLogesCharts(){
+  const types=Object.keys(TI);
+  mk('ch-l-type','doughnut',{labels:types.map(t=>TI[t].i+' '+TI[t].l),datasets:[{data:types.map(t=>loges.filter(l=>l.type===t).length),backgroundColor:C}]});
+  const totCap=loges.reduce((s,l)=>s+(l.cap||0),0);const totAnim=loges.reduce((s,l)=>s+l.animaux.length,0);
+  mk('ch-l-capa','doughnut',{labels:['Occupé','Disponible'],datasets:[{data:[totAnim,Math.max(0,totCap-totAnim)],backgroundColor:[C[0],C[2]]}]});
+}
+
+/* ══ INIT ══ */
+populateBatSelects();populateLogeSelect();
+</script>
+</body>
+</html>

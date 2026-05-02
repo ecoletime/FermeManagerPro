@@ -3,20 +3,42 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: FermeManager Pro API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: animals
+    description: Animal registry
+  - name: sante
+    description: Health records
+  - name: reproduction
+    description: Reproduction and births
+  - name: alimentation
+    description: Feeding and stock
+  - name: loges
+    description: Buildings and pens
+  - name: maintenance
+    description: Maintenance tasks
+  - name: employes
+    description: Employees
+  - name: veterinaire
+    description: Veterinarian visits
+  - name: fournisseurs
+    description: Suppliers
+  - name: budget
+    description: Budget management
+  - name: dashboard
+    description: Dashboard summary
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +46,1065 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── DASHBOARD ──────────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/alertes:
+    get:
+      operationId: getDashboardAlertes
+      tags: [dashboard]
+      summary: Get today's alerts
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alerte"
+
+  /dashboard/activite-recente:
+    get:
+      operationId: getDashboardActiviteRecente
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActiviteItem"
+
+  # ── ANIMAUX ────────────────────────────────────────────────────────────────
+  /animaux:
+    get:
+      operationId: getAnimaux
+      tags: [animals]
+      summary: List all animals
+      parameters:
+        - in: query
+          name: statut
+          schema:
+            type: string
+        - in: query
+          name: type
+          schema:
+            type: string
+        - in: query
+          name: tag
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of animals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Animal"
+    post:
+      operationId: createAnimal
+      tags: [animals]
+      summary: Create a new animal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnimalBody"
+      responses:
+        "201":
+          description: Animal created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Animal"
+
+  /animaux/{id}:
+    get:
+      operationId: getAnimal
+      tags: [animals]
+      summary: Get an animal by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Animal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Animal"
+    put:
+      operationId: updateAnimal
+      tags: [animals]
+      summary: Update an animal
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnimalBody"
+      responses:
+        "200":
+          description: Updated animal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Animal"
+    delete:
+      operationId: deleteAnimal
+      tags: [animals]
+      summary: Delete an animal
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /animaux/stats:
+    get:
+      operationId: getAnimauxStats
+      tags: [animals]
+      summary: Get animal statistics grouped by type
+      responses:
+        "200":
+          description: Animal stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnimauxStats"
+
+  # ── SANTÉ ──────────────────────────────────────────────────────────────────
+  /sante/vaccins:
+    get:
+      operationId: getVaccins
+      tags: [sante]
+      summary: List all vaccinations
+      responses:
+        "200":
+          description: Vaccinations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Vaccin"
+    post:
+      operationId: createVaccin
+      tags: [sante]
+      summary: Record a vaccination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVaccinBody"
+      responses:
+        "201":
+          description: Vaccination recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Vaccin"
+
+  /sante/vaccins/{id}:
+    delete:
+      operationId: deleteVaccin
+      tags: [sante]
+      summary: Delete a vaccination record
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /sante/traitements:
+    get:
+      operationId: getTraitements
+      tags: [sante]
+      summary: List all treatments
+      responses:
+        "200":
+          description: Treatments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Traitement"
+    post:
+      operationId: createTraitement
+      tags: [sante]
+      summary: Record a treatment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTraitementBody"
+      responses:
+        "201":
+          description: Treatment recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Traitement"
+
+  /sante/quarantaine:
+    get:
+      operationId: getQuarantaine
+      tags: [sante]
+      summary: List animals in quarantine
+      responses:
+        "200":
+          description: Quarantine list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quarantaine"
+    post:
+      operationId: createQuarantaine
+      tags: [sante]
+      summary: Place an animal in quarantine
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuarantaineBody"
+      responses:
+        "201":
+          description: Quarantine recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quarantaine"
+
+  /sante/mortalite:
+    get:
+      operationId: getMortalite
+      tags: [sante]
+      summary: List mortality records
+      responses:
+        "200":
+          description: Mortality records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Mort"
+    post:
+      operationId: createMort
+      tags: [sante]
+      summary: Record a death
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMortBody"
+      responses:
+        "201":
+          description: Death recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Mort"
+
+  /sante/stats:
+    get:
+      operationId: getSanteStats
+      tags: [sante]
+      summary: Get health statistics
+      responses:
+        "200":
+          description: Health stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SanteStats"
+
+  # ── REPRODUCTION ───────────────────────────────────────────────────────────
+  /reproduction/accouplements:
+    get:
+      operationId: getAccouplements
+      tags: [reproduction]
+      summary: List all matings
+      responses:
+        "200":
+          description: Matings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Accouplement"
+    post:
+      operationId: createAccouplement
+      tags: [reproduction]
+      summary: Record a mating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAccouplementBody"
+      responses:
+        "201":
+          description: Mating recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Accouplement"
+
+  /reproduction/naissances:
+    get:
+      operationId: getNaissances
+      tags: [reproduction]
+      summary: List all births
+      responses:
+        "200":
+          description: Births
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Naissance"
+    post:
+      operationId: createNaissance
+      tags: [reproduction]
+      summary: Record a birth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNaissanceBody"
+      responses:
+        "201":
+          description: Birth recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Naissance"
+
+  /reproduction/sevrages:
+    get:
+      operationId: getSevrages
+      tags: [reproduction]
+      summary: List all weanings
+      responses:
+        "200":
+          description: Weanings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Sevrage"
+    post:
+      operationId: createSevrage
+      tags: [reproduction]
+      summary: Record a weaning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSevrageBody"
+      responses:
+        "201":
+          description: Weaning recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sevrage"
+
+  /reproduction/stats:
+    get:
+      operationId: getReproductionStats
+      tags: [reproduction]
+      summary: Get reproduction statistics
+      responses:
+        "200":
+          description: Reproduction stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReproductionStats"
+
+  # ── ALIMENTATION ───────────────────────────────────────────────────────────
+  /alimentation/repas:
+    get:
+      operationId: getRepas
+      tags: [alimentation]
+      summary: List meal records
+      responses:
+        "200":
+          description: Meals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Repas"
+    post:
+      operationId: createRepas
+      tags: [alimentation]
+      summary: Record a meal distribution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRepasBody"
+      responses:
+        "201":
+          description: Meal recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Repas"
+
+  /alimentation/stocks:
+    get:
+      operationId: getStocks
+      tags: [alimentation]
+      summary: Get feed stock levels
+      responses:
+        "200":
+          description: Stock levels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stock"
+    post:
+      operationId: createStock
+      tags: [alimentation]
+      summary: Create a new feed stock entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockBody"
+      responses:
+        "201":
+          description: Stock created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stock"
+
+  /alimentation/stocks/{id}:
+    put:
+      operationId: updateStock
+      tags: [alimentation]
+      summary: Update a stock entry
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStockBody"
+      responses:
+        "200":
+          description: Stock updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stock"
+
+  /alimentation/livraisons:
+    get:
+      operationId: getLivraisons
+      tags: [alimentation]
+      summary: List feed deliveries
+      responses:
+        "200":
+          description: Deliveries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Livraison"
+    post:
+      operationId: createLivraison
+      tags: [alimentation]
+      summary: Record a feed delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLivraisonBody"
+      responses:
+        "201":
+          description: Delivery recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Livraison"
+
+  /alimentation/stats:
+    get:
+      operationId: getAlimentationStats
+      tags: [alimentation]
+      summary: Get feeding statistics
+      responses:
+        "200":
+          description: Feeding stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlimentationStats"
+
+  # ── LOGES ──────────────────────────────────────────────────────────────────
+  /loges/batiments:
+    get:
+      operationId: getBatiments
+      tags: [loges]
+      summary: List all buildings
+      responses:
+        "200":
+          description: Buildings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Batiment"
+    post:
+      operationId: createBatiment
+      tags: [loges]
+      summary: Create a building
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBatimentBody"
+      responses:
+        "201":
+          description: Building created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Batiment"
+
+  /loges/loges:
+    get:
+      operationId: getLoges
+      tags: [loges]
+      summary: List all pens
+      responses:
+        "200":
+          description: Pens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Loge"
+    post:
+      operationId: createLoge
+      tags: [loges]
+      summary: Create a pen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLogeBody"
+      responses:
+        "201":
+          description: Pen created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Loge"
+
+  /loges/allocations:
+    get:
+      operationId: getAllocations
+      tags: [loges]
+      summary: List animal-to-pen allocations
+      responses:
+        "200":
+          description: Allocations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Allocation"
+    post:
+      operationId: createAllocation
+      tags: [loges]
+      summary: Assign animal to pen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAllocationBody"
+      responses:
+        "201":
+          description: Allocation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Allocation"
+
+  /loges/stats:
+    get:
+      operationId: getLogesStats
+      tags: [loges]
+      summary: Get occupation stats per building/pen
+      responses:
+        "200":
+          description: Occupation stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogesStats"
+
+  # ── MAINTENANCE ────────────────────────────────────────────────────────────
+  /maintenance:
+    get:
+      operationId: getMaintenances
+      tags: [maintenance]
+      summary: List all maintenance tasks
+      parameters:
+        - in: query
+          name: priorite
+          schema:
+            type: string
+        - in: query
+          name: statut
+          schema:
+            type: string
+        - in: query
+          name: categorie
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Maintenance tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MaintenanceTask"
+    post:
+      operationId: createMaintenance
+      tags: [maintenance]
+      summary: Create a maintenance task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaintenanceBody"
+      responses:
+        "201":
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceTask"
+
+  /maintenance/{id}:
+    put:
+      operationId: updateMaintenance
+      tags: [maintenance]
+      summary: Update a maintenance task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMaintenanceBody"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceTask"
+    delete:
+      operationId: deleteMaintenance
+      tags: [maintenance]
+      summary: Delete a maintenance task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /maintenance/stats:
+    get:
+      operationId: getMaintenanceStats
+      tags: [maintenance]
+      summary: Get maintenance statistics
+      responses:
+        "200":
+          description: Maintenance stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceStats"
+
+  # ── EMPLOYÉS ───────────────────────────────────────────────────────────────
+  /employes:
+    get:
+      operationId: getEmployes
+      tags: [employes]
+      summary: List all employees
+      responses:
+        "200":
+          description: Employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employe"
+    post:
+      operationId: createEmploye
+      tags: [employes]
+      summary: Create an employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeBody"
+      responses:
+        "201":
+          description: Employee created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employe"
+
+  /employes/{id}:
+    put:
+      operationId: updateEmploye
+      tags: [employes]
+      summary: Update an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeBody"
+      responses:
+        "200":
+          description: Updated employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employe"
+    delete:
+      operationId: deleteEmploye
+      tags: [employes]
+      summary: Delete an employee
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── VÉTÉRINAIRE ────────────────────────────────────────────────────────────
+  /veterinaire:
+    get:
+      operationId: getVisitesVeterinaire
+      tags: [veterinaire]
+      summary: List veterinarian visits
+      responses:
+        "200":
+          description: Vet visits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VisiteVeterinaire"
+    post:
+      operationId: createVisiteVeterinaire
+      tags: [veterinaire]
+      summary: Schedule/record a vet visit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVisiteVeterinaireBody"
+      responses:
+        "201":
+          description: Visit recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisiteVeterinaire"
+
+  /veterinaire/{id}:
+    put:
+      operationId: updateVisiteVeterinaire
+      tags: [veterinaire]
+      summary: Update a vet visit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVisiteVeterinaireBody"
+      responses:
+        "200":
+          description: Updated visit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisiteVeterinaire"
+    delete:
+      operationId: deleteVisiteVeterinaire
+      tags: [veterinaire]
+      summary: Delete a vet visit
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── FOURNISSEURS ───────────────────────────────────────────────────────────
+  /fournisseurs:
+    get:
+      operationId: getFournisseurs
+      tags: [fournisseurs]
+      summary: List all suppliers
+      responses:
+        "200":
+          description: Suppliers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Fournisseur"
+    post:
+      operationId: createFournisseur
+      tags: [fournisseurs]
+      summary: Create a supplier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFournisseurBody"
+      responses:
+        "201":
+          description: Supplier created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fournisseur"
+
+  /fournisseurs/{id}:
+    put:
+      operationId: updateFournisseur
+      tags: [fournisseurs]
+      summary: Update a supplier
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFournisseurBody"
+      responses:
+        "200":
+          description: Updated supplier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fournisseur"
+    delete:
+      operationId: deleteFournisseur
+      tags: [fournisseurs]
+      summary: Delete a supplier
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── BUDGET ─────────────────────────────────────────────────────────────────
+  /budget/categories:
+    get:
+      operationId: getBudgetCategories
+      tags: [budget]
+      summary: List budget categories
+      responses:
+        "200":
+          description: Budget categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BudgetCategorie"
+    post:
+      operationId: createBudgetCategorie
+      tags: [budget]
+      summary: Create a budget category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBudgetCategorieBody"
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetCategorie"
+
+  /budget/depenses:
+    get:
+      operationId: getDepenses
+      tags: [budget]
+      summary: List all expenses
+      responses:
+        "200":
+          description: Expenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Depense"
+    post:
+      operationId: createDepense
+      tags: [budget]
+      summary: Record an expense
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDepenseBody"
+      responses:
+        "201":
+          description: Expense created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Depense"
+
+  /budget/stats:
+    get:
+      operationId: getBudgetStats
+      tags: [budget]
+      summary: Get budget overview and monthly breakdown
+      responses:
+        "200":
+          description: Budget stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +1112,1049 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DashboardSummary:
+      type: object
+      properties:
+        totalAnimaux:
+          type: integer
+        animauxMalades:
+          type: integer
+        employesPresents:
+          type: integer
+        maintenancesActives:
+          type: integer
+        naissancesMois:
+          type: integer
+        tauxOccupation:
+          type: number
+        stockCritique:
+          type: integer
+      required: [totalAnimaux, animauxMalades, employesPresents, maintenancesActives, naissancesMois, tauxOccupation, stockCritique]
+
+    Alerte:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: [urgente, attention, ok, info]
+        message:
+          type: string
+        createdAt:
+          type: string
+      required: [id, type, message, createdAt]
+
+    ActiviteItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        icone:
+          type: string
+        message:
+          type: string
+        badge:
+          type: string
+        badgeType:
+          type: string
+        createdAt:
+          type: string
+      required: [id, icone, message, badge, badgeType, createdAt]
+
+    Animal:
+      type: object
+      properties:
+        id:
+          type: integer
+        tag:
+          type: string
+        type:
+          type: string
+        sexe:
+          type: string
+        dateNaissance:
+          type: string
+          nullable: true
+        poids:
+          type: number
+          nullable: true
+        mere:
+          type: string
+          nullable: true
+        pere:
+          type: string
+          nullable: true
+        batiment:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        createdAt:
+          type: string
+      required: [id, tag, type, sexe, statut, createdAt]
+
+    CreateAnimalBody:
+      type: object
+      properties:
+        tag:
+          type: string
+        type:
+          type: string
+        sexe:
+          type: string
+        dateNaissance:
+          type: string
+          nullable: true
+        poids:
+          type: number
+          nullable: true
+        mere:
+          type: string
+          nullable: true
+        pere:
+          type: string
+          nullable: true
+        batiment:
+          type: string
+          nullable: true
+        statut:
+          type: string
+      required: [tag, type, sexe, statut]
+
+    AnimauxStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        parType:
+          type: object
+          additionalProperties:
+            type: integer
+        parStatut:
+          type: object
+          additionalProperties:
+            type: integer
+      required: [total, parType, parStatut]
+
+    Vaccin:
+      type: object
+      properties:
+        id:
+          type: integer
+        tag:
+          type: string
+        vaccin:
+          type: string
+        date:
+          type: string
+        dose:
+          type: string
+          nullable: true
+        rappel:
+          type: string
+          nullable: true
+        administrePar:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, tag, vaccin, date, createdAt]
+
+    CreateVaccinBody:
+      type: object
+      properties:
+        tag:
+          type: string
+        vaccin:
+          type: string
+        date:
+          type: string
+        dose:
+          type: string
+          nullable: true
+        rappel:
+          type: string
+          nullable: true
+        administrePar:
+          type: string
+          nullable: true
+      required: [tag, vaccin, date]
+
+    Traitement:
+      type: object
+      properties:
+        id:
+          type: integer
+        tag:
+          type: string
+        typeTraitement:
+          type: string
+        produit:
+          type: string
+        dose:
+          type: string
+          nullable: true
+        dateDebut:
+          type: string
+        dateFin:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        createdAt:
+          type: string
+      required: [id, tag, typeTraitement, produit, dateDebut, statut, createdAt]
+
+    CreateTraitementBody:
+      type: object
+      properties:
+        tag:
+          type: string
+        typeTraitement:
+          type: string
+        produit:
+          type: string
+        dose:
+          type: string
+          nullable: true
+        dateDebut:
+          type: string
+        dateFin:
+          type: string
+          nullable: true
+        statut:
+          type: string
+      required: [tag, typeTraitement, produit, dateDebut, statut]
+
+    Quarantaine:
+      type: object
+      properties:
+        id:
+          type: integer
+        tag:
+          type: string
+        motif:
+          type: string
+        dateDebut:
+          type: string
+        dureeJours:
+          type: integer
+        statut:
+          type: string
+        createdAt:
+          type: string
+      required: [id, tag, motif, dateDebut, dureeJours, statut, createdAt]
+
+    CreateQuarantaineBody:
+      type: object
+      properties:
+        tag:
+          type: string
+        motif:
+          type: string
+        dateDebut:
+          type: string
+        dureeJours:
+          type: integer
+      required: [tag, motif, dateDebut, dureeJours]
+
+    Mort:
+      type: object
+      properties:
+        id:
+          type: integer
+        tag:
+          type: string
+        date:
+          type: string
+        cause:
+          type: string
+        confirme_par:
+          type: string
+          nullable: true
+        observations:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, tag, date, cause, createdAt]
+
+    CreateMortBody:
+      type: object
+      properties:
+        tag:
+          type: string
+        date:
+          type: string
+        cause:
+          type: string
+        confirme_par:
+          type: string
+          nullable: true
+        observations:
+          type: string
+          nullable: true
+      required: [tag, date, cause]
+
+    SanteStats:
+      type: object
+      properties:
+        malades:
+          type: integer
+        vaccinsAFaire:
+          type: integer
+        enQuarantaine:
+          type: integer
+        decesMois:
+          type: integer
+      required: [malades, vaccinsAFaire, enQuarantaine, decesMois]
+
+    Accouplement:
+      type: object
+      properties:
+        id:
+          type: integer
+        truie:
+          type: string
+        verrat:
+          type: string
+        date:
+          type: string
+        dateMiseBasPrevue:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, truie, verrat, date, statut, createdAt]
+
+    CreateAccouplementBody:
+      type: object
+      properties:
+        truie:
+          type: string
+        verrat:
+          type: string
+        date:
+          type: string
+        dateMiseBasPrevue:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+      required: [truie, verrat, date, statut]
+
+    Naissance:
+      type: object
+      properties:
+        id:
+          type: integer
+        mere:
+          type: string
+        pere:
+          type: string
+        date:
+          type: string
+        totalNes:
+          type: integer
+        vivants:
+          type: integer
+        mortNes:
+          type: integer
+        poidsMovyen:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, mere, pere, date, totalNes, vivants, mortNes, createdAt]
+
+    CreateNaissanceBody:
+      type: object
+      properties:
+        mere:
+          type: string
+        pere:
+          type: string
+        date:
+          type: string
+        totalNes:
+          type: integer
+        vivants:
+          type: integer
+        mortNes:
+          type: integer
+        poidsMovyen:
+          type: number
+          nullable: true
+      required: [mere, pere, date, totalNes, vivants, mortNes]
+
+    Sevrage:
+      type: object
+      properties:
+        id:
+          type: integer
+        mere:
+          type: string
+        date:
+          type: string
+        nbSevres:
+          type: integer
+        ageJours:
+          type: integer
+          nullable: true
+        poidsMoyen:
+          type: number
+          nullable: true
+        destination:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, mere, date, nbSevres, createdAt]
+
+    CreateSevrageBody:
+      type: object
+      properties:
+        mere:
+          type: string
+        date:
+          type: string
+        nbSevres:
+          type: integer
+        ageJours:
+          type: integer
+          nullable: true
+        poidsMoyen:
+          type: number
+          nullable: true
+        destination:
+          type: string
+          nullable: true
+      required: [mere, date, nbSevres]
+
+    ReproductionStats:
+      type: object
+      properties:
+        miseBasImminentes:
+          type: integer
+        truiesGestantes:
+          type: integer
+        naissancesMois:
+          type: integer
+        porceletsASevrer:
+          type: integer
+      required: [miseBasImminentes, truiesGestantes, naissancesMois, porceletsASevrer]
+
+    Repas:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        heure:
+          type: string
+        batiment:
+          type: string
+        aliment:
+          type: string
+        quantiteDistribuee:
+          type: number
+        quantiteRefusee:
+          type: number
+        distribue_par:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, date, heure, batiment, aliment, quantiteDistribuee, quantiteRefusee, createdAt]
+
+    CreateRepasBody:
+      type: object
+      properties:
+        date:
+          type: string
+        heure:
+          type: string
+        batiment:
+          type: string
+        aliment:
+          type: string
+        quantiteDistribuee:
+          type: number
+        quantiteRefusee:
+          type: number
+        distribue_par:
+          type: string
+          nullable: true
+      required: [date, heure, batiment, aliment, quantiteDistribuee, quantiteRefusee]
+
+    Stock:
+      type: object
+      properties:
+        id:
+          type: integer
+        aliment:
+          type: string
+        quantite:
+          type: number
+        capaciteMax:
+          type: number
+        updatedAt:
+          type: string
+      required: [id, aliment, quantite, capaciteMax, updatedAt]
+
+    CreateStockBody:
+      type: object
+      properties:
+        aliment:
+          type: string
+        quantite:
+          type: number
+        capaciteMax:
+          type: number
+      required: [aliment, quantite, capaciteMax]
+
+    Livraison:
+      type: object
+      properties:
+        id:
+          type: integer
+        fournisseur:
+          type: string
+        date:
+          type: string
+        aliment:
+          type: string
+        quantite:
+          type: number
+        prixTotal:
+          type: number
+          nullable: true
+        qualite:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, fournisseur, date, aliment, quantite, createdAt]
+
+    CreateLivraisonBody:
+      type: object
+      properties:
+        fournisseur:
+          type: string
+        date:
+          type: string
+        aliment:
+          type: string
+        quantite:
+          type: number
+        prixTotal:
+          type: number
+          nullable: true
+        qualite:
+          type: string
+          nullable: true
+      required: [fournisseur, date, aliment, quantite]
+
+    AlimentationStats:
+      type: object
+      properties:
+        distribuéAujourdhui:
+          type: number
+        stockRestant:
+          type: number
+        repasEffectues:
+          type: integer
+        tauxConsommation:
+          type: number
+      required: [distribuéAujourdhui, stockRestant, repasEffectues, tauxConsommation]
+
+    Batiment:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        code:
+          type: string
+        vocation:
+          type: string
+          nullable: true
+        superficie:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, nom, code, createdAt]
+
+    CreateBatimentBody:
+      type: object
+      properties:
+        nom:
+          type: string
+        code:
+          type: string
+        vocation:
+          type: string
+          nullable: true
+        superficie:
+          type: number
+          nullable: true
+      required: [nom, code]
+
+    Loge:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        type:
+          type: string
+        batimentId:
+          type: integer
+        batimentNom:
+          type: string
+          nullable: true
+        capacite:
+          type: integer
+          nullable: true
+        occupe:
+          type: integer
+        superficie:
+          type: number
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, nom, type, batimentId, occupe, statut, createdAt]
+
+    CreateLogeBody:
+      type: object
+      properties:
+        nom:
+          type: string
+        type:
+          type: string
+        batimentId:
+          type: integer
+        capacite:
+          type: integer
+          nullable: true
+        superficie:
+          type: number
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+      required: [nom, type, batimentId, statut]
+
+    Allocation:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+        animalTag:
+          type: string
+        logeId:
+          type: integer
+        logeNom:
+          type: string
+          nullable: true
+        batimentNom:
+          type: string
+          nullable: true
+        raison:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, date, animalTag, logeId, createdAt]
+
+    CreateAllocationBody:
+      type: object
+      properties:
+        date:
+          type: string
+        animalTag:
+          type: string
+        logeId:
+          type: integer
+        raison:
+          type: string
+          nullable: true
+      required: [date, animalTag, logeId]
+
+    LogesStats:
+      type: object
+      properties:
+        totalBatiments:
+          type: integer
+        totalLoges:
+          type: integer
+        animauxLoges:
+          type: integer
+        tauxOccupation:
+          type: number
+      required: [totalBatiments, totalLoges, animauxLoges, tauxOccupation]
+
+    MaintenanceTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        titre:
+          type: string
+        categorie:
+          type: string
+        priorite:
+          type: string
+        statut:
+          type: string
+        lieu:
+          type: string
+          nullable: true
+        dateSignalement:
+          type: string
+          nullable: true
+        dateResolution:
+          type: string
+          nullable: true
+        coutEstime:
+          type: number
+          nullable: true
+        coutReel:
+          type: number
+          nullable: true
+        responsable:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, titre, categorie, priorite, statut, createdAt]
+
+    CreateMaintenanceBody:
+      type: object
+      properties:
+        titre:
+          type: string
+        categorie:
+          type: string
+        priorite:
+          type: string
+        statut:
+          type: string
+        lieu:
+          type: string
+          nullable: true
+        dateSignalement:
+          type: string
+          nullable: true
+        dateResolution:
+          type: string
+          nullable: true
+        coutEstime:
+          type: number
+          nullable: true
+        coutReel:
+          type: number
+          nullable: true
+        responsable:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+      required: [titre, categorie, priorite, statut]
+
+    MaintenanceStats:
+      type: object
+      properties:
+        urgentesActives:
+          type: integer
+        enCours:
+          type: integer
+        terminees:
+          type: integer
+        coutTotal:
+          type: number
+      required: [urgentesActives, enCours, terminees, coutTotal]
+
+    Employe:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        poste:
+          type: string
+        telephone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        dateEmbauche:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        salaire:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, nom, poste, statut, createdAt]
+
+    CreateEmployeBody:
+      type: object
+      properties:
+        nom:
+          type: string
+        poste:
+          type: string
+        telephone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        dateEmbauche:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        salaire:
+          type: number
+          nullable: true
+      required: [nom, poste, statut]
+
+    VisiteVeterinaire:
+      type: object
+      properties:
+        id:
+          type: integer
+        veterinaire:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        animauxConcernes:
+          type: string
+          nullable: true
+        diagnostic:
+          type: string
+          nullable: true
+        traitement:
+          type: string
+          nullable: true
+        cout:
+          type: number
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, veterinaire, date, type, statut, createdAt]
+
+    CreateVisiteVeterinaireBody:
+      type: object
+      properties:
+        veterinaire:
+          type: string
+        date:
+          type: string
+        type:
+          type: string
+        animauxConcernes:
+          type: string
+          nullable: true
+        diagnostic:
+          type: string
+          nullable: true
+        traitement:
+          type: string
+          nullable: true
+        cout:
+          type: number
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+      required: [veterinaire, date, type, statut]
+
+    Fournisseur:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        categorie:
+          type: string
+        telephone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          nullable: true
+        produits:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, nom, categorie, statut, createdAt]
+
+    CreateFournisseurBody:
+      type: object
+      properties:
+        nom:
+          type: string
+        categorie:
+          type: string
+        telephone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          nullable: true
+        produits:
+          type: string
+          nullable: true
+        statut:
+          type: string
+        notes:
+          type: string
+          nullable: true
+      required: [nom, categorie, statut]
+
+    BudgetCategorie:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        budget:
+          type: number
+        depense:
+          type: number
+        couleur:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required: [id, nom, budget, depense, createdAt]
+
+    CreateBudgetCategorieBody:
+      type: object
+      properties:
+        nom:
+          type: string
+        budget:
+          type: number
+        depense:
+          type: number
+        couleur:
+          type: string
+          nullable: true
+      required: [nom, budget, depense]
+
+    Depense:
+      type: object
+      properties:
+        id:
+          type: integer
+        categorieId:
+          type: integer
+        categorieNom:
+          type: string
+          nullable: true
+        description:
+          type: string
+        montant:
+          type: number
+        date:
+          type: string
+        createdAt:
+          type: string
+      required: [id, categorieId, description, montant, date, createdAt]
+
+    CreateDepenseBody:
+      type: object
+      properties:
+        categorieId:
+          type: integer
+        description:
+          type: string
+        montant:
+          type: number
+        date:
+          type: string
+      required: [categorieId, description, montant, date]
+
+    BudgetStats:
+      type: object
+      properties:
+        budgetTotal:
+          type: number
+        depenseTotal:
+          type: number
+        solde:
+          type: number
+        parCategorie:
+          type: array
+          items:
+            $ref: "#/components/schemas/BudgetCategorie"
+        depensesMensuelles:
+          type: array
+          items:
+            type: object
+            properties:
+              mois:
+                type: string
+              montant:
+                type: number
+            required: [mois, montant]
+      required: [budgetTotal, depenseTotal, solde, parCategorie, depensesMensuelles]

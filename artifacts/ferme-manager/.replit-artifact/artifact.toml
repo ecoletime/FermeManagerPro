@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "FermeManager Pro"
+version = "1.0.0"
+id = "artifacts/ferme-manager"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21491
+
+[services.development]
+run = "pnpm --filter @workspace/ferme-manager run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ferme-manager", "run", "build" ]
+publicDir = "artifacts/ferme-manager/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21491"
+BASE_PATH = "/"
