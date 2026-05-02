@@ -12,10 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, Shield, Clock, Skull, Bell, Plus, Trash2, CheckCircle2, Activity, CalendarDays, FlaskConical } from "lucide-react";
+import { AlertTriangle, Shield, Clock, Skull, Bell, Plus, Trash2, CheckCircle2, FlaskConical } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number | string; color: string }) {
@@ -62,13 +61,8 @@ export default function Sante() {
 
   const [vaccinForm, setVaccinForm] = useState({ tag: "", vaccin: "", date: today, dose: "", rappel: "", administrePar: "" });
   const [traitForm, setTraitForm] = useState({ tag: "", typeTraitement: "", produit: "", dose: "", dateDebut: today, dateFin: "", statut: "En cours" });
-  const [quarForm, setQuarForm] = useState({ tag: "", motif: "", dateDebut: today, dureeJours: "7", statut: "En cours" });
+  const [quarForm, setQuarForm] = useState({ tag: "", motif: "", dateDebut: today, dureeJours: "7" });
   const [mortForm, setMortForm] = useState({ tag: "", date: today, cause: "", confirme_par: "", observations: "" });
-
-  const [openV, setOpenV] = useState(false);
-  const [openT, setOpenT] = useState(false);
-  const [openQ, setOpenQ] = useState(false);
-  const [openMort, setOpenMort] = useState(false);
 
   const vaccinesDue = (vaccins ?? []).filter(v => v.rappel && v.rappel <= today).length;
   const activeQuarantine = (quarantaine ?? []).filter(q => q.statut === "En cours").length;
@@ -147,7 +141,7 @@ export default function Sante() {
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Enregistrer un vaccin</CardTitle></CardHeader>
             <CardContent>
-              <form onSubmit={e => { e.preventDefault(); createVaccin.mutate({ data: { ...vaccinForm, rappel: vaccinForm.rappel || null, dose: vaccinForm.dose || null, administrePar: vaccinForm.administrePar || null } }, { onSuccess: () => { toast({ title: "Vaccin enregistré" }); qc.invalidateQueries({ queryKey: getGetVaccinsQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setOpenV(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
+              <form onSubmit={e => { e.preventDefault(); createVaccin.mutate({ data: { ...vaccinForm, rappel: vaccinForm.rappel || null, dose: vaccinForm.dose || null, administrePar: vaccinForm.administrePar || null } }, { onSuccess: () => { toast({ title: "Vaccin enregistré" }); qc.invalidateQueries({ queryKey: getGetVaccinsQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setVaccinForm({ tag: "", vaccin: "", date: today, dose: "", rappel: "", administrePar: "" }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Tag animal *</Label><Input value={vaccinForm.tag} onChange={e => setVaccinForm(f => ({ ...f, tag: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Vaccin *</Label><Input value={vaccinForm.vaccin} onChange={e => setVaccinForm(f => ({ ...f, vaccin: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date *</Label><Input type="date" value={vaccinForm.date} onChange={e => setVaccinForm(f => ({ ...f, date: e.target.value }))} required /></div>
@@ -176,7 +170,7 @@ export default function Sante() {
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouveau traitement</CardTitle></CardHeader>
             <CardContent>
-              <form onSubmit={e => { e.preventDefault(); createTraitement.mutate({ data: { ...traitForm, dateFin: traitForm.dateFin || null, dose: traitForm.dose || null } }, { onSuccess: () => { toast({ title: "Traitement enregistré" }); qc.invalidateQueries({ queryKey: getGetTraitementsQueryKey() }); setOpenT(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
+              <form onSubmit={e => { e.preventDefault(); createTraitement.mutate({ data: { ...traitForm, dateFin: traitForm.dateFin || null, dose: traitForm.dose || null } }, { onSuccess: () => { toast({ title: "Traitement enregistré" }); qc.invalidateQueries({ queryKey: getGetTraitementsQueryKey() }); setTraitForm({ tag: "", typeTraitement: "", produit: "", dose: "", dateDebut: today, dateFin: "", statut: "En cours" }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Tag animal *</Label><Input value={traitForm.tag} onChange={e => setTraitForm(f => ({ ...f, tag: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Type *</Label><Input value={traitForm.typeTraitement} onChange={e => setTraitForm(f => ({ ...f, typeTraitement: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Produit *</Label><Input value={traitForm.produit} onChange={e => setTraitForm(f => ({ ...f, produit: e.target.value }))} required /></div>
@@ -205,7 +199,7 @@ export default function Sante() {
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle quarantaine</CardTitle></CardHeader>
             <CardContent>
-              <form onSubmit={e => { e.preventDefault(); createQuarantaine.mutate({ data: { tag: quarForm.tag, motif: quarForm.motif, dateDebut: quarForm.dateDebut, dureeJours: Number(quarForm.dureeJours), statut: quarForm.statut } }, { onSuccess: () => { toast({ title: "Quarantaine enregistrée" }); qc.invalidateQueries({ queryKey: getGetQuarantaineQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setOpenQ(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
+              <form onSubmit={e => { e.preventDefault(); createQuarantaine.mutate({ data: { tag: quarForm.tag, motif: quarForm.motif, dateDebut: quarForm.dateDebut, dureeJours: Number(quarForm.dureeJours) } }, { onSuccess: () => { toast({ title: "Quarantaine enregistrée" }); qc.invalidateQueries({ queryKey: getGetQuarantaineQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setQuarForm({ tag: "", motif: "", dateDebut: today, dureeJours: "7" }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Tag animal *</Label><Input value={quarForm.tag} onChange={e => setQuarForm(f => ({ ...f, tag: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Motif *</Label><Input value={quarForm.motif} onChange={e => setQuarForm(f => ({ ...f, motif: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date début *</Label><Input type="date" value={quarForm.dateDebut} onChange={e => setQuarForm(f => ({ ...f, dateDebut: e.target.value }))} required /></div>
@@ -232,7 +226,7 @@ export default function Sante() {
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Déclarer un décès</CardTitle></CardHeader>
             <CardContent>
-              <form onSubmit={e => { e.preventDefault(); createMort.mutate({ data: { ...mortForm, confirme_par: mortForm.confirme_par || null, observations: mortForm.observations || null } }, { onSuccess: () => { toast({ title: "Décès enregistré" }); qc.invalidateQueries({ queryKey: getGetMortaliteQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setOpenMort(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
+              <form onSubmit={e => { e.preventDefault(); createMort.mutate({ data: { ...mortForm, confirme_par: mortForm.confirme_par || null, observations: mortForm.observations || null } }, { onSuccess: () => { toast({ title: "Décès enregistré" }); qc.invalidateQueries({ queryKey: getGetMortaliteQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); setMortForm({ tag: "", date: today, cause: "", confirme_par: "", observations: "" }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Tag animal *</Label><Input value={mortForm.tag} onChange={e => setMortForm(f => ({ ...f, tag: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date *</Label><Input type="date" value={mortForm.date} onChange={e => setMortForm(f => ({ ...f, date: e.target.value }))} required /></div>
                 <div className="space-y-1 col-span-2"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Cause *</Label><Input value={mortForm.cause} onChange={e => setMortForm(f => ({ ...f, cause: e.target.value }))} required /></div>
