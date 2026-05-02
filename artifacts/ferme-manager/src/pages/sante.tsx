@@ -15,7 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, AlertTriangle, Shield, Activity, Clock, Skull } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, Shield, Clock, Skull, FileDown } from "lucide-react";
+import { exportSantePdf } from "@/lib/export-pdf";
 
 function StatCard({ icon: Icon, label, value, color }: { icon: React.ElementType, label: string, value: number | string, color?: string }) {
   return (
@@ -54,7 +55,19 @@ export default function Sante() {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold tracking-tight">Santé & Vaccins</h1><p className="text-muted-foreground text-sm">Suivi sanitaire du troupeau</p></div>
+      <div className="flex items-center justify-between">
+        <div><h1 className="text-2xl font-bold tracking-tight">Santé & Vaccins</h1><p className="text-muted-foreground text-sm">Suivi sanitaire du troupeau</p></div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (!stats || !vaccins || !traitements || !quarantaine || !mortalite) return;
+            exportSantePdf({ stats, vaccins, traitements, quarantaine, mortalite });
+          }}
+          disabled={!stats || !vaccins}
+        >
+          <FileDown className="h-4 w-4 mr-2" />Exporter PDF
+        </Button>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={AlertTriangle} label="Animaux malades" value={stats?.malades ?? "—"} color="bg-red-500" />

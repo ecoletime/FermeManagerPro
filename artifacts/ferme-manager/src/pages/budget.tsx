@@ -13,8 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, Wallet } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { Plus, TrendingUp, TrendingDown, Wallet, FileDown } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { exportBudgetPdf } from "@/lib/export-pdf";
 
 export default function Budget() {
   const { toast } = useToast();
@@ -38,6 +39,16 @@ export default function Budget() {
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold tracking-tight">Budget</h1><p className="text-muted-foreground text-sm">Vue d'ensemble financière (Administrateur)</p></div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (!stats || !depenses) return;
+              exportBudgetPdf({ stats, depenses: depenses.map(d => ({ ...d, montant: Number(d.montant) })) });
+            }}
+            disabled={!stats}
+          >
+            <FileDown className="h-4 w-4 mr-2" />Exporter PDF
+          </Button>
           <Dialog open={openCat} onOpenChange={setOpenCat}>
             <DialogTrigger asChild><Button variant="outline" data-testid="button-add-categorie"><Plus className="h-4 w-4 mr-2" />Catégorie</Button></DialogTrigger>
             <DialogContent>

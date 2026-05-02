@@ -56,17 +56,17 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      <Route path="/" render={() => <ProtectedRoute component={Dashboard} />} />
-      <Route path="/animaux" render={() => <ProtectedRoute component={Animaux} />} />
-      <Route path="/sante" render={() => <ProtectedRoute component={Sante} />} />
-      <Route path="/reproduction" render={() => <ProtectedRoute component={Reproduction} />} />
-      <Route path="/alimentation" render={() => <ProtectedRoute component={Alimentation} />} />
-      <Route path="/loges" render={() => <ProtectedRoute component={Loges} />} />
-      <Route path="/maintenance" render={() => <ProtectedRoute component={Maintenance} />} />
-      <Route path="/employes" render={() => <ProtectedRoute component={Employes} />} />
-      <Route path="/veterinaire" render={() => <ProtectedRoute component={Veterinaire} />} />
-      <Route path="/fournisseurs" render={() => <ProtectedRoute component={Fournisseurs} />} />
-      <Route path="/budget" render={() => <ProtectedRoute component={Budget} adminOnly />} />
+      <Route path="/">{() => <ProtectedRoute component={Dashboard} />}</Route>
+      <Route path="/animaux">{() => <ProtectedRoute component={Animaux} />}</Route>
+      <Route path="/sante">{() => <ProtectedRoute component={Sante} />}</Route>
+      <Route path="/reproduction">{() => <ProtectedRoute component={Reproduction} />}</Route>
+      <Route path="/alimentation">{() => <ProtectedRoute component={Alimentation} />}</Route>
+      <Route path="/loges">{() => <ProtectedRoute component={Loges} />}</Route>
+      <Route path="/maintenance">{() => <ProtectedRoute component={Maintenance} />}</Route>
+      <Route path="/employes">{() => <ProtectedRoute component={Employes} />}</Route>
+      <Route path="/veterinaire">{() => <ProtectedRoute component={Veterinaire} />}</Route>
+      <Route path="/fournisseurs">{() => <ProtectedRoute component={Fournisseurs} />}</Route>
+      <Route path="/budget">{() => <ProtectedRoute component={Budget} adminOnly />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
