@@ -10,61 +10,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, Heart, Baby, Milk, ChevronDown } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Bell, Plus } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
-function StatutBadge({ statut }: { statut: string }) {
-  const map: Record<string, string> = {
-    "Gestante": "bg-green-100 text-green-700",
-    "Mise bas": "bg-blue-100 text-blue-700",
-    "Vide": "bg-gray-100 text-gray-600",
-    "En cours": "bg-amber-100 text-amber-700",
-    "Confirmée": "bg-green-100 text-green-700",
-    "Fertile": "bg-blue-100 text-blue-700",
-  };
-  return (
-    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${map[statut] ?? "bg-gray-100 text-gray-600"}`}>
-      {statut}
-    </span>
-  );
+type Accouplement = {
+  id: number; truie: string; verrat: string; date: string;
+  dateMiseBasPrevue: string | null; statut: string; notes: string | null; createdAt: string;
+};
+
+function joursRestants(datePrevue: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const d = new Date(datePrevue); d.setHours(0, 0, 0, 0);
+  return Math.ceil((d.getTime() - today.getTime()) / 86400000);
 }
 
-function SectionBar({ label, color }: { label: string; color: "green" | "amber" | "gray" }) {
-  const colors = {
-    green: "bg-primary text-white",
-    amber: "bg-amber-500 text-white",
-    gray: "bg-muted/60 text-foreground border-b",
-  };
-  return (
-    <div className={`px-4 py-2 text-sm font-semibold tracking-wide rounded-t ${colors[color]}`}>
-      {label}
-    </div>
-  );
+function StatutBadge({ jours, statut }: { jours: number | null; statut: string }) {
+  if (jours === null) return <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">{statut}</span>;
+  if (jours <= 0) return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-red-100 text-red-700 flex items-center gap-1 w-fit"><span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />Imminente</span>;
+  if (jours <= 7) return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 w-fit">Proche</span>;
+  return <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 w-fit">En gestation</span>;
 }
 
-function CollapseForm({ title, children }: { title: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="border rounded-md mt-3">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-muted-foreground hover:bg-muted/30 rounded-md transition-colors"
-      >
-        <span className="uppercase tracking-wider">{title}</span>
-        <ChevronDown className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      {open && <div className="px-4 pb-4 border-t">{children}</div>}
-    </div>
-  );
+function RestantCell({ jours }: { jours: number }) {
+  if (jours <= 0) return <span className="text-red-600 font-semibold">Imminente</span>;
+  if (jours <= 7) return <span className="text-amber-500 font-semibold">{jours} jours</span>;
+  return <span className="text-green-600">{jours > 0 ? `−${jours}` : jours} jours</span>;
 }
 
 export default function Reproduction() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const today = new Date().toISOString().slice(0, 10);
+
   const { data: stats } = useGetReproductionStats({ query: { queryKey: getGetReproductionStatsQueryKey() } });
   const { data: accouplements, isLoading: loadingA } = useGetAccouplements({ query: { queryKey: getGetAccouplementsQueryKey() } });
   const { data: naissances, isLoading: loadingN } = useGetNaissances({ query: { queryKey: getGetNaissancesQueryKey() } });
@@ -74,27 +55,35 @@ export default function Reproduction() {
   const createNaissance = useCreateNaissance();
   const createSevrage = useCreateSevrage();
 
-  const today = new Date().toISOString().slice(0, 10);
-
   const [accForm, setAccForm] = useState({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" });
   const [naisForm, setNaisForm] = useState({ mere: "", pere: "", date: today, totalNes: "", vivants: "", mortNes: "0", poidsMovyen: "" });
   const [sevForm, setSevForm] = useState({ mere: "", date: today, nbSevres: "", ageJours: "28", poidsMoyen: "", destination: "" });
 
-  const gestantes = accouplements?.filter(a => a.statut === "Gestante") ?? [];
-  const imminentes = accouplements?.filter(a => {
-    if (!a.dateMiseBasPrevue) return false;
-    const diff = (new Date(a.dateMiseBasPrevue).getTime() - new Date(today).getTime()) / 86400000;
-    return diff >= 0 && diff <= 5;
-  }) ?? [];
+  // Derived alerts
+  const withDates = (accouplements ?? []).filter(a => a.dateMiseBasPrevue);
+  const imminentes = withDates.filter(a => joursRestants(a.dateMiseBasPrevue!) <= 0);
+  const proches = withDates.filter(a => { const j = joursRestants(a.dateMiseBasPrevue!); return j > 0 && j <= 7; });
+  const gestantes = withDates.filter(a => { const j = joursRestants(a.dateMiseBasPrevue!); return j > 7; });
+
+  // Sevrages overdue: naissances older than 28 days that have no sevrage yet
+  const sevragesDus = (naissances ?? []).filter(n => {
+    const ageJours = Math.floor((new Date(today).getTime() - new Date(n.date).getTime()) / 86400000);
+    const alreadyDone = (sevrages ?? []).some(s => s.mere === n.mere);
+    return ageJours >= 28 && !alreadyDone;
+  });
+
+  // Mises bas prévues table = all with dateMiseBasPrevue sorted by closeness
+  const misesBasPrevues = [...withDates].sort((a, b) => {
+    return joursRestants(a.dateMiseBasPrevue!) - joursRestants(b.dateMiseBasPrevue!);
+  }) as Accouplement[];
 
   const submitAcc = (e: React.FormEvent) => {
     e.preventDefault();
     createAcc.mutate({ data: { ...accForm, dateMiseBasPrevue: accForm.dateMiseBasPrevue || null, notes: accForm.notes || null } }, {
-      onSuccess: () => { toast({ title: "Saillie enregistrée" }); qc.invalidateQueries({ queryKey: getGetAccouplementsQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); setAccForm({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" }); },
+      onSuccess: () => { toast({ title: "Accouplement enregistré" }); qc.invalidateQueries({ queryKey: getGetAccouplementsQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); setAccForm({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" }); },
       onError: () => toast({ variant: "destructive", title: "Erreur" }),
     });
   };
-
   const submitNaissance = (e: React.FormEvent) => {
     e.preventDefault();
     createNaissance.mutate({ data: { mere: naisForm.mere, pere: naisForm.pere, date: naisForm.date, totalNes: Number(naisForm.totalNes), vivants: Number(naisForm.vivants), mortNes: Number(naisForm.mortNes), poidsMovyen: naisForm.poidsMovyen ? Number(naisForm.poidsMovyen) : null } }, {
@@ -102,7 +91,6 @@ export default function Reproduction() {
       onError: () => toast({ variant: "destructive", title: "Erreur" }),
     });
   };
-
   const submitSevrage = (e: React.FormEvent) => {
     e.preventDefault();
     createSevrage.mutate({ data: { mere: sevForm.mere, date: sevForm.date, nbSevres: Number(sevForm.nbSevres), ageJours: Number(sevForm.ageJours), poidsMoyen: sevForm.poidsMoyen ? Number(sevForm.poidsMoyen) : null, destination: sevForm.destination || null } }, {
@@ -111,307 +99,207 @@ export default function Reproduction() {
     });
   };
 
+  const chartData = (accouplements ?? []).reduce((acc: Record<string, { mois: string; saillies: number; naissances: number }>, a) => {
+    const m = a.date.slice(0, 7);
+    if (!acc[m]) acc[m] = { mois: m, saillies: 0, naissances: 0 };
+    acc[m].saillies++;
+    return acc;
+  }, {});
+  (naissances ?? []).forEach(n => {
+    const m = n.date.slice(0, 7);
+    if (!chartData[m]) chartData[m] = { mois: m, saillies: 0, naissances: 0 };
+    chartData[m].naissances++;
+  });
+  const chartArr = Object.values(chartData).sort((a, b) => a.mois.localeCompare(b.mois)).slice(-6);
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
           <span>🐷</span> Reproduction & Naissances
         </h1>
-        <p className="text-muted-foreground text-sm">Saillies, gestations, naissances et sevrages</p>
+        <p className="text-muted-foreground text-sm">Accouplements, gestations, naissances, traçabilité et sevrage</p>
       </div>
 
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card><CardContent className="pt-5 pb-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-pink-100 text-pink-600"><Heart className="h-5 w-5" /></div>
-          <div><div className="text-xl font-bold">{stats?.truiesGestantes ?? <Skeleton className="h-6 w-8 inline-block" />}</div><div className="text-xs text-muted-foreground">Truies gestantes</div></div>
+        <Card><CardContent className="pt-5 pb-4 text-center">
+          <div className="text-3xl font-bold text-red-500">{stats?.miseBasImminentes ?? <Skeleton className="h-8 w-8 mx-auto" />}</div>
+          <div className="text-xs text-muted-foreground mt-1">Mises bas imminentes</div>
         </CardContent></Card>
-        <Card><CardContent className="pt-5 pb-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-100 text-amber-600"><AlertTriangle className="h-5 w-5" /></div>
-          <div><div className="text-xl font-bold">{stats?.miseBasImminentes ?? <Skeleton className="h-6 w-8 inline-block" />}</div><div className="text-xs text-muted-foreground">Mises bas prévues</div></div>
+        <Card><CardContent className="pt-5 pb-4 text-center">
+          <div className="text-3xl font-bold text-blue-500">{stats?.truiesGestantes ?? <Skeleton className="h-8 w-8 mx-auto" />}</div>
+          <div className="text-xs text-muted-foreground mt-1">Truies gestantes</div>
         </CardContent></Card>
-        <Card><CardContent className="pt-5 pb-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-green-100 text-green-600"><Baby className="h-5 w-5" /></div>
-          <div><div className="text-xl font-bold">{stats?.naissancesMois ?? <Skeleton className="h-6 w-8 inline-block" />}</div><div className="text-xs text-muted-foreground">Naissances ce mois</div></div>
+        <Card><CardContent className="pt-5 pb-4 text-center">
+          <div className="text-3xl font-bold text-green-600">{stats?.naissancesMois ?? <Skeleton className="h-8 w-8 mx-auto" />}</div>
+          <div className="text-xs text-muted-foreground mt-1">Naissances ce mois</div>
         </CardContent></Card>
-        <Card><CardContent className="pt-5 pb-4 flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-blue-100 text-blue-600"><Milk className="h-5 w-5" /></div>
-          <div><div className="text-xl font-bold">{stats?.porceletsASevrer ?? <Skeleton className="h-6 w-8 inline-block" />}</div><div className="text-xs text-muted-foreground">Porcelets à sevrer</div></div>
+        <Card><CardContent className="pt-5 pb-4 text-center">
+          <div className="text-3xl font-bold text-amber-500">{stats?.porceletsASevrer ?? <Skeleton className="h-8 w-8 mx-auto" />}</div>
+          <div className="text-xs text-muted-foreground mt-1">Porcelets à sevrer</div>
         </CardContent></Card>
       </div>
 
-      <Tabs defaultValue="saillies">
-        <TabsList>
-          <TabsTrigger value="saillies">Saillies</TabsTrigger>
-          <TabsTrigger value="gestations">Gestations</TabsTrigger>
+      <Tabs defaultValue="alertes">
+        <TabsList className="gap-1">
+          <TabsTrigger value="alertes" className="data-[state=active]:bg-primary data-[state=active]:text-white">
+            <Bell className="h-3.5 w-3.5 mr-1.5" />Alertes
+          </TabsTrigger>
+          <TabsTrigger value="accouplements">Accouplements</TabsTrigger>
           <TabsTrigger value="naissances">Naissances</TabsTrigger>
-          <TabsTrigger value="sevrages">Sevrages</TabsTrigger>
-          <TabsTrigger value="resultats">Résultats</TabsTrigger>
+          <TabsTrigger value="tracabilite">Traçabilité</TabsTrigger>
+          <TabsTrigger value="sevrage">Sevrage</TabsTrigger>
+          <TabsTrigger value="graphiques">Graphiques</TabsTrigger>
         </TabsList>
 
-        {/* ── SAILLIES ── */}
-        <TabsContent value="saillies" className="space-y-3 mt-4">
+        {/* ── ALERTES ── */}
+        <TabsContent value="alertes" className="space-y-2 mt-4">
           {imminentes.map(a => (
-            <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>Mise bas imminente — Truie <strong>{a.truie}</strong> prévue le <strong>{a.dateMiseBasPrevue}</strong></span>
+            <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
+              <span className="text-base">🔴</span>
+              <span>Mise bas imminente — <strong>{a.truie}</strong> (aujourd'hui ou dépassée)</span>
             </div>
           ))}
-          {gestantes.length > 3 && (
-            <div className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+          {proches.map(a => (
+            <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span><strong>{gestantes.length}</strong> truies en gestation — surveiller les mises bas</span>
+              <span>Mise bas proche — <strong>{a.truie}</strong> dans {joursRestants(a.dateMiseBasPrevue!)} jours</span>
+            </div>
+          ))}
+          {sevragesDus.map(n => {
+            const age = Math.floor((new Date(today).getTime() - new Date(n.date).getTime()) / 86400000);
+            return (
+              <div key={n.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>Sevrage dû — portée <strong>{n.mere}</strong> ({age} jours accomplis)</span>
+              </div>
+            );
+          })}
+          {gestantes.slice(0, 3).map(a => {
+            const j = joursRestants(a.dateMiseBasPrevue!);
+            const ageGestation = 114 - j;
+            return (
+              <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>Gestation confirmée — <strong>{a.truie}</strong> ({ageGestation > 0 ? ageGestation : "?"} jours)</span>
+              </div>
+            );
+          })}
+          {imminentes.length === 0 && proches.length === 0 && sevragesDus.length === 0 && gestantes.length === 0 && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-muted/40 border text-muted-foreground text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Aucune alerte active pour le moment</span>
             </div>
           )}
 
-          <div className="rounded-md border overflow-hidden">
-            <SectionBar label="Saillies en cours" color="gray" />
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/20">
-                <tr>{["TAG", "VERRAT", "ACCOUPLEMENT", "MISE BAS PRÉVUE", "NOTES", "STATUT"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody className="divide-y">
-                {loadingA ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : accouplements?.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune saillie enregistrée</td></tr>
-                ) : accouplements?.map(a => (
-                  <tr key={a.id} className="hover:bg-muted/10">
-                    <td className="px-4 py-2.5 font-mono font-medium">{a.truie}</td>
-                    <td className="px-4 py-2.5 font-mono">{a.verrat}</td>
-                    <td className="px-4 py-2.5">{a.date}</td>
-                    <td className="px-4 py-2.5">{a.dateMiseBasPrevue ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{a.notes ?? "—"}</td>
-                    <td className="px-4 py-2.5"><StatutBadge statut={a.statut} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Mises bas prévues */}
+          <div className="pt-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Mises bas prévues</p>
+            <Card><CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/20">
+                  <tr>{["TRUIE", "VERRAT", "ACCOUPLEMENT", "MISE BAS PRÉVUE", "RESTANT", "STATUT"].map(h => (
+                    <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                  ))}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {loadingA ? (
+                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                  ) : misesBasPrevues.length === 0 ? (
+                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune mise bas planifiée</td></tr>
+                  ) : misesBasPrevues.map(a => {
+                    const j = joursRestants(a.dateMiseBasPrevue!);
+                    return (
+                      <tr key={a.id} className="hover:bg-muted/10">
+                        <td className="px-4 py-2.5 font-mono font-medium">{a.truie}</td>
+                        <td className="px-4 py-2.5 font-mono">{a.verrat}</td>
+                        <td className="px-4 py-2.5">{a.date}</td>
+                        <td className="px-4 py-2.5">{a.dateMiseBasPrevue}</td>
+                        <td className="px-4 py-2.5"><RestantCell jours={j} /></td>
+                        <td className="px-4 py-2.5"><StatutBadge jours={j} statut={a.statut} /></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </CardContent></Card>
           </div>
-
-          <CollapseForm title="Nouvelle saillie">
-            <form onSubmit={submitAcc} className="pt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Truie (TAG) *</Label>
-                  <Input placeholder="AT-088" value={accForm.truie} onChange={e => setAccForm(f => ({...f, truie: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Verrat (TAG) *</Label>
-                  <Input placeholder="VR-001" value={accForm.verrat} onChange={e => setAccForm(f => ({...f, verrat: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date accouplement *</Label>
-                  <Input type="date" value={accForm.date} onChange={e => setAccForm(f => ({...f, date: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date mise bas prévue</Label>
-                  <Input type="date" value={accForm.dateMiseBasPrevue} onChange={e => setAccForm(f => ({...f, dateMiseBasPrevue: e.target.value}))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Statut</Label>
-                  <Select value={accForm.statut} onValueChange={v => setAccForm(f => ({...f, statut: v}))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {["Gestante", "Mise bas", "Vide", "Confirmée", "En cours"].map(s => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Notes / Résultat</Label>
-                  <Input placeholder="Observations…" value={accForm.notes} onChange={e => setAccForm(f => ({...f, notes: e.target.value}))} />
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground italic">La date de mise bas prévue est calculée automatiquement à 114 jours de gestation si laissée vide.</p>
-              <Button type="submit" className="w-full" disabled={createAcc.isPending}>Enregistrer la saillie</Button>
-            </form>
-          </CollapseForm>
-
-          {/* Naissances / Fécondité */}
-          <div className="rounded-md border overflow-hidden mt-4">
-            <SectionBar label="Naissances / Fécondité" color="green" />
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/20">
-                <tr>{["TAG", "VERRAT", "DATE", "TOTAL NÉS", "VIVANTS", "MORT-NÉS", "POIDS MOY.", "TAUX SURVIE"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody className="divide-y">
-                {loadingN ? (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : naissances?.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune naissance enregistrée</td></tr>
-                ) : naissances?.map(n => {
-                  const tauxSurvie = n.totalNes > 0 ? ((n.vivants / n.totalNes) * 100).toFixed(1) : "—";
-                  return (
-                    <tr key={n.id} className="hover:bg-muted/10">
-                      <td className="px-4 py-2.5 font-mono font-medium">{n.mere}</td>
-                      <td className="px-4 py-2.5 font-mono">{n.pere}</td>
-                      <td className="px-4 py-2.5">{n.date}</td>
-                      <td className="px-4 py-2.5 font-semibold">{n.totalNes}</td>
-                      <td className="px-4 py-2.5 text-green-700 font-medium">{n.vivants}</td>
-                      <td className="px-4 py-2.5 text-red-600">{n.mortNes}</td>
-                      <td className="px-4 py-2.5">{n.poidsMovyen != null ? `${Number(n.poidsMovyen).toFixed(2)} kg` : "—"}</td>
-                      <td className="px-4 py-2.5">{tauxSurvie !== "—" ? `${tauxSurvie}%` : "—"}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          <CollapseForm title="Nouvelle naissance">
-            <form onSubmit={submitNaissance} className="pt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Truie (TAG) *</Label>
-                  <Input placeholder="AT-088" value={naisForm.mere} onChange={e => setNaisForm(f => ({...f, mere: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Verrat (TAG) *</Label>
-                  <Input placeholder="VR-001" value={naisForm.pere} onChange={e => setNaisForm(f => ({...f, pere: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date naissance *</Label>
-                  <Input type="date" value={naisForm.date} onChange={e => setNaisForm(f => ({...f, date: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Total nés *</Label>
-                  <Input type="number" min="0" placeholder="12" value={naisForm.totalNes} onChange={e => setNaisForm(f => ({...f, totalNes: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Nb vivants *</Label>
-                  <Input type="number" min="0" placeholder="11" value={naisForm.vivants} onChange={e => setNaisForm(f => ({...f, vivants: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Mort-nés</Label>
-                  <Input type="number" min="0" placeholder="0" value={naisForm.mortNes} onChange={e => setNaisForm(f => ({...f, mortNes: e.target.value}))} />
-                </div>
-                <div className="space-y-1 col-span-2">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Poids moyen (kg)</Label>
-                  <Input type="number" step="0.01" placeholder="1.35" value={naisForm.poidsMovyen} onChange={e => setNaisForm(f => ({...f, poidsMovyen: e.target.value}))} />
-                </div>
-              </div>
-              <Button type="submit" className="w-full" disabled={createNaissance.isPending}>Enregistrer la naissance</Button>
-            </form>
-          </CollapseForm>
-
-          {/* Naissances / Sevrage */}
-          <div className="rounded-md border overflow-hidden mt-4">
-            <SectionBar label="Naissances / Sevrage" color="amber" />
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/20">
-                <tr>{["MÈRE", "DATE", "NB SEVRÉS", "ÂGE (j)", "POIDS MOY.", "DESTINATION"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody className="divide-y">
-                {loadingS ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : sevrages?.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun sevrage enregistré</td></tr>
-                ) : sevrages?.map(s => (
-                  <tr key={s.id} className="hover:bg-muted/10">
-                    <td className="px-4 py-2.5 font-mono font-medium">{s.mere}</td>
-                    <td className="px-4 py-2.5">{s.date}</td>
-                    <td className="px-4 py-2.5 font-semibold">{s.nbSevres}</td>
-                    <td className="px-4 py-2.5">{s.ageJours ?? "—"}</td>
-                    <td className="px-4 py-2.5">{s.poidsMoyen != null ? `${Number(s.poidsMoyen).toFixed(2)} kg` : "—"}</td>
-                    <td className="px-4 py-2.5">{s.destination ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <CollapseForm title="Enregistrer un sevrage">
-            <form onSubmit={submitSevrage} className="pt-4 space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Mère (TAG) *</Label>
-                  <Input placeholder="AT-088" value={sevForm.mere} onChange={e => setSevForm(f => ({...f, mere: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date sevrage *</Label>
-                  <Input type="date" value={sevForm.date} onChange={e => setSevForm(f => ({...f, date: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Nb sevrés *</Label>
-                  <Input type="number" min="0" placeholder="10" value={sevForm.nbSevres} onChange={e => setSevForm(f => ({...f, nbSevres: e.target.value}))} required />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Âge (jours)</Label>
-                  <Input type="number" min="0" placeholder="28" value={sevForm.ageJours} onChange={e => setSevForm(f => ({...f, ageJours: e.target.value}))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Poids moyen (kg)</Label>
-                  <Input type="number" step="0.01" placeholder="7.5" value={sevForm.poidsMoyen} onChange={e => setSevForm(f => ({...f, poidsMoyen: e.target.value}))} />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground uppercase tracking-wide">Destination</Label>
-                  <Select value={sevForm.destination} onValueChange={v => setSevForm(f => ({...f, destination: v}))}>
-                    <SelectTrigger><SelectValue placeholder="Sélectionner…" /></SelectTrigger>
-                    <SelectContent>
-                      {["Bâtiment A — Croissance", "Bâtiment B — Croissance", "Bâtiment C — Maternité", "Vente", "Autre"].map(d => (
-                        <SelectItem key={d} value={d}>{d}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <Button type="submit" className="w-full" disabled={createSevrage.isPending}>Enregistrer le sevrage</Button>
-            </form>
-          </CollapseForm>
         </TabsContent>
 
-        {/* ── GESTATIONS ── */}
-        <TabsContent value="gestations" className="mt-4">
-          <div className="rounded-md border overflow-hidden">
-            <SectionBar label="Truies en gestation" color="green" />
+        {/* ── ACCOUPLEMENTS ── */}
+        <TabsContent value="accouplements" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvel accouplement</CardTitle></CardHeader>
+            <CardContent>
+              <form onSubmit={submitAcc} className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Truie (TAG) *</Label><Input placeholder="#T-022" value={accForm.truie} onChange={e => setAccForm(f => ({...f, truie: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Verrat (TAG) *</Label><Input placeholder="#B-001" value={accForm.verrat} onChange={e => setAccForm(f => ({...f, verrat: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date accouplement *</Label><Input type="date" value={accForm.date} onChange={e => setAccForm(f => ({...f, date: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date mise bas prévue</Label><Input type="date" value={accForm.dateMiseBasPrevue} onChange={e => setAccForm(f => ({...f, dateMiseBasPrevue: e.target.value}))} /></div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Statut</Label>
+                  <Select value={accForm.statut} onValueChange={v => setAccForm(f => ({...f, statut: v}))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Gestante","Mise bas","Vide","Confirmée","En cours"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Notes</Label><Input placeholder="Observations…" value={accForm.notes} onChange={e => setAccForm(f => ({...f, notes: e.target.value}))} /></div>
+                <div className="col-span-2">
+                  <Button type="submit" className="w-full" disabled={createAcc.isPending}>Enregistrer l'accouplement</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
-                <tr>{["TAG", "VERRAT", "DATE SAILLIE", "MISE BAS PRÉVUE", "JOURS RESTANTS", "STATUT"].map(h => (
+                <tr>{["TRUIE", "VERRAT", "ACCOUPLEMENT", "MISE BAS PRÉVUE", "RESTANT", "STATUT", "NOTES"].map(h => (
                   <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingA ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : gestantes.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune truie en gestation</td></tr>
-                ) : gestantes.map(a => {
-                  const joursRestants = a.dateMiseBasPrevue
-                    ? Math.ceil((new Date(a.dateMiseBasPrevue).getTime() - new Date(today).getTime()) / 86400000)
-                    : null;
-                  return (
-                    <tr key={a.id} className="hover:bg-muted/10">
-                      <td className="px-4 py-2.5 font-mono font-medium">{a.truie}</td>
-                      <td className="px-4 py-2.5 font-mono">{a.verrat}</td>
-                      <td className="px-4 py-2.5">{a.date}</td>
-                      <td className="px-4 py-2.5">{a.dateMiseBasPrevue ?? "—"}</td>
-                      <td className="px-4 py-2.5">
-                        {joursRestants !== null ? (
-                          <span className={joursRestants <= 5 ? "text-red-600 font-semibold" : joursRestants <= 14 ? "text-amber-600 font-medium" : "text-green-700"}>
-                            {joursRestants <= 0 ? "Imminente" : `J−${joursRestants}`}
-                          </span>
-                        ) : "—"}
-                      </td>
-                      <td className="px-4 py-2.5"><StatutBadge statut={a.statut} /></td>
-                    </tr>
-                  );
-                })}
+                {loadingA ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (accouplements ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucun accouplement enregistré</td></tr>
+                  : (accouplements ?? []).map(a => {
+                    const j = a.dateMiseBasPrevue ? joursRestants(a.dateMiseBasPrevue) : null;
+                    return (
+                      <tr key={a.id} className="hover:bg-muted/10">
+                        <td className="px-4 py-2.5 font-mono font-medium">{a.truie}</td>
+                        <td className="px-4 py-2.5 font-mono">{a.verrat}</td>
+                        <td className="px-4 py-2.5">{a.date}</td>
+                        <td className="px-4 py-2.5">{a.dateMiseBasPrevue ?? "—"}</td>
+                        <td className="px-4 py-2.5">{j !== null ? <RestantCell jours={j} /> : "—"}</td>
+                        <td className="px-4 py-2.5"><StatutBadge jours={j} statut={a.statut} /></td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{a.notes ?? "—"}</td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
-          </div>
+          </CardContent></Card>
         </TabsContent>
 
         {/* ── NAISSANCES ── */}
-        <TabsContent value="naissances" className="mt-4">
-          <div className="rounded-md border overflow-hidden">
-            <SectionBar label="Historique des naissances" color="green" />
+        <TabsContent value="naissances" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle naissance</CardTitle></CardHeader>
+            <CardContent>
+              <form onSubmit={submitNaissance} className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Truie (TAG) *</Label><Input placeholder="#T-022" value={naisForm.mere} onChange={e => setNaisForm(f => ({...f, mere: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Verrat (TAG) *</Label><Input placeholder="#B-001" value={naisForm.pere} onChange={e => setNaisForm(f => ({...f, pere: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date naissance *</Label><Input type="date" value={naisForm.date} onChange={e => setNaisForm(f => ({...f, date: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Total nés *</Label><Input type="number" min="0" placeholder="12" value={naisForm.totalNes} onChange={e => setNaisForm(f => ({...f, totalNes: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Vivants *</Label><Input type="number" min="0" placeholder="11" value={naisForm.vivants} onChange={e => setNaisForm(f => ({...f, vivants: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Mort-nés</Label><Input type="number" min="0" placeholder="0" value={naisForm.mortNes} onChange={e => setNaisForm(f => ({...f, mortNes: e.target.value}))} /></div>
+                <div className="space-y-1 col-span-2"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Poids moyen (kg)</Label><Input type="number" step="0.01" placeholder="1.35" value={naisForm.poidsMovyen} onChange={e => setNaisForm(f => ({...f, poidsMovyen: e.target.value}))} /></div>
+                <div className="col-span-2"><Button type="submit" className="w-full" disabled={createNaissance.isPending}>Enregistrer la naissance</Button></div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
                 <tr>{["TAG MÈRE", "PÈRE", "DATE", "TOTAL NÉS", "VIVANTS", "MORT-NÉS", "POIDS MOY.", "TAUX SURVIE"].map(h => (
@@ -419,34 +307,106 @@ export default function Reproduction() {
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingN ? (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : naissances?.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune naissance enregistrée</td></tr>
-                ) : naissances?.map(n => {
-                  const taux = n.totalNes > 0 ? ((n.vivants / n.totalNes) * 100).toFixed(1) : "—";
+                {loadingN ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (naissances ?? []).length === 0 ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Aucune naissance enregistrée</td></tr>
+                  : (naissances ?? []).map(n => {
+                    const taux = n.totalNes > 0 ? ((n.vivants / n.totalNes) * 100).toFixed(1) + "%" : "—";
+                    return (
+                      <tr key={n.id} className="hover:bg-muted/10">
+                        <td className="px-4 py-2.5 font-mono font-medium">{n.mere}</td>
+                        <td className="px-4 py-2.5 font-mono">{n.pere}</td>
+                        <td className="px-4 py-2.5">{n.date}</td>
+                        <td className="px-4 py-2.5 font-semibold">{n.totalNes}</td>
+                        <td className="px-4 py-2.5 text-green-700 font-medium">{n.vivants}</td>
+                        <td className="px-4 py-2.5 text-red-600">{n.mortNes}</td>
+                        <td className="px-4 py-2.5">{n.poidsMovyen != null ? `${Number(n.poidsMovyen).toFixed(2)} kg` : "—"}</td>
+                        <td className="px-4 py-2.5">{taux}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </CardContent></Card>
+        </TabsContent>
+
+        {/* ── TRAÇABILITÉ ── */}
+        <TabsContent value="tracabilite" className="space-y-4 mt-4">
+          <div className="grid grid-cols-3 gap-4">
+            <Card><CardContent className="pt-5 pb-4 text-center">
+              <div className="text-2xl font-bold text-primary">{(accouplements ?? []).length}</div>
+              <div className="text-xs text-muted-foreground mt-1">Accouplements enregistrés</div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-5 pb-4 text-center">
+              <div className="text-2xl font-bold text-green-600">{(naissances ?? []).reduce((s, n) => s + n.vivants, 0)}</div>
+              <div className="text-xs text-muted-foreground mt-1">Total porcelets nés vivants</div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-5 pb-4 text-center">
+              <div className="text-2xl font-bold text-amber-500">{(sevrages ?? []).reduce((s, sv) => s + sv.nbSevres, 0)}</div>
+              <div className="text-xs text-muted-foreground mt-1">Total sevrés</div>
+            </CardContent></Card>
+          </div>
+          <Card><CardContent className="p-0">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/20">
+                <tr>{["TRUIE", "ACCOUPLEMENT", "NAISSANCE", "SEVRAGE", "NB NÉS", "NB SEVRÉS", "TAUX SURVIE"].map(h => (
+                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody className="divide-y">
+                {(naissances ?? []).map(n => {
+                  const acc = (accouplements ?? []).find(a => a.truie === n.mere);
+                  const sev = (sevrages ?? []).find(s => s.mere === n.mere);
+                  const taux = n.totalNes > 0 ? ((n.vivants / n.totalNes) * 100).toFixed(1) + "%" : "—";
                   return (
                     <tr key={n.id} className="hover:bg-muted/10">
                       <td className="px-4 py-2.5 font-mono font-medium">{n.mere}</td>
-                      <td className="px-4 py-2.5 font-mono">{n.pere}</td>
+                      <td className="px-4 py-2.5">{acc?.date ?? "—"}</td>
                       <td className="px-4 py-2.5">{n.date}</td>
+                      <td className="px-4 py-2.5">{sev?.date ?? <span className="text-amber-500 text-xs">En attente</span>}</td>
                       <td className="px-4 py-2.5 font-semibold">{n.totalNes}</td>
-                      <td className="px-4 py-2.5 text-green-700 font-medium">{n.vivants}</td>
-                      <td className="px-4 py-2.5 text-red-600">{n.mortNes}</td>
-                      <td className="px-4 py-2.5">{n.poidsMovyen != null ? `${Number(n.poidsMovyen).toFixed(2)} kg` : "—"}</td>
-                      <td className="px-4 py-2.5">{taux !== "—" ? `${taux}%` : "—"}</td>
+                      <td className="px-4 py-2.5">{sev?.nbSevres ?? "—"}</td>
+                      <td className="px-4 py-2.5">{taux}</td>
                     </tr>
                   );
                 })}
+                {(naissances ?? []).length === 0 && (
+                  <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucune donnée de traçabilité disponible</td></tr>
+                )}
               </tbody>
             </table>
-          </div>
+          </CardContent></Card>
         </TabsContent>
 
-        {/* ── SEVRAGES ── */}
-        <TabsContent value="sevrages" className="mt-4">
-          <div className="rounded-md border overflow-hidden">
-            <SectionBar label="Naissances / Sevrage" color="amber" />
+        {/* ── SEVRAGE ── */}
+        <TabsContent value="sevrage" className="space-y-4 mt-4">
+          {sevragesDus.length > 0 && (
+            <div className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span><strong>{sevragesDus.length}</strong> portée(s) prête(s) à être sevrée(s) (28+ jours)</span>
+            </div>
+          )}
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Enregistrer un sevrage</CardTitle></CardHeader>
+            <CardContent>
+              <form onSubmit={submitSevrage} className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Mère (TAG) *</Label><Input placeholder="#T-022" value={sevForm.mere} onChange={e => setSevForm(f => ({...f, mere: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Date sevrage *</Label><Input type="date" value={sevForm.date} onChange={e => setSevForm(f => ({...f, date: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Nb sevrés *</Label><Input type="number" min="0" placeholder="10" value={sevForm.nbSevres} onChange={e => setSevForm(f => ({...f, nbSevres: e.target.value}))} required /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Âge (jours)</Label><Input type="number" min="0" placeholder="28" value={sevForm.ageJours} onChange={e => setSevForm(f => ({...f, ageJours: e.target.value}))} /></div>
+                <div className="space-y-1"><Label className="text-xs uppercase tracking-wide text-muted-foreground">Poids moyen (kg)</Label><Input type="number" step="0.01" placeholder="7.5" value={sevForm.poidsMoyen} onChange={e => setSevForm(f => ({...f, poidsMoyen: e.target.value}))} /></div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Destination</Label>
+                  <Select value={sevForm.destination} onValueChange={v => setSevForm(f => ({...f, destination: v}))}>
+                    <SelectTrigger><SelectValue placeholder="Sélectionner…" /></SelectTrigger>
+                    <SelectContent>{["Bâtiment A — Croissance","Bâtiment B — Croissance","Bâtiment C — Maternité","Vente","Autre"].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2"><Button type="submit" className="w-full" disabled={createSevrage.isPending}>Enregistrer le sevrage</Button></div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
                 <tr>{["MÈRE", "DATE", "NB SEVRÉS", "ÂGE (j)", "POIDS MOY.", "DESTINATION"].map(h => (
@@ -454,61 +414,63 @@ export default function Reproduction() {
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingS ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                ) : sevrages?.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun sevrage enregistré</td></tr>
-                ) : sevrages?.map(s => (
-                  <tr key={s.id} className="hover:bg-muted/10">
-                    <td className="px-4 py-2.5 font-mono font-medium">{s.mere}</td>
-                    <td className="px-4 py-2.5">{s.date}</td>
-                    <td className="px-4 py-2.5 font-semibold">{s.nbSevres}</td>
-                    <td className="px-4 py-2.5">{s.ageJours ?? "—"}</td>
-                    <td className="px-4 py-2.5">{s.poidsMoyen != null ? `${Number(s.poidsMoyen).toFixed(2)} kg` : "—"}</td>
-                    <td className="px-4 py-2.5">{s.destination ?? "—"}</td>
-                  </tr>
-                ))}
+                {loadingS ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (sevrages ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Aucun sevrage enregistré</td></tr>
+                  : (sevrages ?? []).map(s => (
+                    <tr key={s.id} className="hover:bg-muted/10">
+                      <td className="px-4 py-2.5 font-mono font-medium">{s.mere}</td>
+                      <td className="px-4 py-2.5">{s.date}</td>
+                      <td className="px-4 py-2.5 font-semibold">{s.nbSevres}</td>
+                      <td className="px-4 py-2.5">{s.ageJours ?? "—"}</td>
+                      <td className="px-4 py-2.5">{s.poidsMoyen != null ? `${Number(s.poidsMoyen).toFixed(2)} kg` : "—"}</td>
+                      <td className="px-4 py-2.5">{s.destination ?? "—"}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
-          </div>
+          </CardContent></Card>
         </TabsContent>
 
-        {/* ── RÉSULTATS ── */}
-        <TabsContent value="resultats" className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { label: "Taux de fertilité", value: accouplements && accouplements.length > 0 ? `${((accouplements.filter(a => a.statut === "Gestante" || a.statut === "Mise bas").length / accouplements.length) * 100).toFixed(1)}%` : "—" },
-              { label: "Moy. nés vivants/portée", value: naissances && naissances.length > 0 ? (naissances.reduce((s, n) => s + n.vivants, 0) / naissances.length).toFixed(1) : "—" },
-              { label: "Moy. mort-nés/portée", value: naissances && naissances.length > 0 ? (naissances.reduce((s, n) => s + n.mortNes, 0) / naissances.length).toFixed(1) : "—" },
-              { label: "Taux de survie moyen", value: naissances && naissances.length > 0 ? `${(naissances.reduce((s, n) => s + (n.totalNes > 0 ? (n.vivants / n.totalNes) : 0), 0) / naissances.length * 100).toFixed(1)}%` : "—" },
-            ].map(({ label, value }) => (
-              <Card key={label}><CardContent className="pt-5 pb-4">
-                <div className="text-2xl font-bold text-primary">{value}</div>
-                <div className="text-xs text-muted-foreground mt-1">{label}</div>
-              </CardContent></Card>
-            ))}
+        {/* ── GRAPHIQUES ── */}
+        <TabsContent value="graphiques" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Card><CardContent className="pt-5 pb-4 text-center">
+              <div className="text-2xl font-bold text-primary">
+                {(accouplements ?? []).length > 0
+                  ? `${(((accouplements ?? []).filter(a => a.statut === "Gestante" || a.statut === "Mise bas").length / (accouplements ?? []).length) * 100).toFixed(1)}%`
+                  : "—"}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">Taux de fertilité</div>
+            </CardContent></Card>
+            <Card><CardContent className="pt-5 pb-4 text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {(naissances ?? []).length > 0
+                  ? ((naissances ?? []).reduce((s, n) => s + n.vivants, 0) / (naissances ?? []).length).toFixed(1)
+                  : "—"}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">Moy. porcelets vivants / portée</div>
+            </CardContent></Card>
           </div>
-          <div className="rounded-md border overflow-hidden">
-            <SectionBar label="Récapitulatif saillies" color="gray" />
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/20">
-                <tr>{["TAG", "VERRAT", "DATE", "MISE BAS PRÉVUE", "STATUT"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody className="divide-y">
-                {accouplements?.map(a => (
-                  <tr key={a.id} className="hover:bg-muted/10">
-                    <td className="px-4 py-2.5 font-mono font-medium">{a.truie}</td>
-                    <td className="px-4 py-2.5 font-mono">{a.verrat}</td>
-                    <td className="px-4 py-2.5">{a.date}</td>
-                    <td className="px-4 py-2.5">{a.dateMiseBasPrevue ?? "—"}</td>
-                    <td className="px-4 py-2.5"><StatutBadge statut={a.statut} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Saillies & Naissances par mois</CardTitle></CardHeader>
+            <CardContent>
+              {chartArr.length === 0 ? (
+                <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Pas assez de données</div>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={chartArr} margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="mois" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="saillies" name="Saillies" fill="#1A9E6F" radius={[4,4,0,0]} />
+                    <Bar dataKey="naissances" name="Naissances" fill="#f59e0b" radius={[4,4,0,0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
