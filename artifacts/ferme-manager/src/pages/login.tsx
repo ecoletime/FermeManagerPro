@@ -9,6 +9,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PiggyBank } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+const USER_STORAGE_KEY = "ferme_utilisateurs";
+
+function loadUsers() {
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+  }
+  return [];
+}
+
 export default function Login() {
   const [_, setLocation] = useLocation();
   const { login } = useAuth();
@@ -23,7 +34,7 @@ export default function Login() {
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (adminUsername === "admin" && adminPassword === "admin123") {
-      login("admin");
+      login("admin", ["all"]);
       setLocation("/");
       toast({ title: "Connexion réussie", description: "Bienvenue, Administrateur" });
     } else {
@@ -33,8 +44,14 @@ export default function Login() {
 
   const handleEmployeeLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (empUsername === "employe" && empPassword === "emp123") {
-      login("employee");
+    const users = loadUsers();
+    const matched = users.find((user: any) => user.email.toLowerCase() === empUsername.toLowerCase() && user.actif !== false);
+    if (matched) {
+      login(matched.role, matched.modules ?? []);
+      setLocation("/");
+      toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` });
+    } else if (empUsername === "employe" && empPassword === "emp123") {
+      login("employee", ["animaux", "alimentation", "sante"]);
       setLocation("/");
       toast({ title: "Connexion réussie", description: "Bienvenue, Employé" });
     } else {
@@ -71,7 +88,7 @@ export default function Login() {
                     <Label htmlFor="emp-username">Nom d'utilisateur</Label>
                     <Input 
                       id="emp-username" 
-                      placeholder="employe" 
+                      placeholder="email de l'utilisateur" 
                       value={empUsername}
                       onChange={(e) => setEmpUsername(e.target.value)}
                       required 

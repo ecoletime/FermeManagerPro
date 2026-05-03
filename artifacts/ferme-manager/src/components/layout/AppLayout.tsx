@@ -24,9 +24,16 @@ import { Badge } from "@/components/ui/badge";
 import { useGetMaintenances } from "@workspace/api-client-react";
 import { getGetMaintenancesQueryKey } from "@workspace/api-client-react";
 
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  badge?: number;
+};
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { role, logout } = useAuth();
+  const { role, permissions, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -41,8 +48,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   );
 
   const activeMaintenancesCount = maintenances?.length || 0;
+  const hasAccess = (href: string) => role === "admin" || permissions.includes("all") || permissions.includes(href.replace("/", ""));
 
-  const navSections = [
+  const navSections: { title: string; items: NavItem[] }[] = [
     {
       title: "Navigation",
       items: [{ href: "/", label: "Accueil", icon: Home }],
@@ -54,14 +62,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: "/sante", label: "Santé & Vaccins", icon: HeartPulse },
         { href: "/reproduction", label: "Reproduction", icon: Baby },
         { href: "/alimentation", label: "Alimentation", icon: Wheat },
-      ],
+      ].filter((item) => hasAccess(item.href)),
     },
     {
       title: "Infrastructure",
       items: [
         { href: "/loges", label: "Loges & Bâtiments", icon: HomeIcon },
         { href: "/maintenance", label: "Maintenance", icon: Wrench, badge: activeMaintenancesCount },
-      ],
+      ].filter((item) => hasAccess(item.href)),
     },
     {
       title: "Gestion",
@@ -69,7 +77,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: "/employes", label: "Employés", icon: Users },
         { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
         { href: "/veterinaire", label: "Vétérinaire", icon: Stethoscope },
-      ],
+      ].filter((item) => hasAccess(item.href)),
     },
     {
       title: "Système",
@@ -77,7 +85,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         { href: "/notifications", label: "Notifications", icon: Clock },
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
         ...(role === "admin" ? [{ href: "/utilisateurs", label: "Utilisateurs", icon: UserCog }] : []),
-      ],
+      ].filter((item) => hasAccess(item.href)),
     },
   ];
   const navFlatItems = navSections.flatMap(section => section.items);
