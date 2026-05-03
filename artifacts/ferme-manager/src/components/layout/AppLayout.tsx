@@ -1,20 +1,20 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  Home, 
-  PiggyBank, 
-  HeartPulse, 
-  Baby, 
-  Wheat, 
-  Home as HomeIcon, 
-  Wrench, 
-  Users, 
-  Stethoscope, 
-  Truck, 
+import {
+  Home,
+  PiggyBank,
+  HeartPulse,
+  Baby,
+  Wheat,
+  Home as HomeIcon,
+  Wrench,
+  Users,
+  Stethoscope,
+  Truck,
   Calculator,
   LogOut,
   Menu,
-  Clock
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: "Système",
       items: [
+        { href: "/notifications", label: "Notifications", icon: Clock },
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
       ],
     },
@@ -118,7 +119,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-[220px] bg-sidebar border-r border-sidebar-border shrink-0">
         <div className="h-16 flex items-center px-6 border-b border-sidebar-border shrink-0">
           <div className="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
@@ -148,10 +148,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
       </aside>
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
-        {/* Mobile Header */}
         <header className="md:hidden h-16 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 shrink-0">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <PiggyBank size={24} />
@@ -174,15 +171,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <NavLinks />
               </div>
               <div className="p-4 border-t border-sidebar-border absolute bottom-0 w-full bg-sidebar">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs ${role === 'admin' ? 'bg-amber-500' : 'bg-blue-500'}`}>
-                    {role === 'admin' ? 'AD' : 'EM'}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-sidebar-foreground capitalize">{role}</span>
-                    <span className="text-xs text-sidebar-foreground/60">{currentTime.toLocaleTimeString('fr-FR')}</span>
-                  </div>
-                </div>
                 <Button variant="outline" className="w-full justify-start" onClick={() => { logout(); setIsMobileMenuOpen(false); }}>
                   <LogOut size={16} className="mr-2" />
                   Déconnexion
@@ -191,8 +179,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SheetContent>
           </Sheet>
         </header>
-
-        {/* Topbar Desktop */}
         <header className="hidden md:flex h-16 bg-card border-b border-border items-center justify-between px-8 shrink-0">
           <h1 className="text-xl font-semibold text-foreground">
             {navFlatItems.find(i => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || ""}
@@ -204,8 +190,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-
-        {/* Page Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-background relative">
           <div className="max-w-[1400px] mx-auto h-full">
             {children}
