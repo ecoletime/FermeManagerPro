@@ -226,6 +226,8 @@ export default function Budget() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Alimentation">Alimentation</SelectItem>
+                      <SelectItem value="Salaire">Salaire</SelectItem>
+                      <SelectItem value="Autres">Autres</SelectItem>
                       <SelectItem value="Santé">Santé</SelectItem>
                       <SelectItem value="Maintenance">Maintenance</SelectItem>
                       <SelectItem value="Logistique">Logistique</SelectItem>
@@ -252,6 +254,7 @@ export default function Budget() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="paye">Payé</SelectItem>
+                      <SelectItem value="partiel">Partiel</SelectItem>
                       <SelectItem value="attente">En attente</SelectItem>
                     </SelectContent>
                   </Select>
