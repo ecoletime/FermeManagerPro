@@ -31,10 +31,15 @@ export default function Budget() {
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
   const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseur: "", paiement: "paye" });
   const [plans, setPlans] = useState([
     { id: 1, poste: "Alimentation", budget: 2000000, periode: "Mensuel", mois: "Mai 2025", avancement: 72 },
     { id: 2, poste: "Maintenance", budget: 750000, periode: "Semestriel", mois: "Juin 2025", avancement: 45 },
     { id: 3, poste: "Santé", budget: 500000, periode: "Mensuel", mois: "Mai 2025", avancement: 28 },
+  ]);
+  const [plannedExpenses, setPlannedExpenses] = useState([
+    { id: 1, categorie: "Alimentation", montant: 750000, date: "05/05/2026", fournisseur: "Agrinutrition Sa", paiement: "Payé" },
+    { id: 2, categorie: "Maintenance", montant: 180000, date: "06/05/2026", fournisseur: "Tech Ferme", paiement: "En attente" },
   ]);
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [openCat, setOpenCat] = useState(false);
@@ -75,6 +80,22 @@ export default function Budget() {
       ]);
     }
     setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  };
+
+  const addPlannedExpense = () => {
+    if (!expensePlanForm.categorie || !expensePlanForm.montant) return;
+    setPlannedExpenses((current) => [
+      {
+        id: Date.now(),
+        categorie: expensePlanForm.categorie,
+        montant: Number(expensePlanForm.montant),
+        date: expensePlanForm.date,
+        fournisseur: expensePlanForm.fournisseur || "—",
+        paiement: expensePlanForm.paiement === "paye" ? "Payé" : "En attente",
+      },
+      ...current,
+    ]);
+    setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseur: "", paiement: "paye" });
   };
 
   const editPlan = (id: number) => {
@@ -208,6 +229,68 @@ export default function Budget() {
         <TabsContent value="previsionnel" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
+              <CardTitle className="text-base">Enregistrer une dépense</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Catégorie *</Label>
+                  <Select value={expensePlanForm.categorie} onValueChange={(value) => setExpensePlanForm((f) => ({ ...f, categorie: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Alimentation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Alimentation">Alimentation</SelectItem>
+                      <SelectItem value="Santé">Santé</SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Logistique">Logistique</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Montant (FCFA) *</Label>
+                  <Input
+                    type="number"
+                    placeholder="ex: 75000"
+                    value={expensePlanForm.montant}
+                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, montant: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    value={expensePlanForm.date}
+                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, date: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Fournisseur</Label>
+                  <Input
+                    placeholder="ex: Agrinutrition Sa"
+                    value={expensePlanForm.fournisseur}
+                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, fournisseur: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Paiement</Label>
+                  <Select value={expensePlanForm.paiement} onValueChange={(value) => setExpensePlanForm((f) => ({ ...f, paiement: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="paye">Payé</SelectItem>
+                      <SelectItem value="attente">En attente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlannedExpense}>Ajouter une dépense</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
               <CardTitle className="text-base">Créer un budget prévisionnel</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -320,6 +403,32 @@ export default function Budget() {
                   <Bar dataKey="depenses" fill="#E11D48" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Dépenses prévisionnelles</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {["Date", "Catégorie", "Fournisseur", "Montant (FCFA)", "Paiement"].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {plannedExpenses.map((expense) => (
+                    <tr key={expense.id} className="hover:bg-muted/20">
+                      <td className="px-4 py-3">{expense.date}</td>
+                      <td className="px-4 py-3">{expense.categorie}</td>
+                      <td className="px-4 py-3">{expense.fournisseur}</td>
+                      <td className="px-4 py-3 font-medium">{fmt(expense.montant)}</td>
+                      <td className="px-4 py-3">{expense.paiement}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
         </TabsContent>
