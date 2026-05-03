@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Wrench, AlertTriangle, CheckCircle, Clock, Bell } from "lucide-react";
+import { Plus, Trash2, CheckCircle, Bell } from "lucide-react";
 
 type MaintenanceForm = {
   titre: string;
@@ -131,8 +131,7 @@ export default function Maintenance() {
       <Tabs defaultValue="dashboard">
         <TabsList className="w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
-          <TabsTrigger value="taches">Tâches</TabsTrigger>
-          <TabsTrigger value="nouvelle">+ Nouvelle</TabsTrigger>
+          <TabsTrigger value="nouvelle">Tâches</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4 mt-4">
@@ -164,7 +163,7 @@ export default function Maintenance() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="taches" className="space-y-4 mt-4">
+        <TabsContent value="nouvelle" className="space-y-4 mt-4">
           <Card>
             <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Bell className="h-4 w-4" />Filtres</CardTitle></CardHeader>
             <CardContent>
@@ -207,8 +206,29 @@ export default function Maintenance() {
                         {t.description && <p className="text-sm mt-1 text-muted-foreground">{t.description}</p>}
                         <div className="text-sm mt-1"><span className="font-medium">Estimé :</span> {t.coutEstime ? `${fmt(t.coutEstime)} FCFA` : "—"}</div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { if (!confirm("Supprimer cette tâche ?")) return; deleteTask.mutate({ id: t.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => {
+                            deleteTask.mutate(
+                              { id: t.id },
+                              {
+                                onSuccess: () => {
+                                  toast({ title: "Tâche terminée et envoyée à la corbeille" });
+                                  invalidate();
+                                },
+                                onError: () => toast({ variant: "destructive", title: "Erreur" }),
+                              },
+                            );
+                          }}
+                        >
+                          <CheckCircle className="mr-1 h-4 w-4" />
+                          Terminer et corbeille
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { if (!confirm("Supprimer cette tâche ?")) return; deleteTask.mutate({ id: t.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
