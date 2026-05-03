@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
 type Role = "admin" | "employee" | null;
 
@@ -14,6 +14,7 @@ interface AuthState {
 
 const AUTH_KEY = "ferme_auth";
 const SETTINGS_KEY = "ferme_system_settings";
+const ADMIN_CREDENTIALS_KEY = "ferme_admin_credentials";
 
 function loadAuth(): { isLoggedIn: boolean; role: Role; permissions: Permissions } {
   try {
@@ -32,24 +33,45 @@ function loadAuth(): { isLoggedIn: boolean; role: Role; permissions: Permissions
   return { isLoggedIn: false, role: null, permissions: [] };
 }
 
-function applySavedTheme() {
+function loadAdminCredentials() {
   try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return;
+    const raw = localStorage.getItem(ADMIN_CREDENTIALS_KEY);
+    if (!raw) return { username: "admin", password: "admin123" };
     const parsed = JSON.parse(raw);
-    document.documentElement.classList.toggle("dark", Boolean(parsed.darkMode));
+    return {
+      username: typeof parsed.username === "string" && parsed.username ? parsed.username : "admin",
+      password: typeof parsed.password === "string" && parsed.password ? parsed.password : "admin123",
+    };
   } catch {
+    return { username: "admin", password: "admin123" };
   }
+}
+
+export function getAdminCredentials() {
+  return loadAdminCredentials();
+}
+
+export function updateAdminCredentials(username: string, password: string) {
+  localStorage.setItem(ADMIN_CREDENTIALS_KEY, JSON.stringify({ username, password }));
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const initial = loadAuth();
-  applySavedTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(initial.isLoggedIn);
   const [role, setRole] = useState<Role>(initial.role);
   const [permissions, setPermissions] = useState<Permissions>(initial.permissions);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      document.documentElement.classList.toggle("dark", Boolean(parsed.darkMode));
+    } catch {
+    }
+  }, []);
 
   const login = (newRole: Role, newPermissions: Permissions = []) => {
     setRole(newRole);

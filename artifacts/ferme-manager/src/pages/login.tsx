@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useAuth } from "@/lib/auth";
+import { getAdminCredentials, updateAdminCredentials } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PiggyBank } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,19 +23,22 @@ function loadUsers() {
 
 export default function Login() {
   const [_, setLocation] = useLocation();
-  const { login } = useAuth();
   const { toast } = useToast();
-  
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  
   const [empUsername, setEmpUsername] = useState("");
   const [empPassword, setEmpPassword] = useState("");
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUsername === "admin" && adminPassword === "admin123") {
-      login("admin", ["all"]);
+    const creds = getAdminCredentials();
+    if (adminUsername === creds.username && adminPassword === creds.password) {
+      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: "admin", permissions: ["all"] }));
       setLocation("/");
       toast({ title: "Connexion réussie", description: "Bienvenue, Administrateur" });
     } else {
@@ -47,16 +51,47 @@ export default function Login() {
     const users = loadUsers();
     const matched = users.find((user: any) => user.email.toLowerCase() === empUsername.toLowerCase() && user.actif !== false);
     if (matched) {
-      login(matched.role, matched.modules ?? []);
+      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: matched.role, permissions: matched.modules ?? [] }));
       setLocation("/");
       toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` });
     } else if (empUsername === "employe" && empPassword === "emp123") {
-      login("employee", ["animaux", "alimentation", "sante"]);
+      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: "employee", permissions: ["animaux", "alimentation", "sante"] }));
       setLocation("/");
       toast({ title: "Connexion réussie", description: "Bienvenue, Employé" });
     } else {
       toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" });
     }
+  };
+
+  const handleForgot = () => {
+    if (!forgotUsername.trim()) {
+      toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur admin" });
+      return;
+    }
+    const creds = getAdminCredentials();
+    if (forgotUsername.trim().toLowerCase() !== creds.username.toLowerCase()) {
+      toast({ variant: "destructive", title: "Erreur", description: "Compte administrateur introuvable" });
+      return;
+    }
+    setResetOpen(true);
+  };
+
+  const handleResetPassword = () => {
+    if (!newPassword || newPassword.length < 4) {
+      toast({ variant: "destructive", title: "Erreur", description: "Mot de passe trop court" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas" });
+      return;
+    }
+    updateAdminCredentials(forgotUsername.trim(), newPassword);
+    setResetOpen(false);
+    setForgotOpen(false);
+    setNewPassword("");
+    setConfirmPassword("");
+    setForgotUsername("");
+    toast({ title: "Mot de passe mis à jour" });
   };
 
   return (
@@ -81,54 +116,35 @@ export default function Login() {
                 <TabsTrigger value="employee">Employé</TabsTrigger>
                 <TabsTrigger value="admin">Administrateur</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="employee">
                 <form onSubmit={handleEmployeeLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="emp-username">Nom d'utilisateur</Label>
-                    <Input 
-                      id="emp-username" 
-                      placeholder="email de l'utilisateur" 
-                      value={empUsername}
-                      onChange={(e) => setEmpUsername(e.target.value)}
-                      required 
-                    />
+                    <Input id="emp-username" placeholder="email de l'utilisateur" value={empUsername} onChange={(e) => setEmpUsername(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emp-password">Mot de passe</Label>
-                    <Input 
-                      id="emp-password" 
-                      type="password" 
-                      value={empPassword}
-                      onChange={(e) => setEmpPassword(e.target.value)}
-                      required 
-                    />
+                    <Input id="emp-password" type="password" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required />
                   </div>
                   <Button type="submit" className="w-full font-medium">Se connecter</Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="admin">
                 <form onSubmit={handleAdminLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="admin-username">Nom d'utilisateur</Label>
-                    <Input 
-                      id="admin-username" 
-                      placeholder="admin" 
-                      value={adminUsername}
-                      onChange={(e) => setAdminUsername(e.target.value)}
-                      required 
-                    />
+                    <Input id="admin-username" placeholder="admin" value={adminUsername} onChange={(e) => setAdminUsername(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="admin-password">Mot de passe</Label>
-                    <Input 
-                      id="admin-password" 
-                      type="password" 
-                      value={adminPassword}
-                      onChange={(e) => setAdminPassword(e.target.value)}
-                      required 
-                    />
+                    <Input id="admin-password" type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <button type="button" className="text-sm text-primary hover:underline" onClick={() => setForgotOpen(true)}>
+                      Mot de passe oublié ?
+                    </button>
                   </div>
                   <Button type="submit" className="w-full font-medium">Se connecter</Button>
                 </form>
@@ -137,6 +153,45 @@ export default function Login() {
           </CardContent>
         </Card>
 
+        <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Mot de passe oublié</DialogTitle>
+              <DialogDescription>Entrez votre nom d'utilisateur administrateur pour réinitialiser le mot de passe.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label>Nom d'utilisateur admin</Label>
+                <Input value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="admin" />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleForgot}>Continuer</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nouveau mot de passe</DialogTitle>
+              <DialogDescription>Choisissez un nouveau mot de passe pour l'administrateur.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 pt-2">
+              <div className="space-y-2">
+                <Label>Nouveau mot de passe</Label>
+                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirmer le mot de passe</Label>
+                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={handleResetPassword}>Mettre à jour</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
