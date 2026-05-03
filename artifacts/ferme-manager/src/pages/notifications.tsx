@@ -400,48 +400,63 @@ export default function Notifications() {
         <TabsContent value="regles" className="mt-4">
           <Card className="overflow-hidden">
             <CardHeader className="py-3 px-4 border-b">
-              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Règles de notification actives</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Seuils d’alerte — Stocks alimentaires</CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              {[
-                { label: "Stock critique", type: "critique", desc: "Alerte immédiate quand un stock passe sous le seuil." },
-                { label: "Stock faible", type: "alerte", desc: "Alerte quand un stock atteint le seuil." },
-                { label: "Animal malade", type: "alerte", desc: "Notification à chaque animal malade signalé." },
-                { label: "Décès d'un animal", type: "critique", desc: "Notification immédiate pour tout décès." },
-                { label: "Vaccin en retard", type: "alerte", desc: "Alerte si vaccin non administré à temps." },
-                { label: "Mise bas imminente", type: "alerte", desc: "Notification 24h avant une mise bas." },
-                { label: "Naissance de porcelets", type: "succès", desc: "Notification pour chaque naissance." },
-                { label: "Absence non justifiée", type: "alerte", desc: "Alerte si employé absent sans justification." },
-                { label: "Maintenance urgente", type: "critique", desc: "Alerte immédiate pour toute panne urgente." },
-                { label: "Budget dépassé", type: "critique", desc: "Alerte quand un poste budgétaire est dépassé." },
-                { label: "Visite vétérinaire imminente", type: "info", desc: "Rappel 48h avant une visite." },
-                { label: "Résumé quotidien", type: "info", desc: "Email récapitulatif automatique chaque matin." },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-4 px-4 py-3 border-b last:border-b-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">{item.label}</span>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full ${
-                        item.type === "critique"
-                          ? "bg-red-100 text-red-700"
-                          : item.type === "alerte"
-                          ? "bg-amber-100 text-amber-700"
-                          : item.type === "succès"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-blue-100 text-blue-700"
-                      }`}>
-                        {item.type}
-                      </span>
+            <CardContent className="p-4 space-y-5">
+              <div className="space-y-4">
+                {[
+                  { label: "Croissance 1", value: "40", unit: "kg min", icon: "🍃" },
+                  { label: "Croissance 2", value: "100", unit: "kg min", icon: "🍃" },
+                  { label: "Croissance 3", value: "100", unit: "kg min", icon: "🍃" },
+                  { label: "Maternité", value: "60", unit: "kg min", icon: "🌸" },
+                  { label: "Gestation", value: "60", unit: "kg min", icon: "🌸" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-3 py-2 border-b last:border-b-0">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span>{item.icon}</span>
+                      <span className="font-medium text-sm">{item.label}</span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-1">{item.desc}</div>
-                  </div>
-                  <div className="shrink-0">
-                    <div className="h-6 w-11 rounded-full bg-green-600 flex items-center px-1">
-                      <div className="h-4 w-4 rounded-full bg-white ml-auto" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Input className="w-16 h-8 text-right" defaultValue={item.value} />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{item.unit}</span>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button className="bg-green-600 hover:bg-green-700">Sauvegarder</Button>
+                <Button variant="outline">Tester les seuils</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Fréquence des résumés</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Heure du résumé quotidien</Label>
+                <Input type="time" defaultValue="06:00" />
+              </div>
+              <div className="space-y-2">
+                <Label>Jour du résumé hebdomadaire</Label>
+                <Select defaultValue="lundi">
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lundi">Lundi</SelectItem>
+                    <SelectItem value="mardi">Mardi</SelectItem>
+                    <SelectItem value="mercredi">Mercredi</SelectItem>
+                    <SelectItem value="jeudi">Jeudi</SelectItem>
+                    <SelectItem value="vendredi">Vendredi</SelectItem>
+                    <SelectItem value="samedi">Samedi</SelectItem>
+                    <SelectItem value="dimanche">Dimanche</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-2">
+                <Button className="bg-green-600 hover:bg-green-700">Sauvegarder</Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
