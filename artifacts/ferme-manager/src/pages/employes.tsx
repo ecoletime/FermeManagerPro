@@ -277,7 +277,69 @@ export default function Employes() {
         </TabsContent>
 
         <TabsContent value="conges" className="space-y-4 mt-4">
-          <Card><CardContent className="pt-6 text-sm text-muted-foreground">Aucun congé en cours.</CardContent></Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer un congé</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Employé *</Label>
+                  <Select>
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      {employes?.map(e => <SelectItem key={e.id} value={e.nom}>{e.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Type</Label>
+                  <Select defaultValue="conge_paye">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="conge_paye">Congé payé</SelectItem>
+                      <SelectItem value="conge_maladie">Congé maladie</SelectItem>
+                      <SelectItem value="conge_exceptionnel">Congé exceptionnel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Début</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Fin</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+              </div>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Enregistrer</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Congés enregistrés</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {["Employé", "Type", "Début", "Fin", "Jours", "Statut"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium">Sophie M.</td>
+                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700 font-medium">Congé payé</span></td>
+                    <td className="px-4 py-3">21/04/2025</td>
+                    <td className="px-4 py-3">27/04/2025</td>
+                    <td className="px-4 py-3">7</td>
+                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-medium">Approuvé</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="recap" className="space-y-4 mt-4">
