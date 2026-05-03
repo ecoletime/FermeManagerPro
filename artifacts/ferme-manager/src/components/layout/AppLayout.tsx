@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   Clock,
+  UserCog,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -75,6 +76,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       items: [
         { href: "/notifications", label: "Notifications", icon: Clock },
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
+        ...(role === "admin" ? [{ href: "/utilisateurs", label: "Utilisateurs", icon: UserCog }] : []),
       ],
     },
   ];

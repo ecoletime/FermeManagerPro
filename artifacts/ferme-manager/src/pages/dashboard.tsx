@@ -23,7 +23,7 @@ import {
   Wheat,
   Truck,
 } from "lucide-react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { 
   PieChart, 
   Pie, 
@@ -41,6 +41,7 @@ import { useAuth } from "@/lib/auth";
 
 export default function Dashboard() {
   const { role } = useAuth();
+  const [, navigate] = useLocation();
   
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary({
     query: { queryKey: getGetDashboardSummaryQueryKey() }
@@ -106,14 +107,19 @@ export default function Dashboard() {
         {shortcuts.map((item) => {
           const Icon = item.icon;
           return (
-            <Link key={item.href} href={item.href}>
-              <div className="flex h-full min-h-[56px] cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-sm transition hover:bg-muted/50">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Icon className="h-4 w-4" />
-                </span>
-                <span className="leading-tight">{item.label}</span>
-              </div>
-            </Link>
+            <div
+              key={item.href}
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(item.href)}
+              onKeyDown={(e) => e.key === "Enter" && navigate(item.href)}
+              className="flex h-full min-h-[56px] cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-sm transition hover:bg-muted/50 select-none"
+            >
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="leading-tight">{item.label}</span>
+            </div>
           );
         })}
       </div>
