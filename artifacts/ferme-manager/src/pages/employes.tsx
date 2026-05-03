@@ -200,7 +200,80 @@ export default function Employes() {
         </TabsContent>
 
         <TabsContent value="retards" className="space-y-4 mt-4">
-          <Card><CardContent className="pt-6 text-sm text-muted-foreground">Aucun retard signalé.</CardContent></Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Signaler un retard</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1 md:col-span-1">
+                  <Label>Employé *</Label>
+                  <Select>
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      {employes?.map(e => <SelectItem key={e.id} value={e.nom}>{e.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1 md:col-span-1">
+                  <Label>Date</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Heure prévue</Label>
+                  <Input defaultValue="06:00 AM" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Heure réelle</Label>
+                  <Input placeholder="--:-- --" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Motif</Label>
+                  <Select defaultValue="transport">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {["Transport", "Santé", "Famille", "Autre"].map(v => <SelectItem key={v} value={v.toLowerCase()}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Justifié ?</Label>
+                  <Select defaultValue="oui">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="oui">Oui</SelectItem>
+                      <SelectItem value="non">Non</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">Signaler</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique retards</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {["Employé", "Date", "Retard", "Motif", "Justifié"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium">Thomas B.</td>
+                    <td className="px-4 py-3">25/04/2025</td>
+                    <td className="px-4 py-3 text-red-600">8h00</td>
+                    <td className="px-4 py-3">Transport</td>
+                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">En attente</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="conges" className="space-y-4 mt-4">
