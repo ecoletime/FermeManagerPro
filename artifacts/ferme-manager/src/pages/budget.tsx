@@ -36,6 +36,7 @@ export default function Budget() {
     { id: 2, poste: "Maintenance", budget: 750000, periode: "Semestriel", mois: "Juin 2025", avancement: 45 },
     { id: 3, poste: "Santé", budget: 500000, periode: "Mensuel", mois: "Mai 2025", avancement: 28 },
   ]);
+  const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
 
@@ -55,18 +56,37 @@ export default function Budget() {
 
   const addPlan = () => {
     if (!planForm.poste || !planForm.budget) return;
-    setPlans((current) => [
-      {
-        id: Date.now(),
-        poste: planForm.poste,
-        budget: Number(planForm.budget),
-        periode: planForm.periode.charAt(0).toUpperCase() + planForm.periode.slice(1),
-        mois: planForm.mois,
-        avancement: 0,
-      },
-      ...current,
-    ]);
+    const normalizedPlan = {
+      poste: planForm.poste.charAt(0).toUpperCase() + planForm.poste.slice(1),
+      budget: Number(planForm.budget),
+      periode: planForm.periode.charAt(0).toUpperCase() + planForm.periode.slice(1),
+      mois: planForm.mois,
+      avancement: editingPlanId ? 50 : 0,
+    };
+    if (editingPlanId) {
+      setPlans((current) =>
+        current.map((plan) => (plan.id === editingPlanId ? { ...plan, ...normalizedPlan } : plan))
+      );
+      setEditingPlanId(null);
+    } else {
+      setPlans((current) => [
+        { id: Date.now(), ...normalizedPlan },
+        ...current,
+      ]);
+    }
     setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  };
+
+  const editPlan = (id: number) => {
+    const plan = plans.find((item) => item.id === id);
+    if (!plan) return;
+    setEditingPlanId(id);
+    setPlanForm({
+      poste: plan.poste.toLowerCase(),
+      budget: String(plan.budget),
+      periode: plan.periode.toLowerCase(),
+      mois: plan.mois,
+    });
   };
 
   return (
@@ -244,7 +264,9 @@ export default function Budget() {
                   </Select>
                 </div>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlan}>Ajouter au plan</Button>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlan}>
+                {editingPlanId ? "Modifier le plan" : "Ajouter au plan"}
+              </Button>
             </CardContent>
           </Card>
 
@@ -267,7 +289,7 @@ export default function Budget() {
                     <div className="h-full rounded-full bg-green-600" style={{ width: `${plan.avancement}%` }} />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setPlanForm({ poste: plan.poste.toLowerCase(), budget: String(plan.budget), periode: plan.periode.toLowerCase(), mois: plan.mois })}>
+                    <Button size="sm" variant="outline" onClick={() => editPlan(plan.id)}>
                       <Pencil className="h-4 w-4 mr-2" />
                       Modifier
                     </Button>
