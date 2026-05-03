@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, CheckCircle, Clock3, Plus, Trash2, Users } from "lucide-react";
+import { Bell, CheckCircle, Clock3, Plus, Trash2 } from "lucide-react";
 
 type EmployeForm = {
   nom: string;
@@ -130,99 +131,136 @@ export default function Employes() {
         <StatCard value={total} label="Employés" color="text-blue-600" />
       </div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer arrivée / départ</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label>Employé *</Label>
-              <Select value={form.nom || "all"} onValueChange={v => setForm(f => ({ ...f, nom: v === "all" ? "" : v }))}>
-                <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
-                <SelectContent>
-                  {employes?.map(e => <SelectItem key={e.id} value={e.nom}>{e.nom} — {e.poste}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label>Heure (vide = maintenant)</Label>
-              <Input value={form.dateEmbauche} onChange={e => setForm(f => ({ ...f, dateEmbauche: e.target.value }))} placeholder="--:--" />
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Button type="button" className="w-full bg-green-600 hover:bg-green-700" onClick={() => toast({ title: "Arrivée enregistrée" })}>
-              <CheckCircle className="mr-2 h-4 w-4" /> Arrivée
-            </Button>
-            <Button type="button" className="w-full bg-red-600 hover:bg-red-700" onClick={() => toast({ title: "Départ enregistré" })}>
-              <Clock3 className="mr-2 h-4 w-4" /> Départ
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="pointage">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+          <TabsTrigger value="pointage">Pointage</TabsTrigger>
+          <TabsTrigger value="retards">Retards</TabsTrigger>
+          <TabsTrigger value="conges">Congés</TabsTrigger>
+          <TabsTrigger value="recap">Récapitulatif</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointage du jour</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/30">
-              <tr>
-                {['Employé', 'Poste', 'Arrivée', 'Départ', 'Heures', 'Statut'].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : employes?.map(e => (
-                <tr key={e.id} className="hover:bg-muted/20">
-                  <td className="px-4 py-3 font-medium">{e.nom}</td>
-                  <td className="px-4 py-3">{e.poste}</td>
-                  <td className="px-4 py-3">{e.dateEmbauche ?? '—'}</td>
-                  <td className="px-4 py-3">—</td>
-                  <td className="px-4 py-3">—</td>
-                  <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[e.statut] ?? 'bg-gray-100 text-gray-800'}`}>{e.statut}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+        <TabsContent value="pointage" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer arrivée / départ</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Employé *</Label>
+                  <Select value={form.nom || "all"} onValueChange={v => setForm(f => ({ ...f, nom: v === "all" ? "" : v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      {employes?.map(e => <SelectItem key={e.id} value={e.nom}>{e.nom} — {e.poste}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Heure (vide = maintenant)</Label>
+                  <Input value={form.dateEmbauche} onChange={e => setForm(f => ({ ...f, dateEmbauche: e.target.value }))} placeholder="--:--" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <Button type="button" className="w-full bg-green-600 hover:bg-green-700" onClick={() => toast({ title: "Arrivée enregistrée" })}>
+                  <CheckCircle className="mr-2 h-4 w-4" /> Arrivée
+                </Button>
+                <Button type="button" className="w-full bg-red-600 hover:bg-red-700" onClick={() => toast({ title: "Départ enregistré" })}>
+                  <Clock3 className="mr-2 h-4 w-4" /> Départ
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Liste des employés</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/30">
-              <tr>
-                {['Nom', 'Poste', 'Téléphone', 'Email', 'Embauche', 'Salaire (FCFA)', 'Statut', ''].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {isLoading ? Array.from({ length: 4 }).map((_, i) => <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : employes?.map(e => (
-                <tr key={e.id} className="hover:bg-muted/20" data-testid={`row-employe-${e.id}`}>
-                  <td className="px-4 py-3 font-medium">{e.nom}</td>
-                  <td className="px-4 py-3">{e.poste}</td>
-                  <td className="px-4 py-3">{e.telephone ?? '—'}</td>
-                  <td className="px-4 py-3">{e.email ?? '—'}</td>
-                  <td className="px-4 py-3">{e.dateEmbauche ?? '—'}</td>
-                  <td className="px-4 py-3">{e.salaire != null ? fmt(Number(e.salaire)) : '—'}</td>
-                  <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[e.statut] ?? 'bg-gray-100 text-gray-800'}`}>{e.statut}</span></td>
-                  <td className="px-4 py-3 flex gap-1 justify-end">
-                    <Button variant="ghost" size="sm" data-testid={`button-edit-${e.id}`} onClick={() => { setEditId(e.id); setForm({ nom: e.nom, poste: e.poste, telephone: e.telephone ?? '', email: e.email ?? '', dateEmbauche: e.dateEmbauche ?? '', statut: e.statut, salaire: e.salaire ? String(e.salaire) : '' }); }}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" data-testid={`button-delete-${e.id}`} onClick={() => { if (!confirm(`Supprimer ${e.nom}?`)) return; deleteEmploye.mutate({ id: e.id }, { onSuccess: () => { toast({ title: 'Supprimé' }); invalidate(); } }); }}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointage du jour</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {['Employé', 'Poste', 'Arrivée', 'Départ', 'Heures', 'Statut'].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : employes?.map(e => (
+                    <tr key={e.id} className="hover:bg-muted/20">
+                      <td className="px-4 py-3 font-medium">{e.nom}</td>
+                      <td className="px-4 py-3">{e.poste}</td>
+                      <td className="px-4 py-3">{e.dateEmbauche ?? '—'}</td>
+                      <td className="px-4 py-3">—</td>
+                      <td className="px-4 py-3">—</td>
+                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[e.statut] ?? 'bg-gray-100 text-gray-800'}`}>{e.statut}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="retards" className="space-y-4 mt-4">
+          <Card><CardContent className="pt-6 text-sm text-muted-foreground">Aucun retard signalé.</CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="conges" className="space-y-4 mt-4">
+          <Card><CardContent className="pt-6 text-sm text-muted-foreground">Aucun congé en cours.</CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="recap" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Liste des employés</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {['Nom', 'Poste', 'Téléphone', 'Email', 'Embauche', 'Salaire (FCFA)', 'Statut', ''].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {isLoading ? Array.from({ length: 4 }).map((_, i) => <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : employes?.map(e => (
+                    <tr key={e.id} className="hover:bg-muted/20" data-testid={`row-employe-${e.id}`}>
+                      <td className="px-4 py-3 font-medium">{e.nom}</td>
+                      <td className="px-4 py-3">{e.poste}</td>
+                      <td className="px-4 py-3">{e.telephone ?? '—'}</td>
+                      <td className="px-4 py-3">{e.email ?? '—'}</td>
+                      <td className="px-4 py-3">{e.dateEmbauche ?? '—'}</td>
+                      <td className="px-4 py-3">{e.salaire != null ? fmt(Number(e.salaire)) : '—'}</td>
+                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[e.statut] ?? 'bg-gray-100 text-gray-800'}`}>{e.statut}</span></td>
+                      <td className="px-4 py-3 flex gap-1 justify-end">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          data-testid={`button-edit-${e.id}`}
+                          onClick={() => {
+                            setEditId(e.id);
+                            setForm({
+                              nom: e.nom,
+                              poste: e.poste,
+                              telephone: e.telephone ?? "",
+                              email: e.email ?? "",
+                              dateEmbauche: e.dateEmbauche ?? "",
+                              statut: e.statut,
+                              salaire: e.salaire ? String(e.salaire) : "",
+                            });
+                          }}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" data-testid={`button-delete-${e.id}`} onClick={() => { if (!confirm(`Supprimer ${e.nom}?`)) return; deleteEmploye.mutate({ id: e.id }, { onSuccess: () => { toast({ title: 'Supprimé' }); invalidate(); } }); }}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
