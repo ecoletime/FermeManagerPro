@@ -117,7 +117,7 @@ export default function Veterinaire() {
       <div className="flex justify-end">
         <Dialog open={openVet} onOpenChange={setOpenVet}>
           <DialogTrigger asChild>
-            <Button variant="outline"><Plus className="mr-2 h-4 w-4" />Ajouter un vétérinaire</Button>
+            <Button className="bg-green-600 hover:bg-green-700"><Plus className="mr-2 h-4 w-4" />Ajouter un vétérinaire</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Nouveau vétérinaire</DialogTitle></DialogHeader>
