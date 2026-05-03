@@ -104,6 +104,7 @@ export default function Employes() {
   ]);
   const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>([]);
   const [scheduleForm, setScheduleForm] = useState({ employeId: "", day: scheduleDays[0] ?? "", taskId: "1" });
+  const [scheduleFilters, setScheduleFilters] = useState({ day: "all", employeId: "all", taskId: "all" });
 
   const { data: employes, isLoading } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createEmploye = useCreateEmploye();
@@ -192,6 +193,12 @@ export default function Employes() {
 
   const tasksById = Object.fromEntries(tasks.map((task) => [String(task.id), task.label]));
   const employeesById = Object.fromEntries((employes ?? []).map((e) => [String(e.id), e.nom]));
+  const filteredScheduleEntries = scheduleEntries.filter((entry) => {
+    const matchesDay = scheduleFilters.day === "all" || entry.day === scheduleFilters.day;
+    const matchesEmploye = scheduleFilters.employeId === "all" || entry.employeId === scheduleFilters.employeId;
+    const matchesTask = scheduleFilters.taskId === "all" || entry.taskId === scheduleFilters.taskId;
+    return matchesDay && matchesEmploye && matchesTask;
+  });
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
   const total = employes?.length ?? 0;
@@ -371,6 +378,35 @@ export default function Employes() {
         <TabsContent value="emploi-du-temps" className="space-y-4 mt-4">
           <Card>
             <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Filtres d’affichage</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <Select value={scheduleFilters.day} onValueChange={(v) => setScheduleFilters((f) => ({ ...f, day: v }))}>
+                <SelectTrigger><SelectValue placeholder="Filtrer par jour" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les jours</SelectItem>
+                  {scheduleDays.map((day) => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={scheduleFilters.employeId} onValueChange={(v) => setScheduleFilters((f) => ({ ...f, employeId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Filtrer par employé" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les employés</SelectItem>
+                  {employes?.map((e) => <SelectItem key={e.id} value={String(e.id)}>{e.nom}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={scheduleFilters.taskId} onValueChange={(v) => setScheduleFilters((f) => ({ ...f, taskId: v }))}>
+                <SelectTrigger><SelectValue placeholder="Filtrer par tâche" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Toutes les tâches</SelectItem>
+                  {tasks.map((task) => <SelectItem key={task.id} value={String(task.id)}>{task.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Créer un planning sur 30 jours</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -442,9 +478,9 @@ export default function Employes() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {scheduleEntries.length === 0 ? (
+                  {filteredScheduleEntries.length === 0 ? (
                     <tr><td colSpan={4} className="px-4 py-4 text-muted-foreground">Aucun planning enregistré</td></tr>
-                  ) : scheduleEntries.map((entry) => (
+                  ) : filteredScheduleEntries.map((entry) => (
                     <tr key={entry.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3">{entry.day}</td>
                       <td className="px-4 py-3 font-medium">{employeesById[entry.employeId] ?? "—"}</td>
