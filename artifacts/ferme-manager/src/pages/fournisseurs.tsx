@@ -255,7 +255,7 @@ export default function Fournisseurs() {
                   <Label>Mode</Label>
                   <Select defaultValue="Espèces">
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{["Espèces", "Virement", "Chèque", "Mobile money"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Espèces", "Virement", "Chèque", "Mobile money", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 {paiement === "Autre" && (
