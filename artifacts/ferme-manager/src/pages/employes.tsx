@@ -344,6 +344,12 @@ export default function Employes() {
         </TabsContent>
 
         <TabsContent value="recap" className="space-y-4 mt-4">
+          <div className="flex justify-end">
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Plus className="mr-2 h-4 w-4" />
+              Ajouter employé
+            </Button>
+          </div>
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Liste des employés</CardTitle>
