@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search } from "lucide-react";
+import { useGetEmployes, getGetEmployesQueryKey } from "@workspace/api-client-react";
 
 const statutColors: Record<string, string> = {
   Sain: "bg-green-100 text-green-800",
@@ -41,6 +42,7 @@ export default function Animaux() {
   };
   const { data: animaux, isLoading } = useGetAnimaux(params, { query: { queryKey: getGetAnimauxQueryKey(params) } });
   const { data: stats } = useGetAnimauxStats({ query: { queryKey: getGetAnimauxStatsQueryKey() } });
+  const { data: employes } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createAnimal = useCreateAnimal();
   const deleteAnimal = useDeleteAnimal();
 
@@ -230,11 +232,10 @@ export default function Animaux() {
                 </div>
                 <div className="space-y-1">
                   <Label>Par</Label>
-                  <Select defaultValue="Jean-Pierre D.">
+                  <Select defaultValue={employes?.[0]?.nom ?? ""}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Jean-Pierre D.">Jean-Pierre D.</SelectItem>
-                      <SelectItem value="Marie K.">Marie K.</SelectItem>
+                      {(employes ?? []).map(e => <SelectItem key={e.id} value={e.nom}>{e.nom}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
