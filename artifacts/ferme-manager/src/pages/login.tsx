@@ -41,6 +41,7 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
+  const [adminPassport, setAdminPassport] = useState("");
   const [empUsername, setEmpUsername] = useState("");
   const [empPassword, setEmpPassword] = useState("");
 
@@ -52,20 +53,20 @@ export default function Login() {
     if (adminUsername.trim().toLowerCase() === creds.username.toLowerCase() && adminPassword === creds.password) {
       setAuthState("admin", ["all"]);
       goHome();
-      setTimeout(() => toast({ title: "Connexion réussie", description: "Bienvenue, Administrateur" }), 0);
+      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${creds.username}` }), 0);
     } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" });
+      toast({ variant: "destructive", title: "Erreur", description: "Nom d'utilisateur ou mot de passe invalide" });
     }
   };
 
   const handleEmployeeLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const users = loadUsers();
-    const matched = users.find((user: any) => user.email.toLowerCase() === empUsername.toLowerCase() && user.actif !== false);
+    const matched = users.find((user: any) => (user.username?.toLowerCase?.() === empUsername.toLowerCase() || user.email?.toLowerCase?.() === empUsername.toLowerCase()) && user.actif !== false);
     if (matched && matched.password === empPassword) {
       setAuthState(matched.role, matched.modules ?? []);
       goHome();
-      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` }), 0);
+      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom} (${matched.username})` }), 0);
     } else if (empUsername === "employe" && empPassword === "emp123") {
       setAuthState("employee", ["animaux", "alimentation", "sante"]);
       goHome();
@@ -158,6 +159,15 @@ export default function Login() {
     toast({ title: "Mot de passe mis à jour" });
   };
 
+  const rememberDetails = () => {
+    if (adminUsername.trim()) {
+      const creds = getAdminCredentials();
+      if (adminUsername.trim().toLowerCase() === creds.username.toLowerCase()) {
+        toast({ title: "Détails de connexion", description: `Nom d'utilisateur: ${creds.username} • Mot de passe: déjà enregistré` });
+      }
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] w-full flex items-center justify-center bg-muted/30 p-4">
       <div className="w-full max-w-md flex flex-col gap-6">
@@ -185,11 +195,20 @@ export default function Login() {
                 <form onSubmit={handleEmployeeLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="emp-username">Nom d'utilisateur</Label>
-                    <Input id="emp-username" placeholder="email de l'utilisateur" value={empUsername} onChange={(e) => setEmpUsername(e.target.value)} required />
+                    <Input id="emp-username" placeholder="Nom d'utilisateur" value={empUsername} onChange={(e) => setEmpUsername(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emp-email">E-mail</Label>
+                    <Input id="emp-email" placeholder="E-mail associé au compte" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emp-password">Mot de passe</Label>
                     <Input id="emp-password" type="password" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required />
+                  </div>
+                  <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground">Détails de connexion</div>
+                    <div>Nom d'utilisateur: {empUsername || "—"}</div>
+                    <div>Passeport / ID: —</div>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <button type="button" className="text-sm text-primary hover:underline" onClick={openForgot}>
@@ -209,6 +228,15 @@ export default function Login() {
                   <div className="space-y-2">
                     <Label htmlFor="admin-password">Mot de passe</Label>
                     <Input id="admin-password" type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="admin-passport">Passeport / ID</Label>
+                    <Input id="admin-passport" value={adminPassport} onChange={(e) => setAdminPassport(e.target.value)} placeholder="Passeport ou numéro ID" />
+                  </div>
+                  <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                    <div className="font-medium text-foreground">Détails de connexion</div>
+                    <div>Nom d'utilisateur: {adminUsername || "—"}</div>
+                    <div>Passeport / ID: {adminPassport || "—"}</div>
                   </div>
                   <div className="flex items-center justify-between gap-3">
                     <button type="button" className="text-sm text-primary hover:underline" onClick={openForgot}>

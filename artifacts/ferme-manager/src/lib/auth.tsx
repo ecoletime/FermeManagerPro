@@ -8,6 +8,7 @@ interface AuthState {
   isLoggedIn: boolean;
   role: Role;
   permissions: Permissions;
+  username?: string;
   login: (role: Role, permissions?: Permissions) => void;
   logout: () => void;
 }
@@ -16,6 +17,7 @@ interface AuthSnapshot {
   isLoggedIn: boolean;
   role: Role;
   permissions: Permissions;
+  username?: string;
 }
 
 const AUTH_KEY = "ferme_auth";
@@ -32,6 +34,7 @@ function loadAuth(): AuthSnapshot {
         isLoggedIn: true,
         role: parsed.role,
         permissions: Array.isArray(parsed.permissions) ? parsed.permissions : [],
+        username: typeof parsed.username === "string" ? parsed.username : undefined,
       };
     }
   } catch {
@@ -63,6 +66,10 @@ export function updateAdminCredentials(username: string, password: string) {
 
 export function setAuthState(role: Role, permissions: Permissions = []) {
   localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions }));
+}
+
+export function setAuthStateWithUsername(role: Role, permissions: Permissions = [], username?: string) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions, username }));
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
@@ -103,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn: state.isLoggedIn, role: state.role, permissions: state.permissions, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: state.isLoggedIn, role: state.role, permissions: state.permissions, username: state.username, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

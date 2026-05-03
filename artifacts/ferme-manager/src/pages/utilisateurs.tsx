@@ -26,6 +26,7 @@ const ALL_MODULES = [
 
 interface UserRecord {
   id: number;
+  username: string;
   nom: string;
   prenom: string;
   email: string;
@@ -44,8 +45,8 @@ function loadUsers(): UserRecord[] {
     if (raw) return JSON.parse(raw);
   } catch {}
   return [
-    { id: 1, nom: "Diallo", prenom: "Amadou", email: "amadou@ferme.com", role: "admin", modules: ALL_MODULES.map((m) => m.id), actif: true, createdAt: "2026-01-01", password: "admin123" },
-    { id: 2, nom: "Koné", prenom: "Marie", email: "marie@ferme.com", role: "employee", modules: ["animaux", "alimentation", "sante"], actif: true, createdAt: "2026-02-15", password: "emp123" },
+    { id: 1, username: "admin", nom: "Diallo", prenom: "Amadou", email: "amadou@ferme.com", role: "admin", modules: ALL_MODULES.map((m) => m.id), actif: true, createdAt: "2026-01-01", password: "admin123" },
+    { id: 2, username: "marie.kone", nom: "Koné", prenom: "Marie", email: "marie@ferme.com", role: "employee", modules: ["animaux", "alimentation", "sante"], actif: true, createdAt: "2026-02-15", password: "emp123" },
   ];
 }
 
@@ -53,7 +54,7 @@ function saveUsers(users: UserRecord[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 }
 
-const EMPTY_FORM = { nom: "", prenom: "", email: "", role: "employee" as "admin" | "employee", modules: [] as string[], actif: true, password: "" };
+const EMPTY_FORM = { username: "", nom: "", prenom: "", email: "", role: "employee" as "admin" | "employee", modules: [] as string[], actif: true, password: "" };
 
 export default function Utilisateurs() {
   const { toast } = useToast();
@@ -85,26 +86,26 @@ export default function Utilisateurs() {
   };
 
   const openEdit = (user: UserRecord) => {
-    setForm({ nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, modules: [...user.modules], actif: user.actif, password: user.password ?? "" });
+    setForm({ username: user.username, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, modules: [...user.modules], actif: user.actif, password: user.password ?? "" });
     setEditingId(user.id);
     setOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nom || !form.prenom || !form.email) return;
+    if (!form.username || !form.nom || !form.prenom || !form.email) return;
 
     if (editingId) {
-      setUsers((current) => current.map((u) => u.id === editingId ? { ...u, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password || u.password } : u));
+      setUsers((current) => current.map((u) => u.id === editingId ? { ...u, username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password || u.password } : u));
       if (form.role === "admin" && form.password) {
-        updateAdminCredentials(form.email, form.password);
+        updateAdminCredentials(form.username, form.password);
       }
       toast({ title: "Utilisateur modifié avec succès" });
     } else {
-      const newUser: UserRecord = { id: Date.now(), nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, createdAt: new Date().toISOString().slice(0, 10), password: form.password || (form.role === "admin" ? "admin123" : "emp123") };
+      const newUser: UserRecord = { id: Date.now(), username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, createdAt: new Date().toISOString().slice(0, 10), password: form.password || (form.role === "admin" ? "admin123" : "emp123") };
       setUsers((current) => [newUser, ...current]);
       if (newUser.role === "admin") {
-        updateAdminCredentials(newUser.email, newUser.password ?? "admin123");
+        updateAdminCredentials(newUser.username, newUser.password ?? "admin123");
       }
       toast({ title: "Utilisateur créé avec succès" });
     }
@@ -141,6 +142,7 @@ export default function Utilisateurs() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1"><Label>Nom d'utilisateur *</Label><Input placeholder="ex: amadou.diallo" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label>Prénom *</Label><Input placeholder="ex: Amadou" value={form.prenom} onChange={(e) => setForm((f) => ({ ...f, prenom: e.target.value }))} required /></div>
                 <div className="space-y-1"><Label>Nom *</Label><Input placeholder="ex: Diallo" value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} required /></div>
               </div>
@@ -169,7 +171,7 @@ export default function Utilisateurs() {
             <CardContent className="pt-4 flex items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 flex-wrap"><UserCircle2 className="h-5 w-5 text-primary" /><span className="font-semibold">{user.prenom} {user.nom}</span><Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge><Badge variant={user.actif ? "default" : "destructive"}>{user.actif ? "Actif" : "Inactif"}</Badge></div>
-                <div className="text-sm text-muted-foreground mt-1">{user.email}</div>
+                <div className="text-sm text-muted-foreground mt-1">{user.username} • {user.email}</div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => toggleActif(user.id)}>{user.actif ? "Désactiver" : "Activer"}</Button>
