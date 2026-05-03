@@ -205,11 +205,6 @@ export default function Login() {
                     <Label htmlFor="emp-password">Mot de passe</Label>
                     <Input id="emp-password" type="password" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required />
                   </div>
-                  <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
-                    <div className="font-medium text-foreground">Détails de connexion</div>
-                    <div>Nom d'utilisateur: {empUsername || "—"}</div>
-                    <div>Passeport / ID: —</div>
-                  </div>
                   <div className="flex items-center justify-between gap-3">
                     <button type="button" className="text-sm text-primary hover:underline" onClick={openForgot}>
                       Mot de passe oublié ?
