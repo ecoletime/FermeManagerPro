@@ -22,6 +22,9 @@ const ALL_MODULES = [
   { id: "fournisseurs", label: "Fournisseurs" },
   { id: "veterinaire", label: "Vétérinaire" },
   { id: "budget", label: "Budgétisation" },
+  { id: "notifications", label: "Notifications" },
+  { id: "utilisateurs", label: "Utilisateurs" },
+  { id: "systeme", label: "Paramètres système" },
 ];
 
 interface UserRecord {
@@ -46,7 +49,7 @@ function loadUsers(): UserRecord[] {
   } catch {}
   return [
     { id: 1, username: "admin", nom: "Diallo", prenom: "Amadou", email: "amadou@ferme.com", role: "admin", modules: ALL_MODULES.map((m) => m.id), actif: true, createdAt: "2026-01-01", password: "admin123" },
-    { id: 2, username: "marie.kone", nom: "Koné", prenom: "Marie", email: "marie@ferme.com", role: "employee", modules: ["animaux", "alimentation", "sante"], actif: true, createdAt: "2026-02-15", password: "emp123" },
+    { id: 2, username: "marie.kone", nom: "Koné", prenom: "Marie", email: "marie@ferme.com", role: "employee", modules: ["animaux", "alimentation", "sante", "notifications"], actif: true, createdAt: "2026-02-15", password: "emp123" },
   ];
 }
 
