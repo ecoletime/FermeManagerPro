@@ -274,8 +274,83 @@ export default function Animaux() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="transferts" className="mt-4">
-          <Card><CardContent className="p-4 text-sm text-muted-foreground">Transferts à afficher ici.</CardContent></Card>
+        <TabsContent value="transferts" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer un transfert</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Animal *</Label>
+                  <Select defaultValue="">
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Choisir...</SelectItem>
+                      {(animaux ?? []).map(a => <SelectItem key={a.id} value={a.tag}>{a.tag}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Date</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>De</Label>
+                  <Select defaultValue="Bâtiment A">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Bâtiment A", "Bâtiment B", "Quarantaine"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Vers *</Label>
+                  <Select defaultValue="Bâtiment A">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Bâtiment A", "Bâtiment B", "Quarantaine"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Raison</Label>
+                  <Select defaultValue="Quarantaine">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Quarantaine", "Vente", "Croissance", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Par</Label>
+                  <Select defaultValue={employes?.[0]?.nom ?? ""}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {(employes ?? []).map(e => <SelectItem key={e.id} value={e.nom}>{e.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">Enregistrer</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["DATE", "TAG", "DE", "VERS", "RAISON"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3">22/04/2025</td>
+                    <td className="px-4 py-3">#P-108</td>
+                    <td className="px-4 py-3">Bât. B</td>
+                    <td className="px-4 py-3">Bât. D</td>
+                    <td className="px-4 py-3">Quarantaine</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="sorties" className="mt-4">
