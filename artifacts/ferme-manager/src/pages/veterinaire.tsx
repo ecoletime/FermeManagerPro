@@ -191,7 +191,7 @@ export default function Veterinaire() {
                   <Label>Type</Label>
                   <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{["Routine", "Vaccination", "Urgence", "Contrôle"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Routine", "Vaccination", "Urgence", "Contrôle", "Autre"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
