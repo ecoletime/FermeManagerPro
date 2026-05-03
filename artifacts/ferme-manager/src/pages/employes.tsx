@@ -300,6 +300,7 @@ export default function Employes() {
                       <SelectItem value="conge_paye">Congé payé</SelectItem>
                       <SelectItem value="conge_maladie">Congé maladie</SelectItem>
                       <SelectItem value="conge_exceptionnel">Congé exceptionnel</SelectItem>
+                      <SelectItem value="autre">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
