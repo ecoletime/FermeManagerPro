@@ -17,7 +17,6 @@ import Employes from "@/pages/employes";
 import Veterinaire from "@/pages/veterinaire";
 import Fournisseurs from "@/pages/fournisseurs";
 import Budget from "@/pages/budget";
-import Notifications from "@/pages/notifications";
 import Utilisateurs from "@/pages/utilisateurs";
 
 const queryClient = new QueryClient({
@@ -29,7 +28,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function ProtectedRoute({ component: Component, adminOnly = false }: { component: React.ComponentType, adminOnly?: boolean }) {
+function ProtectedRoute({ component: Component, adminOnly = false }: { component: React.ComponentType; adminOnly?: boolean }) {
   const { isLoggedIn, role } = useAuth();
 
   if (!isLoggedIn) {
@@ -69,7 +68,6 @@ function Router() {
       <Route path="/veterinaire">{() => <ProtectedRoute component={Veterinaire} />}</Route>
       <Route path="/fournisseurs">{() => <ProtectedRoute component={Fournisseurs} />}</Route>
       <Route path="/budget">{() => <ProtectedRoute component={Budget} adminOnly />}</Route>
-      <Route path="/notifications">{() => <ProtectedRoute component={Notifications} />}</Route>
       <Route path="/utilisateurs">{() => <ProtectedRoute component={Utilisateurs} adminOnly />}</Route>
       <Route component={NotFound} />
     </Switch>

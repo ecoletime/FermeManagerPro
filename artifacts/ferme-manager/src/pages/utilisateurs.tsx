@@ -20,7 +20,6 @@ const ALL_MODULES = [
   { id: "employes", label: "Employés" },
   { id: "fournisseurs", label: "Fournisseurs" },
   { id: "veterinaire", label: "Vétérinaire" },
-  { id: "notifications", label: "Notifications" },
   { id: "budget", label: "Budgétisation" },
 ];
 

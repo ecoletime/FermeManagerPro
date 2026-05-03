@@ -82,13 +82,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: "Système",
       items: [
-        { href: "/notifications", label: "Notifications", icon: Clock },
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
         ...(role === "admin" ? [{ href: "/utilisateurs", label: "Utilisateurs", icon: UserCog }] : []),
       ].filter((item) => hasAccess(item.href)),
     },
   ];
-  const navFlatItems = navSections.flatMap(section => section.items);
+  const navFlatItems = navSections.flatMap((section) => section.items);
 
   const NavLinks = () => (
     <div className="flex flex-col py-3">
@@ -191,7 +190,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <header className="hidden md:flex h-16 bg-card border-b border-border items-center justify-between px-8 shrink-0">
           <h1 className="text-xl font-semibold text-foreground">
-            {navFlatItems.find(i => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || ""}
+            {navFlatItems.find((i) => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || ""}
           </h1>
           <div className="flex items-center gap-4 text-muted-foreground">
             <div className="text-sm font-medium flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md">
