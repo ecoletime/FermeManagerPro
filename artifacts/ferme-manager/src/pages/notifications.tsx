@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
 const notificationTypeOptions = [
@@ -220,7 +220,7 @@ export default function Notifications() {
         ))}
       </div>
 
-      <Tabs defaultValue="centre">
+      <Tabs defaultValue="centre" className="space-y-4">
         <TabsList className="w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="centre">Centre de notif</TabsTrigger>
           <TabsTrigger value="journal">Journal emails</TabsTrigger>
@@ -307,6 +307,7 @@ export default function Notifications() {
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogTitle className="text-base font-semibold">Email — {n.title}</DialogTitle>
+                        <DialogDescription className="sr-only">Aperçu détaillé de l’email correspondant à la notification.</DialogDescription>
                         <div className="rounded-t-lg overflow-hidden border mt-2">
                           <div className="bg-amber-700 text-white px-4 py-3 text-sm">
                             <div className="text-[11px] opacity-90">
