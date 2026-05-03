@@ -29,6 +29,18 @@ type PointageForm = {
   dateHeure: string;
 };
 
+type TaskItem = {
+  id: number;
+  label: string;
+};
+
+type ScheduleEntry = {
+  id: number;
+  employeId: string;
+  day: string;
+  taskId: string;
+};
+
 const statutBadge: Record<string, string> = {
   Actif: "bg-green-100 text-green-800",
   Congé: "bg-amber-100 text-amber-800",
@@ -68,6 +80,14 @@ function formatDateTime(value?: string | null) {
   return date.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function buildNextDays(count: number) {
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() + index);
+    return date.toISOString().slice(0, 10);
+  });
+}
+
 export default function Employes() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -75,6 +95,15 @@ export default function Employes() {
   const [form, setForm] = useState<EmployeForm>({ ...initForm });
   const [pointage, setPointage] = useState<PointageForm>({ ...initPointage });
   const [pointages, setPointages] = useState<Array<{ id: number; employeId: string; type: "arrivee" | "depart"; dateHeure: string }>>([]);
+  const [scheduleDays] = useState(buildNextDays(30));
+  const [taskInput, setTaskInput] = useState("");
+  const [tasks, setTasks] = useState<TaskItem[]>([
+    { id: 1, label: "Nettoyage" },
+    { id: 2, label: "Alimentation" },
+    { id: 3, label: "Surveillance" },
+  ]);
+  const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>([]);
+  const [scheduleForm, setScheduleForm] = useState({ employeId: "", day: scheduleDays[0] ?? "", taskId: "1" });
 
   const { data: employes, isLoading } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createEmploye = useCreateEmploye();
@@ -133,6 +162,37 @@ export default function Employes() {
     toast({ title: type === "arrivee" ? "Arrivée enregistrée" : "Départ enregistré", description: formatDateTime(dateHeure) });
   };
 
+  const addTask = () => {
+    const label = taskInput.trim();
+    if (!label) return;
+    setTasks((current) => [...current, { id: Date.now(), label }]);
+    setTaskInput("");
+  };
+
+  const deleteScheduleEntry = (id: number) => {
+    setScheduleEntries((current) => current.filter((entry) => entry.id !== id));
+  };
+
+  const addScheduleEntry = () => {
+    if (!scheduleForm.employeId || !scheduleForm.day || !scheduleForm.taskId) {
+      toast({ variant: "destructive", title: "Choisissez un employé, un jour et une tâche" });
+      return;
+    }
+    setScheduleEntries((current) => [
+      ...current,
+      {
+        id: Date.now(),
+        employeId: scheduleForm.employeId,
+        day: scheduleForm.day,
+        taskId: scheduleForm.taskId,
+      },
+    ]);
+    toast({ title: "Planning enregistré" });
+  };
+
+  const tasksById = Object.fromEntries(tasks.map((task) => [String(task.id), task.label]));
+  const employeesById = Object.fromEntries((employes ?? []).map((e) => [String(e.id), e.nom]));
+
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
   const total = employes?.length ?? 0;
   const presents = employes?.filter(e => e.statut === "Actif").length ?? 0;
@@ -165,7 +225,8 @@ export default function Employes() {
           <TabsTrigger value="pointage">Pointage</TabsTrigger>
           <TabsTrigger value="retards">Retards</TabsTrigger>
           <TabsTrigger value="conges">Congés</TabsTrigger>
-          <TabsTrigger value="recap">Récapitulatif</TabsTrigger>
+        <TabsTrigger value="emploi-du-temps">Emploi du temps</TabsTrigger>
+        <TabsTrigger value="recap">Récapitulatif</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pointage" className="space-y-4 mt-4">
@@ -301,6 +362,100 @@ export default function Employes() {
                     <td className="px-4 py-3">Transport</td>
                     <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-700 font-medium">En attente</span></td>
                   </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="emploi-du-temps" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Créer un planning sur 30 jours</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Employé</Label>
+                  <Select value={scheduleForm.employeId} onValueChange={(v) => setScheduleForm((f) => ({ ...f, employeId: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      {employes?.map((e) => <SelectItem key={e.id} value={String(e.id)}>{e.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Jour</Label>
+                  <Select value={scheduleForm.day} onValueChange={(v) => setScheduleForm((f) => ({ ...f, day: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir un jour" /></SelectTrigger>
+                    <SelectContent>
+                      {scheduleDays.map((day) => <SelectItem key={day} value={day}>{day}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Tâche</Label>
+                  <Select value={scheduleForm.taskId} onValueChange={(v) => setScheduleForm((f) => ({ ...f, taskId: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      {tasks.map((task) => <SelectItem key={task.id} value={String(task.id)}>{task.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" onClick={addScheduleEntry}>Enregistrer</Button>
+                <Button type="button" variant="outline" onClick={() => setScheduleForm({ employeId: "", day: scheduleDays[0] ?? "", taskId: String(tasks[0]?.id ?? "") })}>Réinitialiser</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Affecter les tâches</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                <Input value={taskInput} onChange={(e) => setTaskInput(e.target.value)} placeholder="Nouvelle tâche" />
+                <Button type="button" onClick={addTask}>Ajouter</Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tasks.map((task) => (
+                  <span key={task.id} className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm">
+                    {task.label}
+                    <button type="button" className="text-destructive" onClick={() => setTasks((current) => current.filter((item) => item.id !== task.id))}>×</button>
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Planning par jour</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {["Jour", "Employé", "Tâche", ""].map((h) => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {scheduleEntries.length === 0 ? (
+                    <tr><td colSpan={4} className="px-4 py-4 text-muted-foreground">Aucun planning enregistré</td></tr>
+                  ) : scheduleEntries.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-muted/20">
+                      <td className="px-4 py-3">{entry.day}</td>
+                      <td className="px-4 py-3 font-medium">{employeesById[entry.employeId] ?? "—"}</td>
+                      <td className="px-4 py-3">{tasksById[entry.taskId] ?? "—"}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Button variant="ghost" size="sm" onClick={() => deleteScheduleEntry(entry.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </CardContent>
