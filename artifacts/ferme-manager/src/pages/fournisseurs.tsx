@@ -251,6 +251,13 @@ export default function Fournisseurs() {
                     <SelectContent>{["Payé", "Partiel", "En attente", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1">
+                  <Label>Mode</Label>
+                  <Select defaultValue="Espèces">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Espèces", "Virement", "Chèque", "Mobile money"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
                 {paiement === "Autre" && (
                   <div className="space-y-1 md:col-span-2">
                     <Label>Préciser</Label>
