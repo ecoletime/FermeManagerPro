@@ -15,7 +15,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Building2, Home } from "lucide-react";
+import { Building2, Home, Plus, Bell, Activity } from "lucide-react";
+
+function StatCard({ value, label, color }: { value: number | string; label: string; color: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-5 pb-4 text-center">
+        <div className={`text-3xl font-bold ${color}`}>{value}</div>
+        <div className="text-xs text-muted-foreground mt-1">{label}</div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Loges() {
   const { toast } = useToast();
@@ -36,134 +47,154 @@ export default function Loges() {
   const [openL, setOpenL] = useState(false);
   const [openA, setOpenA] = useState(false);
 
-  return (
-    <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold tracking-tight">Loges & Bâtiments</h1><p className="text-muted-foreground text-sm">Gestion des infrastructures d'hébergement</p></div>
+  const batimentCount = stats?.totalBatiments ?? 0;
+  const logeCount = stats?.totalLoges ?? 0;
+  const animauxLoges = stats?.animauxLoges ?? 0;
+  const occupation = stats ? `${Number(stats.tauxOccupation).toFixed(0)}%` : "—";
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { icon: Building2, label: "Bâtiments", value: stats?.totalBatiments ?? "—" },
-          { icon: Home, label: "Loges", value: stats?.totalLoges ?? "—" },
-          { icon: Home, label: "Animaux logés", value: stats?.animauxLoges ?? "—" },
-          { icon: Home, label: "Taux occupation", value: stats ? `${Number(stats.tauxOccupation).toFixed(1)}%` : "—" },
-        ].map(({ icon: Icon, label, value }) => (
-          <Card key={label}><CardContent className="pt-4 flex items-center gap-3"><Icon className="h-6 w-6 text-primary" /><div><div className="text-xl font-bold">{value}</div><div className="text-xs text-muted-foreground">{label}</div></div></CardContent></Card>
-        ))}
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">Loges & Bâtiments</h1>
+          <p className="text-muted-foreground text-sm">Gestion des infrastructures d’hébergement</p>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 text-green-700"><span className="h-2 w-2 rounded-full bg-green-500" />Système actif</span>
+          <Button variant="ghost" size="sm">🔔 Notifs</Button>
+        </div>
       </div>
 
-      <Tabs defaultValue="batiments">
-        <TabsList>
+      <Tabs defaultValue="dashboard">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+          <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="batiments">Bâtiments</TabsTrigger>
           <TabsTrigger value="loges">Loges</TabsTrigger>
-          <TabsTrigger value="allocations">Allocations</TabsTrigger>
+          <TabsTrigger value="nouveau">+ Nouvelle</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="batiments" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={openB} onOpenChange={setOpenB}>
-              <DialogTrigger asChild><Button data-testid="button-add-batiment"><Plus className="h-4 w-4 mr-2" />Nouveau bâtiment</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Nouveau bâtiment</DialogTitle></DialogHeader>
-                <form onSubmit={e => { e.preventDefault(); createBatiment.mutate({ data: { ...batForm, superficie: batForm.superficie ? Number(batForm.superficie) : null, vocation: batForm.vocation || null } }, { onSuccess: () => { toast({ title: "Bâtiment créé" }); qc.invalidateQueries({ queryKey: getGetBatimentsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setOpenB(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label>Nom *</Label><Input value={batForm.nom} onChange={e => setBatForm(f => ({...f, nom: e.target.value}))} required /></div>
-                    <div className="space-y-1"><Label>Code *</Label><Input value={batForm.code} onChange={e => setBatForm(f => ({...f, code: e.target.value}))} required /></div>
-                    <div className="space-y-1"><Label>Vocation</Label><Input value={batForm.vocation} onChange={e => setBatForm(f => ({...f, vocation: e.target.value}))} /></div>
-                    <div className="space-y-1"><Label>Superficie (m²)</Label><Input type="number" value={batForm.superficie} onChange={e => setBatForm(f => ({...f, superficie: e.target.value}))} /></div>
-                  </div>
+        <TabsContent value="dashboard" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={batimentCount} label="Bâtiments" color="text-slate-700" />
+            <StatCard value={logeCount} label="Loges" color="text-slate-700" />
+            <StatCard value={animauxLoges} label="Animaux logés" color="text-green-600" />
+            <StatCard value={occupation} label="Taux occupation" color="text-indigo-600" />
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Aperçu par bâtiment</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loadingB ? (
+                <Skeleton className="h-20 w-full" />
+              ) : (batiments ?? []).length === 0 ? (
+                <div className="text-sm text-muted-foreground">Aucun bâtiment enregistré</div>
+              ) : (
+                (batiments ?? []).map((b) => {
+                  const totalLoges = (loges ?? []).filter((l) => l.batimentId === b.id).length;
+                  const totalAnimaux = (loges ?? []).filter((l) => l.batimentId === b.id).reduce((sum, l) => sum + l.occupe, 0);
+                  const taux = (loges ?? []).filter((l) => l.batimentId === b.id && l.capacite).reduce((sum, l) => sum + (l.occupe / (l.capacite || 1)) * 100, 0);
+                  const avgTaux = totalLoges > 0 ? Math.round(taux / totalLoges) : 0;
+                  return (
+                    <div key={b.id} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="font-semibold flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />{b.nom}</div>
+                        <div className="text-muted-foreground">{totalLoges} loges — {totalAnimaux} animaux</div>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-emerald-100 overflow-hidden">
+                        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(avgTaux, 100)}%` }} />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>{b.code}</span>
+                        <span>{avgTaux}% occupation</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="batiments" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/20">
+                  <tr>{["Nom", "Code", "Vocation", "Superficie"].map((h) => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {loadingB ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    : (batiments ?? []).length === 0 ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Aucun bâtiment</td></tr>
+                    : (batiments ?? []).map((b) => <tr key={b.id}><td className="px-4 py-2.5 font-medium">{b.nom}</td><td className="px-4 py-2.5">{b.code}</td><td className="px-4 py-2.5">{b.vocation ?? "—"}</td><td className="px-4 py-2.5">{b.superficie ?? "—"}</td></tr>)}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="loges" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/20">
+                  <tr>{["Nom", "Type", "Bâtiment", "Capacité", "Occupé", "Taux", "Statut"].map((h) => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {loadingL ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    : (loges ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucune loge</td></tr>
+                    : (loges ?? []).map((l) => {
+                      const pct = l.capacite && l.capacite > 0 ? (l.occupe / l.capacite) * 100 : 0;
+                      return <tr key={l.id}><td className="px-4 py-2.5 font-medium">{l.nom}</td><td className="px-4 py-2.5">{l.type}</td><td className="px-4 py-2.5">{l.batimentNom ?? "—"}</td><td className="px-4 py-2.5">{l.capacite ?? "—"}</td><td className="px-4 py-2.5">{l.occupe}</td><td className="px-4 py-2.5">{pct.toFixed(0)}%</td><td className="px-4 py-2.5"><span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">{l.statut}</span></td></tr>;
+                    })}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="nouveau" className="space-y-4 mt-4">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouveau bâtiment</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={e => { e.preventDefault(); createBatiment.mutate({ data: { ...batForm, superficie: batForm.superficie ? Number(batForm.superficie) : null, vocation: batForm.vocation || null } }, { onSuccess: () => { toast({ title: "Bâtiment créé" }); qc.invalidateQueries({ queryKey: getGetBatimentsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setBatForm({ nom: "", code: "", vocation: "", superficie: "" }); setOpenB(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                  <div className="space-y-1"><Label>Nom *</Label><Input value={batForm.nom} onChange={e => setBatForm(f => ({ ...f, nom: e.target.value }))} required /></div>
+                  <div className="space-y-1"><Label>Code *</Label><Input value={batForm.code} onChange={e => setBatForm(f => ({ ...f, code: e.target.value }))} required /></div>
+                  <div className="space-y-1"><Label>Vocation</Label><Input value={batForm.vocation} onChange={e => setBatForm(f => ({ ...f, vocation: e.target.value }))} /></div>
+                  <div className="space-y-1"><Label>Superficie (m²)</Label><Input type="number" value={batForm.superficie} onChange={e => setBatForm(f => ({ ...f, superficie: e.target.value }))} /></div>
                   <Button type="submit" className="w-full" disabled={createBatiment.isPending}>Créer</Button>
                 </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {loadingB ? Array.from({length: 2}).map((_, i) => <Card key={i}><CardContent className="pt-4"><Skeleton className="h-12 w-full" /></CardContent></Card>)
-              : batiments?.map(b => (
-              <Card key={b.id}>
-                <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4 text-primary" />{b.nom} <span className="text-sm font-normal text-muted-foreground">({b.code})</span></CardTitle></CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-1">
-                  {b.vocation && <div>Vocation: {b.vocation}</div>}
-                  {b.superficie && <div>Superficie: {b.superficie} m²</div>}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="loges" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={openL} onOpenChange={setOpenL}>
-              <DialogTrigger asChild><Button data-testid="button-add-loge"><Plus className="h-4 w-4 mr-2" />Nouvelle loge</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Nouvelle loge</DialogTitle></DialogHeader>
-                <form onSubmit={e => { e.preventDefault(); createLoge.mutate({ data: { nom: logeForm.nom, type: logeForm.type, batimentId: Number(logeForm.batimentId), capacite: logeForm.capacite ? Number(logeForm.capacite) : null, superficie: logeForm.superficie ? Number(logeForm.superficie) : null, statut: logeForm.statut, notes: logeForm.notes || null } }, { onSuccess: () => { toast({ title: "Loge créée" }); qc.invalidateQueries({ queryKey: getGetLogesQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setOpenL(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label>Nom *</Label><Input value={logeForm.nom} onChange={e => setLogeForm(f => ({...f, nom: e.target.value}))} required /></div>
-                    <div className="space-y-1"><Label>Type *</Label>
-                      <Select value={logeForm.type} onValueChange={v => setLogeForm(f => ({...f, type: v}))}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>{["Truies","Verrats","Porcelet","Engraissement","Nurserie","Quarantaine"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1"><Label>Bâtiment *</Label>
-                      <Select value={logeForm.batimentId} onValueChange={v => setLogeForm(f => ({...f, batimentId: v}))}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                        <SelectContent>{batiments?.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.nom}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1"><Label>Capacité</Label><Input type="number" value={logeForm.capacite} onChange={e => setLogeForm(f => ({...f, capacite: e.target.value}))} /></div>
-                  </div>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle loge</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={e => { e.preventDefault(); createLoge.mutate({ data: { nom: logeForm.nom, type: logeForm.type, batimentId: Number(logeForm.batimentId), capacite: logeForm.capacite ? Number(logeForm.capacite) : null, superficie: logeForm.superficie ? Number(logeForm.superficie) : null, statut: logeForm.statut, notes: logeForm.notes || null } }, { onSuccess: () => { toast({ title: "Loge créée" }); qc.invalidateQueries({ queryKey: getGetLogesQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setLogeForm({ nom: "", type: "Truies", batimentId: "", capacite: "", occupe: "0", superficie: "", statut: "Active", notes: "" }); setOpenL(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                  <div className="space-y-1"><Label>Nom *</Label><Input value={logeForm.nom} onChange={e => setLogeForm(f => ({ ...f, nom: e.target.value }))} required /></div>
+                  <div className="space-y-1"><Label>Type *</Label><Select value={logeForm.type} onValueChange={v => setLogeForm(f => ({ ...f, type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["Truies", "Verrats", "Porcelet", "Engraissement", "Nurserie", "Quarantaine"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-1"><Label>Bâtiment *</Label><Select value={logeForm.batimentId} onValueChange={v => setLogeForm(f => ({ ...f, batimentId: v }))}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{batiments?.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.nom}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-1"><Label>Capacité</Label><Input type="number" value={logeForm.capacite} onChange={e => setLogeForm(f => ({ ...f, capacite: e.target.value }))} /></div>
                   <Button type="submit" className="w-full" disabled={createLoge.isPending}>Créer</Button>
                 </form>
-              </DialogContent>
-            </Dialog>
-          </div>
-          <Card><CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/30"><tr>{["Nom","Type","Bâtiment","Capacité","Occupé","Taux","Statut"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
-              <tbody className="divide-y">
-                {loadingL ? <tr><td colSpan={7} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
-                  : loges?.map(l => {
-                    const pct = l.capacite && l.capacite > 0 ? (l.occupe / l.capacite) * 100 : 0;
-                    return <tr key={l.id} className="hover:bg-muted/20"><td className="px-4 py-3 font-medium">{l.nom}</td><td className="px-4 py-3">{l.type}</td><td className="px-4 py-3">{l.batimentNom ?? "—"}</td><td className="px-4 py-3">{l.capacite ?? "—"}</td><td className="px-4 py-3">{l.occupe}</td><td className="px-4 py-3"><span className={pct > 90 ? "text-red-600" : pct > 70 ? "text-amber-600" : "text-green-600"}>{pct.toFixed(0)}%</span></td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">{l.statut}</span></td></tr>;
-                  })}
-              </tbody>
-            </table>
-          </CardContent></Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
 
-        <TabsContent value="allocations" className="space-y-4">
-          <div className="flex justify-end">
-            <Dialog open={openA} onOpenChange={setOpenA}>
-              <DialogTrigger asChild><Button data-testid="button-add-allocation"><Plus className="h-4 w-4 mr-2" />Nouvelle allocation</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Nouvelle allocation</DialogTitle></DialogHeader>
-                <form onSubmit={e => { e.preventDefault(); createAllocation.mutate({ data: { date: allocForm.date, animalTag: allocForm.animalTag, logeId: Number(allocForm.logeId), raison: allocForm.raison || null } }, { onSuccess: () => { toast({ title: "Allocation créée" }); qc.invalidateQueries({ queryKey: getGetAllocationsQueryKey() }); setOpenA(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label>Tag animal *</Label><Input value={allocForm.animalTag} onChange={e => setAllocForm(f => ({...f, animalTag: e.target.value}))} required /></div>
-                    <div className="space-y-1"><Label>Date *</Label><Input type="date" value={allocForm.date} onChange={e => setAllocForm(f => ({...f, date: e.target.value}))} required /></div>
-                    <div className="space-y-1"><Label>Loge *</Label>
-                      <Select value={allocForm.logeId} onValueChange={v => setAllocForm(f => ({...f, logeId: v}))}>
-                        <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                        <SelectContent>{loges?.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.nom} ({l.batimentNom})</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1"><Label>Raison</Label><Input value={allocForm.raison} onChange={e => setAllocForm(f => ({...f, raison: e.target.value}))} /></div>
-                  </div>
+            <Card>
+              <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle allocation</CardTitle></CardHeader>
+              <CardContent>
+                <form onSubmit={e => { e.preventDefault(); createAllocation.mutate({ data: { date: allocForm.date, animalTag: allocForm.animalTag, logeId: Number(allocForm.logeId), raison: allocForm.raison || null } }, { onSuccess: () => { toast({ title: "Allocation créée" }); qc.invalidateQueries({ queryKey: getGetAllocationsQueryKey() }); setAllocForm({ date: new Date().toISOString().slice(0, 10), animalTag: "", logeId: "", raison: "" }); setOpenA(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                  <div className="space-y-1"><Label>Tag animal *</Label><Input value={allocForm.animalTag} onChange={e => setAllocForm(f => ({ ...f, animalTag: e.target.value }))} required /></div>
+                  <div className="space-y-1"><Label>Date *</Label><Input type="date" value={allocForm.date} onChange={e => setAllocForm(f => ({ ...f, date: e.target.value }))} required /></div>
+                  <div className="space-y-1"><Label>Loge *</Label><Select value={allocForm.logeId} onValueChange={v => setAllocForm(f => ({ ...f, logeId: v }))}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{loges?.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.nom} ({l.batimentNom})</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-1"><Label>Raison</Label><Input value={allocForm.raison} onChange={e => setAllocForm(f => ({ ...f, raison: e.target.value }))} /></div>
                   <Button type="submit" className="w-full" disabled={createAllocation.isPending}>Créer</Button>
                 </form>
-              </DialogContent>
-            </Dialog>
+              </CardContent>
+            </Card>
           </div>
-          <Card><CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/30"><tr>{["Date","Animal","Loge","Bâtiment","Raison"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
-              <tbody className="divide-y">
-                {loadingA ? <tr><td colSpan={5} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
-                  : allocations?.map(a => <tr key={a.id} className="hover:bg-muted/20"><td className="px-4 py-3">{a.date}</td><td className="px-4 py-3 font-mono">{a.animalTag}</td><td className="px-4 py-3">{a.logeNom ?? "—"}</td><td className="px-4 py-3">{a.batimentNom ?? "—"}</td><td className="px-4 py-3">{a.raison ?? "—"}</td></tr>)}
-              </tbody>
-            </table>
-          </CardContent></Card>
         </TabsContent>
       </Tabs>
     </div>
