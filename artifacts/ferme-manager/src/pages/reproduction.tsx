@@ -29,12 +29,14 @@ type LogeOption = {
 
 type PlanningItem = {
   id: number;
-  type: "loge" | "croisement" | "naissance";
+  type: "loge" | "croisement" | "naissance" | "sevrage" | "recroisement";
   date: string;
   truie: string;
   verrat: string;
   loge: string;
   porcelets?: number;
+  sevrageLe?: string;
+  recroisementLe?: string;
   notes?: string;
 };
 
@@ -91,6 +93,8 @@ export default function Reproduction() {
     verrat: "",
     loge: "",
     porcelets: "",
+    sevrageLe: "",
+    recroisementLe: "",
     notes: "",
   });
   const [planningFilter, setPlanningFilter] = useState("all");
@@ -172,12 +176,14 @@ export default function Reproduction() {
         verrat: planningForm.verrat || "—",
         loge: planningForm.loge,
         porcelets: planningForm.porcelets ? Number(planningForm.porcelets) : undefined,
+        sevrageLe: planningForm.sevrageLe || undefined,
+        recroisementLe: planningForm.recroisementLe || undefined,
         notes: planningForm.notes || undefined,
       },
       ...current,
     ]);
     toast({ title: "Planification enregistrée" });
-    setPlanningForm({ type: "loge", date: today, truie: "", verrat: "", loge: "", porcelets: "", notes: "" });
+    setPlanningForm({ type: "loge", date: today, truie: "", verrat: "", loge: "", porcelets: "", sevrageLe: "", recroisementLe: "", notes: "" });
   };
 
   const deletePlanning = (id: number) => {
@@ -316,6 +322,8 @@ export default function Reproduction() {
                       <SelectItem value="loge">Loge à assigner</SelectItem>
                       <SelectItem value="croisement">Croisement truie / verrat</SelectItem>
                       <SelectItem value="naissance">Naissance prévue</SelectItem>
+                      <SelectItem value="sevrage">Sevrage</SelectItem>
+                      <SelectItem value="recroisement">Recroisement</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -348,6 +356,24 @@ export default function Reproduction() {
                 <div className="space-y-1">
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Porcelets prévus</Label>
                   <Input type="number" min="0" value={planningForm.porcelets} onChange={(e) => setPlanningForm((f) => ({ ...f, porcelets: e.target.value }))} placeholder="12" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Date sevrage</Label>
+                  <Select value={planningForm.sevrageLe} onValueChange={(v) => setPlanningForm((f) => ({ ...f, sevrageLe: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                    <SelectContent>
+                      {futureDates.map((date) => <SelectItem key={date} value={date}>{date}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Date recroisement</Label>
+                  <Select value={planningForm.recroisementLe} onValueChange={(v) => setPlanningForm((f) => ({ ...f, recroisementLe: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir" /></SelectTrigger>
+                    <SelectContent>
+                      {futureDates.map((date) => <SelectItem key={date} value={date}>{date}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-1 md:col-span-3">
                   <Label className="text-xs uppercase tracking-wide text-muted-foreground">Notes</Label>
@@ -394,6 +420,10 @@ export default function Reproduction() {
                         <td className="px-4 py-2.5">{item.verrat}</td>
                         <td className="px-4 py-2.5">{item.loge}</td>
                         <td className="px-4 py-2.5">{item.porcelets ?? "—"}</td>
+                        <td className="px-4 py-2.5">
+                          <div>{item.sevrageLe ?? "—"}</div>
+                          <div className="text-xs text-muted-foreground">{item.recroisementLe ? `Recroisement: ${item.recroisementLe}` : ""}</div>
+                        </td>
                         <td className="px-4 py-2.5">{item.notes ?? "—"}</td>
                         <td className="px-4 py-2.5 text-right">
                           <Button variant="ghost" size="sm" onClick={() => deletePlanning(item.id)}>Supprimer</Button>
