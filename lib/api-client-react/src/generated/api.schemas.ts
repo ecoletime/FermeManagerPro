@@ -503,6 +503,26 @@ export interface CreateDepenseBody {
   date: string;
 }
 
+export interface Notification {
+  id: number;
+  utilisateur: string;
+  role: string;
+  module: string;
+  action: string;
+  detail: string;
+  lue: boolean;
+  createdAt: string;
+}
+
+export interface CreateNotificationBody {
+  utilisateur: string;
+  role?: string;
+  module: string;
+  action: string;
+  detail: string;
+  lue?: boolean;
+}
+
 export type BudgetStatsDepensesMensuellesItem = {
   mois: string;
   montant: number;
@@ -515,6 +535,27 @@ export interface BudgetStats {
   parCategorie: BudgetCategorie[];
   depensesMensuelles: BudgetStatsDepensesMensuellesItem[];
 }
+
+export type GetNotificationsParams = {
+  module?: string;
+  utilisateur?: string;
+  nonLues?: string;
+};
+
+export type MarkAllNotificationsLues200 = {
+  updated: number;
+};
+
+export type GetNotificationsStats200ParModuleItem = {
+  module: string;
+  count: number;
+};
+
+export type GetNotificationsStats200 = {
+  nonLues: number;
+  total: number;
+  parModule: GetNotificationsStats200ParModuleItem[];
+};
 
 export type GetAnimauxParams = {
   statut?: string;

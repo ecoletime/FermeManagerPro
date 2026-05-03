@@ -17,12 +17,13 @@ import {
   Clock,
   UserCog,
   Settings,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { useGetMaintenances } from "@workspace/api-client-react";
+import { useGetMaintenances, useGetNotificationsStats, getGetNotificationsStatsQueryKey } from "@workspace/api-client-react";
 import { getGetMaintenancesQueryKey } from "@workspace/api-client-react";
 
 type NavItem = {
@@ -48,7 +49,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { query: { enabled: true, queryKey: getGetMaintenancesQueryKey({ statut: "en_cours" }) } }
   );
 
+  const { data: notifStats } = useGetNotificationsStats({
+    query: { queryKey: getGetNotificationsStatsQueryKey(), refetchInterval: 30000 }
+  });
+
   const activeMaintenancesCount = maintenances?.length || 0;
+  const nonLuesCount = notifStats?.nonLues || 0;
   const hasAccess = (href: string) => role === "admin" || permissions.includes("all") || permissions.includes(href.replace("/", ""));
 
   const navSections: { title: string; items: NavItem[] }[] = [
@@ -86,6 +92,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
         ...(role === "admin" ? [{ href: "/utilisateurs", label: "Utilisateurs", icon: UserCog }] : []),
         ...(role === "admin" ? [{ href: "/systeme", label: "Paramètres système", icon: Settings }] : []),
+        { href: "/notifications", label: "Notifications", icon: Bell, badge: nonLuesCount },
       ].filter((item) => hasAccess(item.href)),
     },
   ];

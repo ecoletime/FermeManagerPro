@@ -32,6 +32,8 @@ tags:
     description: Budget management
   - name: dashboard
     description: Dashboard summary
+  - name: notifications
+    description: Activity log and notifications
 
 paths:
   /healthz:
@@ -46,6 +48,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── NOTIFICATIONS ──────────────────────────────────────────────────────────
+  /notifications:
+    get:
+      operationId: getNotifications
+      tags: [notifications]
+      summary: Get all notifications/activity log
+      parameters:
+        - in: query
+          name: module
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: utilisateur
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: nonLues
+          schema:
+            type: string
+          required: false
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+    post:
+      operationId: createNotification
+      tags: [notifications]
+      summary: Create a notification/log entry
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNotificationBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/{id}/lue:
+    patch:
+      operationId: markNotificationLue
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/tout-lire:
+    post:
+      operationId: markAllNotificationsLues
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: Done
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updated:
+                    type: integer
+                required: [updated]
+
+  /notifications/stats:
+    get:
+      operationId: getNotificationsStats
+      tags: [notifications]
+      summary: Get notification stats (unread count, modules)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonLues:
+                    type: integer
+                  total:
+                    type: integer
+                  parModule:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        module:
+                          type: string
+                        count:
+                          type: integer
+                      required: [module, count]
+                required: [nonLues, total, parModule]
 
   # ── DASHBOARD ──────────────────────────────────────────────────────────────
   /dashboard/summary:
@@ -2133,6 +2249,44 @@ components:
         date:
           type: string
       required: [categorieId, description, montant, date]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        utilisateur:
+          type: string
+        role:
+          type: string
+        module:
+          type: string
+        action:
+          type: string
+        detail:
+          type: string
+        lue:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, utilisateur, role, module, action, detail, lue, createdAt]
+
+    CreateNotificationBody:
+      type: object
+      properties:
+        utilisateur:
+          type: string
+        role:
+          type: string
+        module:
+          type: string
+        action:
+          type: string
+        detail:
+          type: string
+        lue:
+          type: boolean
+      required: [utilisateur, module, action, detail]
 
     BudgetStats:
       type: object

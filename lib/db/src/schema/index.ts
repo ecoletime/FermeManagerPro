@@ -8,3 +8,4 @@ export * from "./employes";
 export * from "./veterinaire";
 export * from "./fournisseurs";
 export * from "./budget";
+export * from "./notifications";

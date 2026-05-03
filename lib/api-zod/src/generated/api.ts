@@ -15,6 +15,78 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Get all notifications/activity log
+ */
+export const GetNotificationsQueryParams = zod.object({
+  module: zod.coerce.string().optional(),
+  utilisateur: zod.coerce.string().optional(),
+  nonLues: zod.coerce.string().optional(),
+});
+
+export const GetNotificationsResponseItem = zod.object({
+  id: zod.number(),
+  utilisateur: zod.string(),
+  role: zod.string(),
+  module: zod.string(),
+  action: zod.string(),
+  detail: zod.string(),
+  lue: zod.boolean(),
+  createdAt: zod.string(),
+});
+export const GetNotificationsResponse = zod.array(GetNotificationsResponseItem);
+
+/**
+ * @summary Create a notification/log entry
+ */
+export const CreateNotificationBody = zod.object({
+  utilisateur: zod.string(),
+  role: zod.string().optional(),
+  module: zod.string(),
+  action: zod.string(),
+  detail: zod.string(),
+  lue: zod.boolean().optional(),
+});
+
+/**
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationLueParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const MarkNotificationLueResponse = zod.object({
+  id: zod.number(),
+  utilisateur: zod.string(),
+  role: zod.string(),
+  module: zod.string(),
+  action: zod.string(),
+  detail: zod.string(),
+  lue: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Mark all notifications as read
+ */
+export const MarkAllNotificationsLuesResponse = zod.object({
+  updated: zod.number(),
+});
+
+/**
+ * @summary Get notification stats (unread count, modules)
+ */
+export const GetNotificationsStatsResponse = zod.object({
+  nonLues: zod.number(),
+  total: zod.number(),
+  parModule: zod.array(
+    zod.object({
+      module: zod.string(),
+      count: zod.number(),
+    }),
+  ),
+});
+
+/**
  * @summary Get dashboard summary stats
  */
 export const GetDashboardSummaryResponse = zod.object({
