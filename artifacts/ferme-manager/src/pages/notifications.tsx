@@ -129,7 +129,7 @@ export default function Notifications() {
   };
 
   const handleMarkAll = () => {
-    markAll.mutate({}, {
+    markAll.mutate(undefined, {
       onSuccess: (data) => {
         toast({ title: `${data.updated} notification(s) marquée(s) comme lues` });
         invalidate();
