@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
 const notificationTypeOptions = [
   { label: "Critiques", icon: "🚨" },
@@ -12,6 +13,20 @@ const notificationTypeOptions = [
   { label: "Infos", icon: "ℹ️" },
   { label: "Résumé quotidien", icon: "📊" },
   { label: "Succès", icon: "✅" },
+];
+
+const overviewStats = [
+  { value: "7", label: "Alertes critiques" },
+  { value: "12", label: "Stocks surveillés" },
+  { value: "98%", label: "Taux de livraison" },
+  { value: "7j", label: "Historique" },
+];
+
+const templateTypes = [
+  { label: "Alerte critique", color: "bg-red-100 text-red-700", title: "🚨 Alerte critique" },
+  { label: "Stock faible", color: "bg-amber-100 text-amber-700", title: "⚠️ Stock faible" },
+  { label: "Succès", color: "bg-green-100 text-green-700", title: "✅ Succès" },
+  { label: "Info", color: "bg-blue-100 text-blue-700", title: "ℹ️ Information" },
 ];
 
 const severityIconMap: Record<string, string> = {
@@ -160,6 +175,21 @@ const recipients = [
   { name: "Carla V.", email: "carta.v@ferme.com", role: "Responsable", active: true, types: ["Critiques", "Alertes", "Résumé quotidien"] },
 ];
 
+const rules = [
+  { label: "Stock critique", type: "critique", desc: "Alerte immédiate quand un stock passe sous le seuil.", active: true },
+  { label: "Stock faible", type: "alerte", desc: "Alerte quand un stock atteint le seuil.", active: true },
+  { label: "Animal malade", type: "alerte", desc: "Notification à chaque animal malade signalé.", active: true },
+  { label: "Décès d'un animal", type: "critique", desc: "Notification immédiate pour tout décès.", active: true },
+  { label: "Vaccin en retard", type: "alerte", desc: "Alerte si vaccin non administré à temps.", active: true },
+  { label: "Mise bas imminente", type: "alerte", desc: "Notification 24h avant une mise bas.", active: true },
+  { label: "Naissance de porcelets", type: "succès", desc: "Notification pour chaque naissance.", active: true },
+  { label: "Absence non justifiée", type: "alerte", desc: "Alerte si employé absent sans justification.", active: true },
+  { label: "Maintenance urgente", type: "critique", desc: "Alerte immédiate pour toute panne urgente.", active: true },
+  { label: "Budget dépassé", type: "critique", desc: "Alerte quand un poste budgétaire est dépassé.", active: true },
+  { label: "Visite vétérinaire imminente", type: "info", desc: "Rappel 48h avant une visite.", active: true },
+  { label: "Résumé quotidien", type: "info", desc: "Email récapitulatif automatique chaque matin.", active: true },
+];
+
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
     <Card>
@@ -184,6 +214,12 @@ export default function Notifications() {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {overviewStats.map((stat) => (
+          <StatCard key={stat.label} value={stat.value} label={stat.label} />
+        ))}
+      </div>
+
       <Tabs defaultValue="centre">
         <TabsList className="w-full justify-start gap-1 overflow-x-auto">
           <TabsTrigger value="centre">Centre de notif</TabsTrigger>
@@ -194,13 +230,6 @@ export default function Notifications() {
         </TabsList>
 
         <TabsContent value="centre" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard value="7" label="Non lues" />
-            <StatCard value="2" label="Critiques" />
-            <StatCard value="10" label="Emails envoyés" />
-            <StatCard value="2" label="Destinataires actifs" />
-          </div>
-
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <div className="text-sm text-muted-foreground">Type</div>
@@ -397,7 +426,37 @@ export default function Notifications() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="regles" className="mt-4">
+        <TabsContent value="regles" className="mt-4 space-y-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Règles de notification actives</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {rules.map((item) => (
+                <div key={item.label} className="flex items-center gap-4 px-4 py-3 border-b last:border-b-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm">{item.label}</span>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full ${
+                        item.type === "critique"
+                          ? "bg-red-100 text-red-700"
+                          : item.type === "alerte"
+                          ? "bg-amber-100 text-amber-700"
+                          : item.type === "succès"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}>
+                        {item.type}
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1">{item.desc}</div>
+                  </div>
+                  <Switch checked={item.active} />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
           <Card className="overflow-hidden">
             <CardHeader className="py-3 px-4 border-b">
               <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Seuils d’alerte — Stocks alimentaires</CardTitle>
@@ -459,10 +518,42 @@ export default function Notifications() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Templates d’emails</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {templateTypes.map((template) => (
+                <div key={template.label} className="rounded-lg border p-3 space-y-2">
+                  <div className={`inline-flex text-[11px] px-2 py-0.5 rounded-full ${template.color}`}>{template.label}</div>
+                  <div className="font-semibold text-sm">{template.title}</div>
+                  <div className="text-xs text-muted-foreground">Aperçu visuel du modèle d’email à envoyer.</div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Simulateur d’événements</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {["Naissance", "Panne", "Stock critique", "Absence", "Vaccin en retard", "Décès"].map((event) => (
+                  <Button key={event} variant="outline" className="justify-start">{event}</Button>
+                ))}
+              </div>
+              <div className="text-xs text-muted-foreground">Déclenche un événement en temps réel pour tester les notifications.</div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="simulateur" className="mt-4">
-          <Card><CardHeader><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Simulateur</CardTitle></CardHeader><CardContent className="p-4 text-sm text-muted-foreground">Simulateur à afficher ici.</CardContent></Card>
+          <Card>
+            <CardHeader><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Simulateur</CardTitle></CardHeader>
+            <CardContent className="p-4 text-sm text-muted-foreground">Le simulateur est désormais intégré dans l’onglet Règles & Seuils.</CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
