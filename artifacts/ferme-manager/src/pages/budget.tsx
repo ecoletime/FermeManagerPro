@@ -213,21 +213,6 @@ export default function Budget() {
 
         <TabsContent value="depenses" className="space-y-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">Dernières dépenses</CardTitle></CardHeader>
-            <CardContent className="p-0">
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
-                <tbody className="divide-y">
-                  {loadingD ? <tr><td colSpan={4} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
-                    : depensesList.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td></tr>)}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="previsionnel" className="space-y-4">
-          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Enregistrer une dépense</CardTitle>
             </CardHeader>
@@ -249,28 +234,15 @@ export default function Budget() {
                 </div>
                 <div className="space-y-2">
                   <Label>Montant (FCFA) *</Label>
-                  <Input
-                    type="number"
-                    placeholder="ex: 75000"
-                    value={expensePlanForm.montant}
-                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, montant: e.target.value }))}
-                  />
+                  <Input type="number" placeholder="ex: 75000" value={expensePlanForm.montant} onChange={(e) => setExpensePlanForm((f) => ({ ...f, montant: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Date *</Label>
-                  <Input
-                    type="date"
-                    value={expensePlanForm.date}
-                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, date: e.target.value }))}
-                  />
+                  <Input type="date" value={expensePlanForm.date} onChange={(e) => setExpensePlanForm((f) => ({ ...f, date: e.target.value }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Fournisseur</Label>
-                  <Input
-                    placeholder="ex: Agrinutrition Sa"
-                    value={expensePlanForm.fournisseur}
-                    onChange={(e) => setExpensePlanForm((f) => ({ ...f, fournisseur: e.target.value }))}
-                  />
+                  <Input placeholder="ex: Agrinutrition Sa" value={expensePlanForm.fournisseur} onChange={(e) => setExpensePlanForm((f) => ({ ...f, fournisseur: e.target.value }))} />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Paiement</Label>
@@ -289,6 +261,21 @@ export default function Budget() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader><CardTitle className="text-base">Dernières dépenses</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
+                <tbody className="divide-y">
+                  {loadingD ? <tr><td colSpan={4} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
+                    : depensesList.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td></tr>)}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="previsionnel" className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Créer un budget prévisionnel</CardTitle>
