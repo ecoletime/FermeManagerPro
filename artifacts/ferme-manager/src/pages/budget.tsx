@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   useGetBudgetCategories, getGetBudgetCategoriesQueryKey, useCreateBudgetCategorie,
   useGetDepenses, getGetDepensesQueryKey, useCreateDepense,
@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, Wallet, FileDown } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, FileDown, PiggyBank, Receipt, CalendarRange } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { exportBudgetPdf } from "@/lib/export-pdf";
 
@@ -33,6 +34,18 @@ export default function Budget() {
   const [openDep, setOpenDep] = useState(false);
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
+  const depensesList = depenses ?? [];
+  const recettes = useMemo(() => ([
+    { id: 1, date: "2026-05-01", source: "Vente porcelets", description: "Portée T-009", montant: 1200000 },
+    { id: 2, date: "2026-05-02", source: "Vente aliment", description: "Réassort externe", montant: 850000 },
+    { id: 3, date: "2026-05-03", source: "Subvention", description: "Aide mensuelle", montant: 1500000 },
+  ]), []);
+  const budgetPrevisionnel = useMemo(() => ([
+    { mois: "Jan", recettes: 2450000, depenses: 1980000 },
+    { mois: "Fév", recettes: 2320000, depenses: 2140000 },
+    { mois: "Mar", recettes: 2780000, depenses: 2190000 },
+    { mois: "Avr", recettes: 2600000, depenses: 2300000 },
+  ]), []);
 
   return (
     <div className="space-y-6">
@@ -91,55 +104,83 @@ export default function Budget() {
         </div>
       )}
 
-      {stats?.parCategorie && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Budget par catégorie</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {stats.parCategorie.map(cat => {
-              const pct = cat.budget > 0 ? Math.min((cat.depense / cat.budget) * 100, 100) : 0;
-              return (
-                <div key={cat.id} className="space-y-1">
-                  <div className="flex justify-between text-sm"><span className="font-medium">{cat.nom}</span><span className="text-muted-foreground">{fmt(cat.depense)} / {fmt(cat.budget)} FCFA</span></div>
-                  <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: cat.couleur ?? "#1A9E6F" }} />
-                  </div>
-                  <div className="text-xs text-right text-muted-foreground">{pct.toFixed(1)}% utilisé</div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="budget" className="space-y-4">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+          <TabsTrigger value="budget"><PiggyBank className="h-4 w-4 mr-2" />Budget</TabsTrigger>
+          <TabsTrigger value="recettes"><Receipt className="h-4 w-4 mr-2" />Recette</TabsTrigger>
+          <TabsTrigger value="depenses"><TrendingDown className="h-4 w-4 mr-2" />Dépense</TabsTrigger>
+          <TabsTrigger value="previsionnel"><CalendarRange className="h-4 w-4 mr-2" />Budget prévisionnel</TabsTrigger>
+        </TabsList>
 
-      {stats?.depensesMensuelles && stats.depensesMensuelles.length > 0 && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Dépenses mensuelles</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={stats.depensesMensuelles}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mois" />
-                <YAxis tickFormatter={v => `${Math.round(v/1000)}k`} />
-                <Tooltip formatter={(v: number) => [`${fmt(v)} FCFA`, "Dépenses"]} />
-                <Bar dataKey="montant" fill="#1A9E6F" radius={[4,4,0,0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="budget" className="space-y-4">
+          {stats?.parCategorie && (
+            <Card>
+              <CardHeader><CardTitle className="text-base">Budget par catégorie</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                {stats.parCategorie.map(cat => {
+                  const pct = cat.budget > 0 ? Math.min((cat.depense / cat.budget) * 100, 100) : 0;
+                  return (
+                    <div key={cat.id} className="space-y-1">
+                      <div className="flex justify-between text-sm"><span className="font-medium">{cat.nom}</span><span className="text-muted-foreground">{fmt(cat.depense)} / {fmt(cat.budget)} FCFA</span></div>
+                      <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: cat.couleur ?? "#1A9E6F" }} />
+                      </div>
+                      <div className="text-xs text-right text-muted-foreground">{pct.toFixed(1)}% utilisé</div>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">Dernières dépenses</CardTitle></CardHeader>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
-            <tbody className="divide-y">
-              {loadingD ? <tr><td colSpan={4} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
-                : depenses?.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td></tr>)}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+        <TabsContent value="recettes" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Recettes enregistrées</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30"><tr>{["Date", "Source", "Description", "Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
+                <tbody className="divide-y">
+                  {recettes.map(r => <tr key={r.id} className="hover:bg-muted/20"><td className="px-4 py-3">{r.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">{r.source}</span></td><td className="px-4 py-3">{r.description}</td><td className="px-4 py-3 font-medium">{fmt(r.montant)}</td></tr>)}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="depenses" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Dernières dépenses</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
+                <tbody className="divide-y">
+                  {loadingD ? <tr><td colSpan={4} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
+                    : depensesList.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td></tr>)}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="previsionnel" className="space-y-4">
+          <Card>
+            <CardHeader><CardTitle className="text-base">Budget prévisionnel</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={budgetPrevisionnel}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mois" />
+                  <YAxis tickFormatter={v => `${Math.round(v/1000)}k`} />
+                  <Tooltip formatter={(v: number) => [`${fmt(v)} FCFA`, "Montant"]} />
+                  <Bar dataKey="recettes" fill="#1A9E6F" radius={[4,4,0,0]} />
+                  <Bar dataKey="depenses" fill="#E11D48" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
