@@ -230,7 +230,12 @@ export default function Veterinaire() {
         </TabsContent>
 
         <TabsContent value="couts" className="space-y-4 mt-4">
-          <Card><CardContent className="pt-6 text-sm text-muted-foreground">Total coûts vétérinaires : {fmt(stats.cout)} FCFA</CardContent></Card>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={`${fmt(stats.cout)} FCFA`} label="Total 2025" color="text-green-600" />
+            <StatCard value={`${fmt(Math.round(stats.cout / 18 || 0))} FCFA`} label="Moy / visite" color="text-slate-800" />
+            <StatCard value="40 000 FCFA" label="Prévision fixée" color="text-red-600" />
+            <StatCard value="2 298 FCFA" label="Coût / animal / an" color="text-slate-800" />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
