@@ -198,10 +198,6 @@ export default function Login() {
                     <Input id="emp-username" placeholder="Nom d'utilisateur" value={empUsername} onChange={(e) => setEmpUsername(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="emp-email">E-mail</Label>
-                    <Input id="emp-email" placeholder="E-mail associé au compte" />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="emp-password">Mot de passe</Label>
                     <Input id="emp-password" type="password" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required />
                   </div>
