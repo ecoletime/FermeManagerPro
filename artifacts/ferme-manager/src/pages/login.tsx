@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 const USER_STORAGE_KEY = "ferme_utilisateurs";
 const RESET_CODE_KEY = "ferme_admin_reset_code";
 
+const API_BASE = `${import.meta.env.BASE_URL}api`;
+
 type ResetStep = "request" | "verify" | "password";
 
 function loadUsers() {
@@ -82,7 +84,7 @@ export default function Login() {
     setConfirmPassword("");
   };
 
-  const handleForgot = (e?: React.FormEvent) => {
+  const handleForgot = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!forgotUsername.trim()) {
       toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur admin" });
@@ -95,8 +97,19 @@ export default function Login() {
     }
     const code = generateCode();
     localStorage.setItem(RESET_CODE_KEY, JSON.stringify({ username: creds.username, code, expiresAt: Date.now() + 10 * 60 * 1000 }));
+    try {
+      const targetEmail = `${creds.username}@example.com`;
+      const response = await fetch(`${API_BASE}/auth/reset-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: targetEmail, code }),
+      });
+      if (!response.ok) throw new Error("email-failed");
+      toast({ title: "Code envoyé", description: `Le code a été envoyé à ${targetEmail}` });
+    } catch {
+      toast({ title: "Code généré", description: "L'envoi email a échoué, utilisez le code affiché dans le navigateur." });
+    }
     setResetStep("verify");
-    toast({ title: "Code envoyé", description: `Code à 5 chiffres généré pour ${creds.username}` });
   };
 
   const handleVerifyCode = (e?: React.FormEvent) => {
