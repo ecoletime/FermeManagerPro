@@ -175,11 +175,18 @@ const recipients = [
 ];
 
 const notificationTypeOptions = [
-  { label: "Critiques", icon: "🔴" },
+  { label: "Critiques", icon: "🚨" },
   { label: "Alertes", icon: "⚠️" },
   { label: "Infos", icon: "ℹ️" },
   { label: "Résumé quotidien", icon: "📊" },
 ];
+
+const severityIconMap: Record<string, string> = {
+  succès: "🟢",
+  alerte: "⚠️",
+  critique: "🔴",
+  urgence: "🚨",
+};
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
@@ -251,9 +258,7 @@ export default function Notifications() {
             <Button variant="destructive">Suppr. lues</Button>
           </div>
 
-          <Card className="bg-green-50 border-green-100"><CardContent className="p-4 flex items-start justify-between gap-4"><div><div className="font-semibold">Naissance — Truie #T-009 — 9 porcelets</div><div className="text-sm text-muted-foreground">Nouvelle portée née ce matin.</div><div className="text-xs text-muted-foreground mt-2">02/05/2026 21:32</div></div><div className="flex flex-col gap-2 shrink-0"><Button size="sm" className="bg-green-600 hover:bg-green-700">✓ Lu</Button><Button size="sm" variant="outline">Email</Button></div></CardContent></Card>
-
-          {notifications.slice(1).map((n) => (
+          {notifications.map((n) => (
             <Card key={n.title} className={n.color}>
               <CardContent className="p-4 flex items-start justify-between gap-4">
                 <div>
@@ -285,7 +290,7 @@ export default function Notifications() {
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">
                         <span className="text-muted-foreground font-medium">[FermeManager]</span> {" "}
-                        {n.severity === "succès" ? "🟢" : n.severity === "critique" ? "🔴" : n.severity === "urgence" ? "🚨" : "⚠️"} {" "}
+                        {severityIconMap[n.severity] ?? "ℹ️"}{" "}
                         {n.title}
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
@@ -408,7 +413,7 @@ export default function Notifications() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {recipient.types.map((type) => (
                           <span key={type} className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                            {notificationTypeOptions.find((option) => option.label === type)?.icon} {type}
+                        {notificationTypeOptions.find((option) => option.label === type)?.icon} {type}
                           </span>
                         ))}
                       </div>
