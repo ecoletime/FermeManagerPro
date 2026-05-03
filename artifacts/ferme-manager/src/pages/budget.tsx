@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, TrendingUp, TrendingDown, Wallet, FileDown, PiggyBank, Receipt, CalendarRange } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Wallet, FileDown, PiggyBank, Receipt, CalendarRange, Pencil, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { exportBudgetPdf } from "@/lib/export-pdf";
 
@@ -31,6 +31,11 @@ export default function Budget() {
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
   const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  const [plans, setPlans] = useState([
+    { id: 1, poste: "Alimentation", budget: 2000000, periode: "Mensuel", mois: "Mai 2025", avancement: 72 },
+    { id: 2, poste: "Maintenance", budget: 750000, periode: "Semestriel", mois: "Juin 2025", avancement: 45 },
+    { id: 3, poste: "Santé", budget: 500000, periode: "Mensuel", mois: "Mai 2025", avancement: 28 },
+  ]);
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
 
@@ -47,6 +52,22 @@ export default function Budget() {
     { mois: "Mar", recettes: 2780000, depenses: 2190000 },
     { mois: "Avr", recettes: 2600000, depenses: 2300000 },
   ]), []);
+
+  const addPlan = () => {
+    if (!planForm.poste || !planForm.budget) return;
+    setPlans((current) => [
+      {
+        id: Date.now(),
+        poste: planForm.poste,
+        budget: Number(planForm.budget),
+        periode: planForm.periode.charAt(0).toUpperCase() + planForm.periode.slice(1),
+        mois: planForm.mois,
+        avancement: 0,
+      },
+      ...current,
+    ]);
+    setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  };
 
   return (
     <div className="space-y-6">
@@ -223,7 +244,44 @@ export default function Budget() {
                   </Select>
                 </div>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700">Ajouter au plan</Button>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlan}>Ajouter au plan</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-base">Plans en cours</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {plans.map((plan) => (
+                <div key={plan.id} className="rounded-lg border p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-semibold">{plan.poste}</div>
+                      <div className="text-xs text-muted-foreground">{plan.periode} • {plan.mois}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold">{fmt(plan.budget)} FCFA</div>
+                      <div className="text-xs text-muted-foreground">{plan.avancement}% avancé</div>
+                    </div>
+                  </div>
+                  <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+                    <div className="h-full rounded-full bg-green-600" style={{ width: `${plan.avancement}%` }} />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setPlanForm({ poste: plan.poste.toLowerCase(), budget: String(plan.budget), periode: plan.periode.toLowerCase(), mois: plan.mois })}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setPlans((current) => current.filter((item) => item.id !== plan.id))}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 
