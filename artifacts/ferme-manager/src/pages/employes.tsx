@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Bell, CheckCircle, Clock3, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, Clock3, Plus, Trash2 } from "lucide-react";
 
 type EmployeForm = {
   nom: string;
@@ -22,6 +22,11 @@ type EmployeForm = {
   dateEmbauche: string;
   statut: string;
   salaire: string;
+};
+
+type PointageForm = {
+  employeId: string;
+  dateHeure: string;
 };
 
 const statutBadge: Record<string, string> = {
@@ -40,6 +45,11 @@ const initForm: EmployeForm = {
   salaire: "",
 };
 
+const initPointage: PointageForm = {
+  employeId: "",
+  dateHeure: new Date().toISOString().slice(0, 16),
+};
+
 function StatCard({ value, label, color }: { value: number | string; label: string; color: string }) {
   return (
     <Card>
@@ -51,11 +61,20 @@ function StatCard({ value, label, color }: { value: number | string; label: stri
   );
 }
 
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
 export default function Employes() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<EmployeForm>({ ...initForm });
+  const [pointage, setPointage] = useState<PointageForm>({ ...initPointage });
+  const [pointages, setPointages] = useState<Array<{ id: number; employeId: string; type: "arrivee" | "depart"; dateHeure: string }>>([]);
 
   const { data: employes, isLoading } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createEmploye = useCreateEmploye();
@@ -104,6 +123,16 @@ export default function Employes() {
     }
   };
 
+  const enregistrerPointage = (type: "arrivee" | "depart") => {
+    if (!pointage.employeId) {
+      toast({ variant: "destructive", title: "Choisissez un employé" });
+      return;
+    }
+    const dateHeure = pointage.dateHeure || new Date().toISOString().slice(0, 16);
+    setPointages((current) => [{ id: Date.now(), employeId: pointage.employeId, type, dateHeure }, ...current]);
+    toast({ title: type === "arrivee" ? "Arrivée enregistrée" : "Départ enregistré", description: formatDateTime(dateHeure) });
+  };
+
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
   const total = employes?.length ?? 0;
   const presents = employes?.filter(e => e.statut === "Actif").length ?? 0;
@@ -148,23 +177,23 @@ export default function Employes() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label>Employé *</Label>
-                  <Select value={form.nom || "all"} onValueChange={v => setForm(f => ({ ...f, nom: v === "all" ? "" : v }))}>
+                  <Select value={pointage.employeId} onValueChange={(v) => setPointage((f) => ({ ...f, employeId: v }))}>
                     <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
                     <SelectContent>
-                      {employes?.map(e => <SelectItem key={e.id} value={e.nom}>{e.nom} — {e.poste}</SelectItem>)}
+                      {employes?.map(e => <SelectItem key={e.id} value={String(e.id)}>{e.nom} — {e.poste}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label>Heure (vide = maintenant)</Label>
-                  <Input value={form.dateEmbauche} onChange={e => setForm(f => ({ ...f, dateEmbauche: e.target.value }))} placeholder="--:--" />
+                  <Label>Date / heure</Label>
+                  <Input type="datetime-local" value={pointage.dateHeure} onChange={(e) => setPointage((f) => ({ ...f, dateHeure: e.target.value }))} />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Button type="button" className="w-full bg-green-600 hover:bg-green-700" onClick={() => toast({ title: "Arrivée enregistrée" })}>
+                <Button type="button" className="w-full bg-green-600 hover:bg-green-700" onClick={() => enregistrerPointage("arrivee")}>
                   <CheckCircle className="mr-2 h-4 w-4" /> Arrivée
                 </Button>
-                <Button type="button" className="w-full bg-red-600 hover:bg-red-700" onClick={() => toast({ title: "Départ enregistré" })}>
+                <Button type="button" className="w-full bg-red-600 hover:bg-red-700" onClick={() => enregistrerPointage("depart")}>
                   <Clock3 className="mr-2 h-4 w-4" /> Départ
                 </Button>
               </div>
@@ -173,26 +202,28 @@ export default function Employes() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointage du jour</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointages récents</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
                   <tr>
-                    {['Employé', 'Poste', 'Arrivée', 'Départ', 'Heures', 'Statut'].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
+                    {['Employé', 'Type', 'Date / heure'].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : employes?.map(e => (
-                    <tr key={e.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium">{e.nom}</td>
-                      <td className="px-4 py-3">{e.poste}</td>
-                      <td className="px-4 py-3">{e.dateEmbauche ?? '—'}</td>
-                      <td className="px-4 py-3">—</td>
-                      <td className="px-4 py-3">—</td>
-                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[e.statut] ?? 'bg-gray-100 text-gray-800'}`}>{e.statut}</span></td>
-                    </tr>
-                  ))}
+                  {pointages.length === 0 ? (
+                    <tr><td colSpan={3} className="px-4 py-4 text-muted-foreground">Aucun pointage enregistré</td></tr>
+                  ) : pointages.map((p) => {
+                    const employe = employes?.find((e) => String(e.id) === p.employeId);
+                    return (
+                      <tr key={p.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 font-medium">{employe?.nom ?? "—"}</td>
+                        <td className="px-4 py-3">{p.type === "arrivee" ? "Arrivée" : "Départ"}</td>
+                        <td className="px-4 py-3">{formatDateTime(p.dateHeure)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </CardContent>
@@ -221,11 +252,11 @@ export default function Employes() {
                 </div>
                 <div className="space-y-1">
                   <Label>Heure prévue</Label>
-                  <Input defaultValue="06:00 AM" />
+                  <Input type="time" defaultValue="06:00" />
                 </div>
                 <div className="space-y-1">
                   <Label>Heure réelle</Label>
-                  <Input placeholder="--:-- --" />
+                  <Input type="time" />
                 </div>
                 <div className="space-y-1">
                   <Label>Motif</Label>
