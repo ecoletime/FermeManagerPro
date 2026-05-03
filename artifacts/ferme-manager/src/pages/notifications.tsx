@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 const notifications = [
   { title: "Naissance — Truie #T-009 — 9 porcelets", desc: "Nouvelle portée née ce matin.", time: "02/05/2026 21:32", severity: "succès", color: "bg-green-100", text: "text-green-900" },
@@ -12,6 +14,20 @@ const notifications = [
   { title: "Stock critique — Aliment Maternité (45 kg)", desc: "Le stock a atteint un seuil critique.", time: "02/05/2026 17:20", severity: "critique", color: "bg-pink-100", text: "text-pink-900" },
   { title: "Vaccin en retard — #P-108 — PRRS", desc: "Le vaccin PRRS est en retard de 3 jours.", time: "02/05/2026 16:58", severity: "alerte", color: "bg-yellow-100", text: "text-yellow-900" },
 ];
+
+const emailPreview = {
+  subject: "Animal malade — #P-108 — Fièvre 40.8°C",
+  from: "noreply@fermamanager.pro",
+  to: ["admin@ferme.com", "carta.v@ferme.com"],
+  body: "L’animal #P-108 — Fièvre 40.8°C a été signalé malade.",
+  stock: [
+    { label: "Croissance 1", value: "120 kg", level: "good", width: "100%" },
+    { label: "Croissance 2", value: "85 kg", level: "bad", width: "34%" },
+    { label: "Croissance 3", value: "250 kg", level: "good", width: "87%" },
+    { label: "Maternité", value: "45 kg", level: "bad", width: "26%" },
+    { label: "Gestation", value: "180 kg", level: "good", width: "100%" },
+  ],
+};
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
@@ -126,7 +142,47 @@ export default function Notifications() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-xs text-green-700">● Envoyé</span>
-                    <Button size="sm" variant="outline" className="h-7 px-3">Voir</Button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="outline" className="h-7 px-3">Voir</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogTitle className="text-base font-semibold">
+                          Email — {emailPreview.subject}
+                        </DialogTitle>
+                        <div className="rounded-t-lg overflow-hidden border mt-2">
+                          <div className="bg-amber-700 text-white px-4 py-3 text-sm">
+                            <div className="text-[11px] opacity-90">
+                              De : {emailPreview.from} | À : {emailPreview.to.join(", ")}
+                            </div>
+                            <div className="font-semibold mt-1">{emailPreview.subject}</div>
+                          </div>
+                          <div className="bg-white p-5 space-y-4">
+                            <div className="text-sm font-semibold text-amber-700">🩺 {emailPreview.subject}</div>
+                            <p className="text-sm text-slate-700">{emailPreview.body}</p>
+                            <div className="rounded-lg bg-stone-100 p-4">
+                              <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">État des stocks</div>
+                              <div className="mt-3 space-y-3">
+                                {emailPreview.stock.map((item) => (
+                                  <div key={item.label} className="space-y-1">
+                                    <div className="flex items-center justify-between text-sm">
+                                      <span>{item.label}</span>
+                                      <span className={item.level === "good" ? "text-green-700 font-semibold" : "text-red-600 font-semibold"}>{item.value}</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-neutral-200 overflow-hidden">
+                                      <div
+                                        className={`h-full rounded-full ${item.level === "good" ? "bg-green-600" : "bg-red-500"}`}
+                                        style={{ width: item.width }}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               ))}
