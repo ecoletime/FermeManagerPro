@@ -236,23 +236,23 @@ export default function Reproduction() {
         {/* ── ALERTES ── */}
         <TabsContent value="alertes" className="space-y-2 mt-4">
           {imminentes.map(a => (
-            <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-red-50 border border-red-200 text-red-800 text-sm">
-              <span className="text-base">🔴</span>
-              <span>Mise bas imminente — <strong>{a.truie}</strong> (aujourd'hui ou dépassée)</span>
+            <div key={a.id} className="flex items-start gap-3 px-4 py-3 rounded-md bg-red-50 border border-red-200 text-red-900 text-sm">
+              <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white">!</span>
+              <span className="leading-5">Mise bas imminente — <strong>{a.truie}</strong> (aujourd'hui ou dépassée)</span>
             </div>
           ))}
           {proches.map(a => (
-            <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-              <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>Mise bas proche — <strong>{a.truie}</strong> dans {joursRestants(a.dateMiseBasPrevue!)} jours</span>
+            <div key={a.id} className="flex items-start gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-300 text-amber-950 text-sm">
+              <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-[10px] font-bold text-white">!</span>
+              <span className="leading-5">Mise bas proche — <strong>{a.truie}</strong> dans {joursRestants(a.dateMiseBasPrevue!)} jours</span>
             </div>
           ))}
           {sevragesDus.map(n => {
             const age = Math.floor((new Date(today).getTime() - new Date(n.date).getTime()) / 86400000);
             return (
-              <div key={n.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                <AlertTriangle className="h-4 w-4 shrink-0" />
-                <span>Sevrage dû — portée <strong>{n.mere}</strong> ({age} jours accomplis)</span>
+              <div key={n.id} className="flex items-start gap-3 px-4 py-3 rounded-md bg-amber-50 border border-amber-300 text-amber-950 text-sm">
+                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-600 text-[10px] font-bold text-white">!</span>
+                <span className="leading-5">Sevrage dû — portée <strong>{n.mere}</strong> ({age} jours accomplis)</span>
               </div>
             );
           })}
@@ -260,16 +260,16 @@ export default function Reproduction() {
             const j = joursRestants(a.dateMiseBasPrevue!);
             const ageGestation = 114 - j;
             return (
-              <div key={a.id} className="flex items-center gap-3 px-4 py-3 rounded-md bg-green-50 border border-green-200 text-green-800 text-sm">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>Gestation confirmée — <strong>{a.truie}</strong> ({ageGestation > 0 ? ageGestation : "?"} jours)</span>
+              <div key={a.id} className="flex items-start gap-3 px-4 py-3 rounded-md bg-green-50 border border-green-300 text-green-950 text-sm">
+                <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white">✓</span>
+                <span className="leading-5">Gestation confirmée — <strong>{a.truie}</strong> ({ageGestation > 0 ? ageGestation : "?"} jours)</span>
               </div>
             );
           })}
           {imminentes.length === 0 && proches.length === 0 && sevragesDus.length === 0 && gestantes.length === 0 && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-md bg-muted/40 border text-muted-foreground text-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              <span>Aucune alerte active pour le moment</span>
+            <div className="flex items-start gap-3 px-4 py-3 rounded-md bg-muted/40 border text-foreground text-sm">
+              <span className="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[10px] font-bold text-white">i</span>
+              <span className="leading-5">Aucune alerte active pour le moment</span>
             </div>
           )}
 
