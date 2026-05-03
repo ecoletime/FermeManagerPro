@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
@@ -154,6 +156,23 @@ const emailPreview = {
 };
 
 const getEmailPreview = (notification: (typeof notifications)[number]) => notification.email;
+
+const recipients = [
+  {
+    name: "Administrateur",
+    email: "admin@ferme.com",
+    role: "Admin principal",
+    active: true,
+    types: ["Critiques", "Alertes", "Résumé"],
+  },
+  {
+    name: "Carla V.",
+    email: "carta.v@ferme.com",
+    role: "Employée",
+    active: true,
+    types: ["Critiques", "Alertes", "Résumé"],
+  },
+];
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
@@ -322,8 +341,81 @@ export default function Notifications() {
           </div>
         </TabsContent>
 
-        <TabsContent value="destinataires" className="mt-4">
-          <Card><CardHeader><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Destinataires</CardTitle></CardHeader><CardContent className="p-4 text-sm text-muted-foreground">Destinataires à afficher ici.</CardContent></Card>
+        <TabsContent value="destinataires" className="space-y-4 mt-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Ajouter un destinataire</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nom complet *</Label>
+                  <Input placeholder="ex: Jean-Pierre Dupont" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input placeholder="ex: admin@ferme.com" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Rôle</Label>
+                <Select defaultValue="admin">
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin principal</SelectItem>
+                    <SelectItem value="employe">Employé</SelectItem>
+                    <SelectItem value="veterinaire">Vétérinaire</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Types de notifications à recevoir</Label>
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {["Critiques", "Alertes", "Infos", "Résumé quotidien"].map((item) => (
+                    <label key={item} className="flex items-center gap-2">
+                      <input type="checkbox" defaultChecked={item !== "Infos"} />
+                      <span>{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <Button className="w-full bg-green-600 hover:bg-green-700">Ajouter le destinataire</Button>
+            </CardContent>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Destinataires enregistrés</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {recipients.map((recipient) => (
+                <div key={recipient.email} className="flex items-center justify-between gap-4 px-4 py-3 border-b last:border-b-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
+                      {recipient.name[0]}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{recipient.name}</div>
+                      <div className="text-xs text-muted-foreground">{recipient.email}</div>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {recipient.types.map((type) => (
+                          <span key={type} className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                            {type}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold ${recipient.active ? "text-green-700" : "text-muted-foreground"}`}>
+                      {recipient.active ? "Actif" : "Inactif"}
+                    </span>
+                    <Button size="sm" variant="outline" className="h-7 px-3">Désact.</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="regles" className="mt-4">
