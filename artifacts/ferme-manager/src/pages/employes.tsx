@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Clock3, Plus, Trash2 } from "lucide-react";
@@ -88,6 +89,12 @@ function buildNextDays(count: number) {
   });
 }
 
+function formatDay(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
 export default function Employes() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -105,6 +112,9 @@ export default function Employes() {
   const [scheduleEntries, setScheduleEntries] = useState<ScheduleEntry[]>([]);
   const [scheduleForm, setScheduleForm] = useState({ employeId: "", day: scheduleDays[0] ?? "", taskId: "1" });
   const [scheduleFilters, setScheduleFilters] = useState({ day: "all", employeId: "all", taskId: "all" });
+  const [scheduleCalendarMonth, setScheduleCalendarMonth] = useState<Date>(new Date());
+  const [scheduleCalendarOpen, setScheduleCalendarOpen] = useState(false);
+  const [filterCalendarOpen, setFilterCalendarOpen] = useState(false);
 
   const { data: employes, isLoading } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createEmploye = useCreateEmploye();
@@ -381,13 +391,27 @@ export default function Employes() {
               <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Filtres d’affichage</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <Select value={scheduleFilters.day} onValueChange={(v) => setScheduleFilters((f) => ({ ...f, day: v }))}>
-                <SelectTrigger><SelectValue placeholder="Filtrer par jour" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous les jours</SelectItem>
-                  {scheduleDays.map((day) => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Filtrer par jour</Label>
+                <Button type="button" variant="outline" className="w-full justify-start font-normal" onClick={() => setFilterCalendarOpen((v) => !v)}>
+                  {scheduleFilters.day === "all" ? "Tous les jours" : formatDay(scheduleFilters.day)}
+                </Button>
+                {filterCalendarOpen && (
+                  <div className="rounded-md border bg-background p-2">
+                    <Calendar
+                      mode="single"
+                      month={scheduleCalendarMonth}
+                      onMonthChange={setScheduleCalendarMonth}
+                      selected={scheduleFilters.day === "all" ? undefined : new Date(scheduleFilters.day)}
+                      onSelect={(date) => {
+                        if (!date) return;
+                        setScheduleFilters((f) => ({ ...f, day: date.toISOString().slice(0, 10) }));
+                        setFilterCalendarOpen(false);
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
               <Select value={scheduleFilters.employeId} onValueChange={(v) => setScheduleFilters((f) => ({ ...f, employeId: v }))}>
                 <SelectTrigger><SelectValue placeholder="Filtrer par employé" /></SelectTrigger>
                 <SelectContent>
@@ -422,12 +446,24 @@ export default function Employes() {
                 </div>
                 <div className="space-y-1">
                   <Label>Jour</Label>
-                  <Select value={scheduleForm.day} onValueChange={(v) => setScheduleForm((f) => ({ ...f, day: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Choisir un jour" /></SelectTrigger>
-                    <SelectContent>
-                      {scheduleDays.map((day) => <SelectItem key={day} value={day}>{day}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Button type="button" variant="outline" className="w-full justify-start font-normal" onClick={() => setScheduleCalendarOpen((v) => !v)}>
+                    {formatDay(scheduleForm.day)}
+                  </Button>
+                  {scheduleCalendarOpen && (
+                    <div className="rounded-md border bg-background p-2">
+                      <Calendar
+                        mode="single"
+                        month={scheduleCalendarMonth}
+                        onMonthChange={setScheduleCalendarMonth}
+                        selected={new Date(scheduleForm.day)}
+                        onSelect={(date) => {
+                          if (!date) return;
+                          setScheduleForm((f) => ({ ...f, day: date.toISOString().slice(0, 10) }));
+                          setScheduleCalendarOpen(false);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <Label>Tâche</Label>
