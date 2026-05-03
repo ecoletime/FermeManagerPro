@@ -30,6 +30,7 @@ export default function Budget() {
 
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
+  const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
 
@@ -164,6 +165,67 @@ export default function Budget() {
         </TabsContent>
 
         <TabsContent value="previsionnel" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Créer un budget prévisionnel</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Poste *</Label>
+                  <Select value={planForm.poste} onValueChange={(value) => setPlanForm((f) => ({ ...f, poste: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Alimentation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="alimentation">Alimentation</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="sante">Santé</SelectItem>
+                      <SelectItem value="salaires">Salaires</SelectItem>
+                      <SelectItem value="logistique">Logistique</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Budget (FCFA) *</Label>
+                  <Input
+                    type="number"
+                    placeholder="ex: 2000000"
+                    value={planForm.budget}
+                    onChange={(e) => setPlanForm((f) => ({ ...f, budget: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Période</Label>
+                  <Select value={planForm.periode} onValueChange={(value) => setPlanForm((f) => ({ ...f, periode: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="mensuel">Mensuel</SelectItem>
+                      <SelectItem value="trimestriel">Trimestriel</SelectItem>
+                      <SelectItem value="annuel">Annuel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Mois</Label>
+                  <Select value={planForm.mois} onValueChange={(value) => setPlanForm((f) => ({ ...f, mois: value }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Jan 2025","Fév 2025","Mar 2025","Avr 2025","Mai 2025","Juin 2025","Juil 2025","Août 2025","Sept 2025","Oct 2025","Nov 2025","Déc 2025"].map((month) => (
+                        <SelectItem key={month} value={month}>{month}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Ajouter au plan</Button>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader><CardTitle className="text-base">Budget prévisionnel</CardTitle></CardHeader>
             <CardContent>
