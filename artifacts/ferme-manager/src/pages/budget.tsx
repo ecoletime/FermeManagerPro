@@ -261,7 +261,7 @@ export default function Budget() {
             <CardHeader><CardTitle className="text-base">Recettes enregistrées</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30"><tr>{["Date", "Source", "Description", "Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
+                <thead className="border-b bg-muted/30"><tr>{["Date", "Source", "Référence", "Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
                   {recettesList.map(r => <tr key={r.id} className="hover:bg-muted/20"><td className="px-4 py-3">{r.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">{r.source}</span></td><td className="px-4 py-3">{r.reference}</td><td className="px-4 py-3 font-medium">{fmt(r.montant)}</td></tr>)}
                 </tbody>
