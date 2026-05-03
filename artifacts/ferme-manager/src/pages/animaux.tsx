@@ -372,7 +372,7 @@ export default function Animaux() {
                   <Label>Type</Label>
                   <Select defaultValue="Vente">
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{["Vente", "Décès", "Consommation", "Abattage"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Vente", "Décès", "Consommation", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">
