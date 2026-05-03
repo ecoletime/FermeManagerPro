@@ -3,6 +3,7 @@ import {
   useGetBudgetCategories, getGetBudgetCategoriesQueryKey, useCreateBudgetCategorie,
   useGetDepenses, getGetDepensesQueryKey, useCreateDepense,
   useGetBudgetStats, getGetBudgetStatsQueryKey,
+  useGetFournisseurs, getGetFournisseursQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ export default function Budget() {
   const { data: stats, isLoading: loadingStats } = useGetBudgetStats({ query: { queryKey: getGetBudgetStatsQueryKey() } });
   const { data: categories } = useGetBudgetCategories({ query: { queryKey: getGetBudgetCategoriesQueryKey() } });
   const { data: depenses, isLoading: loadingD } = useGetDepenses({ query: { queryKey: getGetDepensesQueryKey() } });
+  const { data: fournisseurs } = useGetFournisseurs({ query: { queryKey: getGetFournisseursQueryKey() } });
 
   const createCategorie = useCreateBudgetCategorie();
   const createDepense = useCreateDepense();
@@ -31,7 +33,7 @@ export default function Budget() {
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
   const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
-  const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseur: "", paiement: "paye" });
+  const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
   const [plans, setPlans] = useState([
     { id: 1, poste: "Alimentation", budget: 2000000, periode: "Mensuel", mois: "Mai 2025", avancement: 72 },
     { id: 2, poste: "Maintenance", budget: 750000, periode: "Semestriel", mois: "Juin 2025", avancement: 45 },
@@ -95,7 +97,7 @@ export default function Budget() {
       },
       ...current,
     ]);
-    setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseur: "", paiement: "paye" });
+    setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
   };
 
   const editPlan = (id: number) => {
@@ -244,7 +246,19 @@ export default function Budget() {
                 </div>
                 <div className="space-y-2">
                   <Label>Fournisseur</Label>
-                  <Input placeholder="ex: Agrinutrition Sa" value={expensePlanForm.fournisseur} onChange={(e) => setExpensePlanForm((f) => ({ ...f, fournisseur: e.target.value }))} />
+                  <Select value={expensePlanForm.fournisseurId} onValueChange={(value) => {
+                    const fournisseur = fournisseurs?.find((item) => String(item.id) === value)?.nom ?? "";
+                    setExpensePlanForm((f) => ({ ...f, fournisseurId: value, fournisseur }));
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir un fournisseur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(fournisseurs ?? []).map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>{item.nom}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Paiement</Label>
