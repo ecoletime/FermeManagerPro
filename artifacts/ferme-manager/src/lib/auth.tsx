@@ -13,6 +13,7 @@ interface AuthState {
 }
 
 const AUTH_KEY = "ferme_auth";
+const SETTINGS_KEY = "ferme_system_settings";
 
 function loadAuth(): { isLoggedIn: boolean; role: Role; permissions: Permissions } {
   try {
@@ -31,10 +32,21 @@ function loadAuth(): { isLoggedIn: boolean; role: Role; permissions: Permissions
   return { isLoggedIn: false, role: null, permissions: [] };
 }
 
+function applySavedTheme() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    document.documentElement.classList.toggle("dark", Boolean(parsed.darkMode));
+  } catch {
+  }
+}
+
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const initial = loadAuth();
+  applySavedTheme();
   const [isLoggedIn, setIsLoggedIn] = useState(initial.isLoggedIn);
   const [role, setRole] = useState<Role>(initial.role);
   const [permissions, setPermissions] = useState<Permissions>(initial.permissions);
