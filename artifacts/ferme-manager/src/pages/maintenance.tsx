@@ -107,6 +107,18 @@ export default function Maintenance() {
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
   const tasksList = tasks ?? [];
+  const finishTask = (id: number) => {
+    deleteTask.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast({ title: "Tâche terminée" });
+          invalidate();
+        },
+        onError: () => toast({ variant: "destructive", title: "Erreur" }),
+      },
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -210,12 +222,21 @@ export default function Maintenance() {
                         <Button
                           size="sm"
                           className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => finishTask(t.id)}
+                        >
+                          <CheckCircle className="mr-1 h-4 w-4" />
+                          Terminer tâche
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
                           onClick={() => {
+                            if (!confirm("Supprimer cette tâche ?")) return;
                             deleteTask.mutate(
                               { id: t.id },
                               {
                                 onSuccess: () => {
-                                  toast({ title: "Tâche terminée et envoyée à la corbeille" });
+                                  toast({ title: "Envoyée à la corbeille" });
                                   invalidate();
                                 },
                                 onError: () => toast({ variant: "destructive", title: "Erreur" }),
@@ -223,11 +244,8 @@ export default function Maintenance() {
                             );
                           }}
                         >
-                          <CheckCircle className="mr-1 h-4 w-4" />
-                          Terminer et corbeille
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => { if (!confirm("Supprimer cette tâche ?")) return; deleteTask.mutate({ id: t.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}>
                           <Trash2 className="h-4 w-4 text-destructive" />
+                          <span className="ml-2">Corbeille</span>
                         </Button>
                       </div>
                     </div>
