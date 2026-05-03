@@ -60,8 +60,10 @@ export default function Veterinaire() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [openVet, setOpenVet] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<VisiteForm>({ ...initForm });
+  const [vetForm, setVetForm] = useState({ nom: "", telephone: "", specialite: "" });
 
   const { data: visites, isLoading } = useGetVisitesVeterinaire({ query: { queryKey: getGetVisitesVeterinaireQueryKey() } });
   const createVisite = useCreateVisiteVeterinaire();
@@ -111,6 +113,22 @@ export default function Veterinaire() {
           <span className="inline-flex items-center gap-1 text-green-700"><span className="h-2 w-2 rounded-full bg-green-500" />Système actif</span>
           <Button variant="ghost" size="sm">🔔 Notifs</Button>
         </div>
+      </div>
+      <div className="flex justify-end">
+        <Dialog open={openVet} onOpenChange={setOpenVet}>
+          <DialogTrigger asChild>
+            <Button variant="outline"><Plus className="mr-2 h-4 w-4" />Ajouter un vétérinaire</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouveau vétérinaire</DialogTitle></DialogHeader>
+            <form className="space-y-3" onSubmit={e => { e.preventDefault(); setOpenVet(false); setVetForm({ nom: "", telephone: "", specialite: "" }); }}>
+              <div className="space-y-1"><Label>Nom *</Label><Input value={vetForm.nom} onChange={e => setVetForm(f => ({ ...f, nom: e.target.value }))} required /></div>
+              <div className="space-y-1"><Label>Téléphone</Label><Input value={vetForm.telephone} onChange={e => setVetForm(f => ({ ...f, telephone: e.target.value }))} /></div>
+              <div className="space-y-1"><Label>Spécialité</Label><Input value={vetForm.specialite} onChange={e => setVetForm(f => ({ ...f, specialite: e.target.value }))} /></div>
+              <Button type="submit" className="w-full">Ajouter</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Tabs defaultValue="alertes">
