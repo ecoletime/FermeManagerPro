@@ -242,8 +242,8 @@ export default function Employes() {
           <TabsTrigger value="pointage">Pointage</TabsTrigger>
           <TabsTrigger value="retards">Retards</TabsTrigger>
           <TabsTrigger value="conges">Congés</TabsTrigger>
-        <TabsTrigger value="emploi-du-temps">Emploi du temps</TabsTrigger>
-        <TabsTrigger value="recap">Récapitulatif</TabsTrigger>
+          <TabsTrigger value="emploi-du-temps">Emploi du temps</TabsTrigger>
+          <TabsTrigger value="recap">Récapitulatif</TabsTrigger>
         </TabsList>
 
         <TabsContent value="pointage" className="space-y-4 mt-4">
@@ -657,6 +657,26 @@ export default function Employes() {
                   ))}
                 </tbody>
               </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recap" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={presents} label="Présents" color="text-green-600" />
+            <StatCard value={absents} label="Absents" color="text-red-600" />
+            <StatCard value={congés} label="Congés" color="text-amber-600" />
+            <StatCard value={total} label="Total" color="text-blue-600" />
+          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointages fictifs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {pointages.slice(0, 5).map((p) => {
+                const employe = employes?.find((e) => String(e.id) === p.employeId);
+                return <div key={p.id} className="rounded-lg border px-3 py-2 text-sm">{employe?.nom ?? "—"} — {p.type === "arrivee" ? "Arrivée" : "Départ"} — {formatDateTime(p.dateHeure)}</div>;
+              })}
             </CardContent>
           </Card>
         </TabsContent>

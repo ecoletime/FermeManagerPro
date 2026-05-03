@@ -336,6 +336,17 @@ export default function Alimentation() {
               )}
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-sm">Livraisons fictives</CardTitle></CardHeader>
+            <CardContent className="space-y-2">
+              {livraisons?.slice(0, 4).map((l) => (
+                <div key={l.id} className="rounded-lg border px-3 py-2 text-sm flex justify-between">
+                  <span>{l.fournisseur} — {l.aliment}</span>
+                  <span className="text-muted-foreground">{fmt(Number(l.quantite))} kg</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
           <Card><CardHeader><CardTitle className="text-sm">Résumé des repas du jour</CardTitle></CardHeader>
             <CardContent>
               {loadingR ? <Skeleton className="h-32 w-full" /> : (

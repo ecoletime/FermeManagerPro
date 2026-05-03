@@ -110,6 +110,7 @@ export default function Fournisseurs() {
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="commandes">Commandes</TabsTrigger>
           <TabsTrigger value="paiements">Paiements</TabsTrigger>
+          <TabsTrigger value="graphiques">Graphiques</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4 mt-4">
@@ -290,6 +291,30 @@ export default function Fournisseurs() {
                   ))}
                 </tbody>
               </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="graphiques" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={`${stats.fournisseursActifs}`} label="Actifs" color="text-green-600" />
+            <StatCard value={`${stats.enAttente}`} label="En attente" color="text-red-600" />
+            <StatCard value={`${stats.remboursements}`} label="Total fournisseurs" color="text-slate-800" />
+            <StatCard value={`${new Intl.NumberFormat("fr-FR").format(stats.depenseAnnee)} FCFA`} label="Dépenses" color="text-amber-600" />
+          </div>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Répartition fournisseurs</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {fournisseurs?.slice(0, 4).map((f) => (
+                <div key={f.id} className="rounded-lg border p-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="font-medium">{f.nom}</span>
+                    <span className="text-muted-foreground">{f.statut}</span>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>
