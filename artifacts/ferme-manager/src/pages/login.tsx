@@ -80,7 +80,8 @@ export default function Login() {
     setConfirmPassword("");
   };
 
-  const handleForgot = () => {
+  const handleForgot = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!forgotUsername.trim()) {
       toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur admin" });
       return;
@@ -96,7 +97,8 @@ export default function Login() {
     toast({ title: "Code envoyé", description: `Code à 5 chiffres généré pour ${creds.username}` });
   };
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = (e?: React.FormEvent) => {
+    e?.preventDefault();
     try {
       const raw = localStorage.getItem(RESET_CODE_KEY);
       if (!raw) {
@@ -119,7 +121,8 @@ export default function Login() {
     }
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!newPassword || newPassword.length < 4) {
       toast({ variant: "destructive", title: "Erreur", description: "Mot de passe trop court" });
       return;
@@ -212,30 +215,30 @@ export default function Login() {
             </DialogHeader>
             <div className="space-y-4 pt-2">
               {resetStep === "request" && (
-                <>
+                <form className="space-y-4" onSubmit={handleForgot}>
                   <div className="space-y-2">
                     <Label>Nom d'utilisateur admin</Label>
                     <Input value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="admin" />
                   </div>
                   <div className="flex justify-end">
-                    <Button onClick={handleForgot}>Envoyer le code</Button>
+                    <Button type="submit">Envoyer le code</Button>
                   </div>
-                </>
+                </form>
               )}
               {resetStep === "verify" && (
-                <>
+                <form className="space-y-4" onSubmit={handleVerifyCode}>
                   <div className="space-y-2">
                     <Label>Code à 5 chiffres</Label>
                     <Input value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="12345" maxLength={5} inputMode="numeric" />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setResetStep("request")}>Retour</Button>
-                    <Button onClick={handleVerifyCode}>Vérifier</Button>
+                    <Button type="button" variant="outline" onClick={() => setResetStep("request")}>Retour</Button>
+                    <Button type="submit">Vérifier</Button>
                   </div>
-                </>
+                </form>
               )}
               {resetStep === "password" && (
-                <>
+                <form className="space-y-4" onSubmit={handleResetPassword}>
                   <div className="space-y-2">
                     <Label>Nouveau mot de passe</Label>
                     <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
@@ -245,10 +248,10 @@ export default function Login() {
                     <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
                   </div>
                   <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setResetStep("verify")}>Retour</Button>
-                    <Button onClick={handleResetPassword}>Mettre à jour</Button>
+                    <Button type="button" variant="outline" onClick={() => setResetStep("verify")}>Retour</Button>
+                    <Button type="submit">Mettre à jour</Button>
                   </div>
-                </>
+                </form>
               )}
             </div>
           </DialogContent>
