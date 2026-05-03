@@ -22,6 +22,22 @@ type Accouplement = {
   dateMiseBasPrevue: string | null; statut: string; notes: string | null; createdAt: string;
 };
 
+type LogeOption = {
+  id: number;
+  nom: string;
+};
+
+type PlanningItem = {
+  id: number;
+  type: "loge" | "croisement" | "naissance";
+  date: string;
+  truie: string;
+  verrat: string;
+  loge: string;
+  porcelets?: number;
+  notes?: string;
+};
+
 function joursRestants(datePrevue: string): number {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const d = new Date(datePrevue); d.setHours(0, 0, 0, 0);
@@ -41,10 +57,19 @@ function RestantCell({ jours }: { jours: number }) {
   return <span className="text-green-600">{jours > 0 ? `−${jours}` : jours} jours</span>;
 }
 
+function makeFutureDates(days: number) {
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() + index);
+    return date.toISOString().slice(0, 10);
+  });
+}
+
 export default function Reproduction() {
   const { toast } = useToast();
   const qc = useQueryClient();
   const today = new Date().toISOString().slice(0, 10);
+  const futureDates = makeFutureDates(120);
 
   const { data: stats } = useGetReproductionStats({ query: { queryKey: getGetReproductionStatsQueryKey() } });
   const { data: accouplements, isLoading: loadingA } = useGetAccouplements({ query: { queryKey: getGetAccouplementsQueryKey() } });
@@ -58,6 +83,25 @@ export default function Reproduction() {
   const [accForm, setAccForm] = useState({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" });
   const [naisForm, setNaisForm] = useState({ mere: "", pere: "", date: today, totalNes: "", vivants: "", mortNes: "0", poidsMovyen: "" });
   const [sevForm, setSevForm] = useState({ mere: "", date: today, nbSevres: "", ageJours: "28", poidsMoyen: "", destination: "" });
+  const [planningItems, setPlanningItems] = useState<PlanningItem[]>([]);
+  const [planningForm, setPlanningForm] = useState({
+    type: "loge" as PlanningItem["type"],
+    date: today,
+    truie: "",
+    verrat: "",
+    loge: "",
+    porcelets: "",
+    notes: "",
+  });
+  const [planningFilter, setPlanningFilter] = useState("all");
+  const [loges] = useState<LogeOption[]>([
+    { id: 1, nom: "Loge A1" },
+    { id: 2, nom: "Loge A2" },
+    { id: 3, nom: "Loge B1" },
+    { id: 4, nom: "Loge B2" },
+    { id: 5, nom: "Maternité 1" },
+    { id: 6, nom: "Maternité 2" },
+  ]);
 
   // Derived alerts
   const withDates = (accouplements ?? []).filter(a => a.dateMiseBasPrevue);
@@ -111,6 +155,35 @@ export default function Reproduction() {
     chartData[m].naissances++;
   });
   const chartArr = Object.values(chartData).sort((a, b) => a.mois.localeCompare(b.mois)).slice(-6);
+  const filteredPlanning = planningItems.filter((item) => planningFilter === "all" || item.type === planningFilter);
+
+  const submitPlanning = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planningForm.truie || !planningForm.date || !planningForm.loge) {
+      toast({ variant: "destructive", title: "Erreur", description: "Choisissez la truie, la date et la loge" });
+      return;
+    }
+    setPlanningItems((current) => [
+      {
+        id: Date.now(),
+        type: planningForm.type,
+        date: planningForm.date,
+        truie: planningForm.truie,
+        verrat: planningForm.verrat || "—",
+        loge: planningForm.loge,
+        porcelets: planningForm.porcelets ? Number(planningForm.porcelets) : undefined,
+        notes: planningForm.notes || undefined,
+      },
+      ...current,
+    ]);
+    toast({ title: "Planification enregistrée" });
+    setPlanningForm({ type: "loge", date: today, truie: "", verrat: "", loge: "", porcelets: "", notes: "" });
+  };
+
+  const deletePlanning = (id: number) => {
+    setPlanningItems((current) => current.filter((item) => item.id !== id));
+    toast({ title: "Planification supprimée" });
+  };
 
   return (
     <div className="space-y-6">
@@ -147,6 +220,7 @@ export default function Reproduction() {
             <Bell className="h-3.5 w-3.5 mr-1.5" />Alertes
           </TabsTrigger>
           <TabsTrigger value="accouplements">Accouplements</TabsTrigger>
+          <TabsTrigger value="planification">Planification</TabsTrigger>
           <TabsTrigger value="naissances">Naissances</TabsTrigger>
           <TabsTrigger value="tracabilite">Traçabilité</TabsTrigger>
           <TabsTrigger value="sevrage">Sevrage</TabsTrigger>
@@ -225,6 +299,112 @@ export default function Reproduction() {
               </table>
             </CardContent></Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="planification" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Planifier dans le futur</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={submitPlanning} className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Type</Label>
+                  <Select value={planningForm.type} onValueChange={(v) => setPlanningForm((f) => ({ ...f, type: v as PlanningItem["type"] }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="loge">Loge à assigner</SelectItem>
+                      <SelectItem value="croisement">Croisement truie / verrat</SelectItem>
+                      <SelectItem value="naissance">Naissance prévue</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Date</Label>
+                  <Select value={planningForm.date} onValueChange={(v) => setPlanningForm((f) => ({ ...f, date: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir une date" /></SelectTrigger>
+                    <SelectContent>
+                      {futureDates.map((date) => <SelectItem key={date} value={date}>{date}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Loge</Label>
+                  <Select value={planningForm.loge} onValueChange={(v) => setPlanningForm((f) => ({ ...f, loge: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Choisir une loge" /></SelectTrigger>
+                    <SelectContent>
+                      {loges.map((loge) => <SelectItem key={loge.id} value={loge.nom}>{loge.nom}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Truie</Label>
+                  <Input value={planningForm.truie} onChange={(e) => setPlanningForm((f) => ({ ...f, truie: e.target.value }))} placeholder="#T-022" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Verrat</Label>
+                  <Input value={planningForm.verrat} onChange={(e) => setPlanningForm((f) => ({ ...f, verrat: e.target.value }))} placeholder="#B-001" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Porcelets prévus</Label>
+                  <Input type="number" min="0" value={planningForm.porcelets} onChange={(e) => setPlanningForm((f) => ({ ...f, porcelets: e.target.value }))} placeholder="12" />
+                </div>
+                <div className="space-y-1 md:col-span-3">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Notes</Label>
+                  <Input value={planningForm.notes} onChange={(e) => setPlanningForm((f) => ({ ...f, notes: e.target.value }))} placeholder="Préparer la maternité, déplacement, suivi..." />
+                </div>
+                <div className="md:col-span-3">
+                  <Button type="submit" className="w-full">Enregistrer la planification</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Vue future</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Select value={planningFilter} onValueChange={setPlanningFilter}>
+                <SelectTrigger><SelectValue placeholder="Filtrer" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tout</SelectItem>
+                  <SelectItem value="loge">Loges</SelectItem>
+                  <SelectItem value="croisement">Croisements</SelectItem>
+                  <SelectItem value="naissance">Naissances</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/20">
+                    <tr>
+                      {["Type", "Date", "Truie", "Verrat", "Loge", "Porcelets", "Notes", ""].map((h) => (
+                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {filteredPlanning.length === 0 ? (
+                      <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Aucune planification</td></tr>
+                    ) : filteredPlanning.map((item) => (
+                      <tr key={item.id} className="hover:bg-muted/10">
+                        <td className="px-4 py-2.5">{item.type}</td>
+                        <td className="px-4 py-2.5">{item.date}</td>
+                        <td className="px-4 py-2.5">{item.truie}</td>
+                        <td className="px-4 py-2.5">{item.verrat}</td>
+                        <td className="px-4 py-2.5">{item.loge}</td>
+                        <td className="px-4 py-2.5">{item.porcelets ?? "—"}</td>
+                        <td className="px-4 py-2.5">{item.notes ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <Button variant="ghost" size="sm" onClick={() => deletePlanning(item.id)}>Supprimer</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* ── ACCOUPLEMENTS ── */}
