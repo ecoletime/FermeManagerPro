@@ -102,8 +102,42 @@ export default function Notifications() {
           ))}
         </TabsContent>
 
-        <TabsContent value="journal" className="mt-4">
-          <Card><CardHeader><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Journal emails</CardTitle></CardHeader><CardContent className="p-4 text-sm text-muted-foreground">Journal des emails à afficher ici.</CardContent></Card>
+        <TabsContent value="journal" className="space-y-4 mt-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="py-3 px-4 border-b">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Journal des emails envoyés</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {notifications.map((n, index) => (
+                <div key={`${n.title}-${index}`} className="flex items-center justify-between gap-4 px-4 py-3 border-b last:border-b-0">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className="mt-1 h-8 w-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-sm shrink-0">
+                      {index % 2 === 0 ? "◔" : "◍"}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold truncate">
+                        <span className="text-muted-foreground font-medium">[FermeManager]</span> {" "}
+                        {n.title}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        À Cora V. &lt;admin@fermamanager.com&gt; — {n.time}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-green-700">● Envoyé</span>
+                    <Button size="sm" variant="outline" className="h-7 px-3">Voir</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-3 gap-3">
+            <StatCard value="10" label="Emails envoyés" />
+            <StatCard value="0" label="Erreurs" />
+            <StatCard value="2" label="Destinataires touchés" />
+          </div>
         </TabsContent>
 
         <TabsContent value="destinataires" className="mt-4">
