@@ -41,45 +41,79 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const activeMaintenancesCount = maintenances?.length || 0;
 
-  const navItems = [
-    { href: "/", label: "Accueil", icon: Home },
-    { href: "/animaux", label: "Animaux", icon: PiggyBank },
-    { href: "/sante", label: "Santé", icon: HeartPulse },
-    { href: "/reproduction", label: "Reproduction", icon: Baby },
-    { href: "/alimentation", label: "Alimentation", icon: Wheat },
-    { href: "/loges", label: "Loges & Bâtiments", icon: HomeIcon },
-    { href: "/maintenance", label: "Maintenance", icon: Wrench, badge: activeMaintenancesCount },
-    { href: "/employes", label: "Employés", icon: Users },
-    { href: "/veterinaire", label: "Vétérinaire", icon: Stethoscope },
-    { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
-    ...(role === "admin" ? [{ href: "/budget", label: "Budget", icon: Calculator }] : []),
+  const navSections = [
+    {
+      title: "Navigation",
+      items: [{ href: "/", label: "Accueil", icon: Home }],
+    },
+    {
+      title: "Élevage",
+      items: [
+        { href: "/animaux", label: "Animaux", icon: PiggyBank },
+        { href: "/sante", label: "Santé & Vaccins", icon: HeartPulse },
+        { href: "/reproduction", label: "Reproduction", icon: Baby },
+        { href: "/alimentation", label: "Alimentation", icon: Wheat },
+      ],
+    },
+    {
+      title: "Infrastructure",
+      items: [
+        { href: "/loges", label: "Loges & Bâtiments", icon: HomeIcon },
+        { href: "/maintenance", label: "Maintenance", icon: Wrench, badge: activeMaintenancesCount },
+      ],
+    },
+    {
+      title: "Gestion",
+      items: [
+        { href: "/employes", label: "Employés", icon: Users },
+        { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
+        { href: "/veterinaire", label: "Vétérinaire", icon: Stethoscope },
+      ],
+    },
+    {
+      title: "Système",
+      items: [
+        { href: "/notifications", label: "Notifications", icon: Clock },
+        ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
+      ],
+    },
   ];
+  const navFlatItems = navSections.flatMap(section => section.items);
 
   const NavLinks = () => (
-    <div className="flex flex-col gap-1 py-4">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
-        return (
-          <Link key={item.href} href={item.href}>
-            <span
-              className={`flex items-center justify-between px-4 py-2 mx-2 rounded-md text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer ${
-                isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/80"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Icon size={18} />
-                {item.label}
-              </div>
-              {item.badge !== undefined && item.badge > 0 && (
-                <Badge variant="destructive" className="h-5 px-1.5 flex items-center justify-center rounded-full text-xs">
-                  {item.badge}
-                </Badge>
-              )}
-            </span>
-          </Link>
-        );
-      })}
+    <div className="flex flex-col py-3">
+      {navSections.map((section) => (
+        <div key={section.title} className="mb-3">
+          <div className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/35">
+            {section.title}
+          </div>
+          <div className="flex flex-col gap-1">
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
+              return (
+                <Link key={item.href} href={item.href}>
+                  <span
+                    className={`flex items-center justify-between px-4 py-2 mx-2 rounded-md text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground cursor-pointer ${
+                      isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={18} />
+                      {item.label}
+                    </div>
+                    {item.badge !== undefined && item.badge > 0 && (
+                      <Badge variant="destructive" className="h-5 px-1.5 flex items-center justify-center rounded-full text-xs">
+                        {item.badge}
+                      </Badge>
+                    )}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 
@@ -137,7 +171,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                   <span>FermeManager<span className="text-foreground">Pro</span></span>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="flex-1 overflow-y-auto pb-28" onClick={() => setIsMobileMenuOpen(false)}>
                 <NavLinks />
               </div>
               <div className="p-4 border-t border-sidebar-border absolute bottom-0 w-full bg-sidebar">
@@ -162,7 +196,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Topbar Desktop */}
         <header className="hidden md:flex h-16 bg-card border-b border-border items-center justify-between px-8 shrink-0">
           <h1 className="text-xl font-semibold text-foreground">
-            {navItems.find(i => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || ""}
+            {navFlatItems.find(i => location === i.href || (i.href !== "/" && location.startsWith(i.href)))?.label || ""}
           </h1>
           <div className="flex items-center gap-4 text-muted-foreground">
             <div className="text-sm font-medium flex items-center gap-2 bg-muted px-3 py-1.5 rounded-md">
