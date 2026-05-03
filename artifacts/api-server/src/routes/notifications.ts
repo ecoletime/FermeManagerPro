@@ -48,6 +48,14 @@ router.patch("/notifications/:id/lue", async (req, res): Promise<void> => {
   res.json(mapRow(row));
 });
 
+router.delete("/notifications/:id", async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
+  const [row] = await db.delete(notificationsTable).where(eq(notificationsTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Not found" }); return; }
+  res.json({ ok: true });
+});
+
 router.post("/notifications/tout-lire", async (_req, res): Promise<void> => {
   const rows = await db.update(notificationsTable).set({ lue: true }).where(eq(notificationsTable.lue, false)).returning();
   res.json({ updated: rows.length });

@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useGetNotifications,
   useGetNotificationsStats,
-  useCreateNotification,
   useMarkNotificationLue,
   useMarkAllNotificationsLues,
   getGetNotificationsQueryKey,
@@ -18,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell, BellOff, CheckCheck, Filter, Clock, User, Activity, Search, Layers } from "lucide-react";
+import { Bell, BellOff, CheckCheck, Clock, User, Activity, Search, Layers, Trash2 } from "lucide-react";
 
 const MODULE_ICONS: Record<string, string> = {
   Animaux: "🐖",
@@ -88,7 +87,7 @@ const MODULES_LIST = ["Animaux", "Santé", "Reproduction", "Alimentation", "Loge
 const ACTIONS_LIST = ["Création", "Modification", "Suppression", "Connexion", "Déconnexion", "Vaccination", "Traitement", "Pointage", "Paiement", "Alerte"];
 
 export default function Notifications() {
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
   const [filterModule, setFilterModule] = useState("all");
@@ -102,20 +101,30 @@ export default function Notifications() {
   });
 
   const { data: notifications, isLoading } = useGetNotifications(
-    {},
-    { query: { queryKey: getGetNotificationsQueryKey({}) } }
+    undefined,
+    { query: { queryKey: getGetNotificationsQueryKey() } }
   );
 
   const markLue = useMarkNotificationLue();
   const markAll = useMarkAllNotificationsLues();
 
   const invalidate = () => {
-    qc.invalidateQueries({ queryKey: getGetNotificationsQueryKey({}) });
+    qc.invalidateQueries({ queryKey: getGetNotificationsQueryKey() });
     qc.invalidateQueries({ queryKey: getGetNotificationsStatsQueryKey() });
   };
 
   const handleMarkLue = (id: number) => {
     markLue.mutate({ id }, { onSuccess: invalidate, onError: () => toast({ variant: "destructive", title: "Erreur" }) });
+  };
+
+  const handleDelete = (id: number) => {
+    fetch(`/api/notifications/${id}`, { method: "DELETE" })
+      .then(async (res) => {
+        if (!res.ok) throw new Error();
+        toast({ title: "Notification supprimée" });
+        invalidate();
+      })
+      .catch(() => toast({ variant: "destructive", title: "Impossible de supprimer" }));
   };
 
   const handleMarkAll = () => {
@@ -159,41 +168,16 @@ export default function Notifications() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard
-          value={loadingStats ? "…" : (stats?.total ?? 0)}
-          label="Total actions"
-          color="text-slate-800"
-          icon={Activity}
-        />
-        <StatCard
-          value={loadingStats ? "…" : (stats?.nonLues ?? 0)}
-          label="Non lues"
-          color="text-red-600"
-          icon={Bell}
-        />
-        <StatCard
-          value={loadingStats ? "…" : ((notifications ?? []).filter(n => n.lue).length)}
-          label="Lues"
-          color="text-green-600"
-          icon={BellOff}
-        />
-        <StatCard
-          value={loadingStats ? "…" : (stats?.parModule?.length ?? 0)}
-          label="Modules actifs"
-          color="text-blue-600"
-          icon={Layers}
-        />
+        <StatCard value={loadingStats ? "…" : (stats?.total ?? 0)} label="Total actions" color="text-slate-800" icon={Activity} />
+        <StatCard value={loadingStats ? "…" : (stats?.nonLues ?? 0)} label="Non lues" color="text-red-600" icon={Bell} />
+        <StatCard value={loadingStats ? "…" : ((notifications ?? []).filter(n => n.lue).length)} label="Lues" color="text-green-600" icon={BellOff} />
+        <StatCard value={loadingStats ? "…" : (stats?.parModule?.length ?? 0)} label="Modules actifs" color="text-blue-600" icon={Layers} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         <div className="relative">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Rechercher..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <Input className="pl-9" placeholder="Rechercher..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <Select value={filterModule} onValueChange={setFilterModule}>
           <SelectTrigger><SelectValue placeholder="Tous les modules" /></SelectTrigger>
@@ -211,60 +195,35 @@ export default function Notifications() {
         </Select>
         <div className="relative">
           <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Filtrer par utilisateur..."
-            value={filterUser}
-            onChange={e => setFilterUser(e.target.value)}
-          />
+          <Input className="pl-9" placeholder="Filtrer par utilisateur..." value={filterUser} onChange={e => setFilterUser(e.target.value)} />
         </div>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full justify-start gap-1">
-          <TabsTrigger value="toutes">
-            Toutes
-            <Badge variant="secondary" className="ml-2 h-5 px-1.5">{(notifications ?? []).length}</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="non-lues">
-            Non lues
-            {nonLues > 0 && <Badge variant="destructive" className="ml-2 h-5 px-1.5">{nonLues}</Badge>}
-          </TabsTrigger>
+          <TabsTrigger value="toutes">Toutes <Badge variant="secondary" className="ml-2 h-5 px-1.5">{(notifications ?? []).length}</Badge></TabsTrigger>
+          <TabsTrigger value="non-lues">Non lues {nonLues > 0 && <Badge variant="destructive" className="ml-2 h-5 px-1.5">{nonLues}</Badge>}</TabsTrigger>
           <TabsTrigger value="lues">Lues</TabsTrigger>
           <TabsTrigger value="stats">Statistiques</TabsTrigger>
         </TabsList>
 
         <TabsContent value="toutes" className="mt-4">
-          <NotificationList
-            items={filtered}
-            isLoading={isLoading}
-            onMarkLue={handleMarkLue}
-          />
+          <NotificationList items={filtered} isLoading={isLoading} onMarkLue={handleMarkLue} onDelete={handleDelete} canDelete={role === "admin"} />
         </TabsContent>
 
         <TabsContent value="non-lues" className="mt-4">
-          <NotificationList
-            items={filtered}
-            isLoading={isLoading}
-            onMarkLue={handleMarkLue}
-          />
+          <NotificationList items={filtered} isLoading={isLoading} onMarkLue={handleMarkLue} onDelete={handleDelete} canDelete={role === "admin"} />
         </TabsContent>
 
         <TabsContent value="lues" className="mt-4">
-          <NotificationList
-            items={filtered}
-            isLoading={isLoading}
-            onMarkLue={handleMarkLue}
-          />
+          <NotificationList items={filtered} isLoading={isLoading} onMarkLue={handleMarkLue} onDelete={handleDelete} canDelete={role === "admin"} />
         </TabsContent>
 
         <TabsContent value="stats" className="mt-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <Layers className="h-4 w-4" />Activité par module
-                </CardTitle>
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Layers className="h-4 w-4" />Activité par module</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {loadingStats ? Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-8 w-full" />) :
@@ -291,9 +250,7 @@ export default function Notifications() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                  <User className="h-4 w-4" />Activité par utilisateur
-                </CardTitle>
+                <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><User className="h-4 w-4" />Activité par utilisateur</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {isLoading ? Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-8 w-full" />) : (() => {
@@ -307,12 +264,7 @@ export default function Notifications() {
                   return users.map(([username, { count, role: urole }]) => (
                     <div key={username}>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium flex items-center gap-1.5">
-                          <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ${urole === "admin" ? "bg-amber-500" : "bg-blue-500"}`}>
-                            {urole === "admin" ? "A" : "E"}
-                          </span>
-                          {username}
-                        </span>
+                        <span className="font-medium flex items-center gap-1.5"><span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white ${urole === "admin" ? "bg-amber-500" : "bg-blue-500"}`}>{urole === "admin" ? "A" : "E"}</span>{username}</span>
                         <span className="text-muted-foreground font-semibold">{count}</span>
                       </div>
                       <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
@@ -333,23 +285,30 @@ export default function Notifications() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
                   <tr>
-                    {["Module", "Action", "Détail", "Utilisateur", "Date"].map(h => (
+                    {["Module", "Action", "Détail", "Utilisateur", "Date", "Supprimer"].map(h => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {isLoading ? (
-                    <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
                   ) : (notifications ?? []).slice(0, 10).map(n => (
                     <tr key={n.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3 font-medium">{MODULE_ICONS[n.module] ?? "📌"} {n.module}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded border font-medium ${ACTION_COLORS[n.action] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>{n.action}</span>
-                      </td>
+                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded border font-medium ${ACTION_COLORS[n.action] ?? "bg-gray-100 text-gray-800 border-gray-200"}`}>{n.action}</span></td>
                       <td className="px-4 py-3 text-muted-foreground max-w-xs truncate">{n.detail}</td>
                       <td className="px-4 py-3">{n.utilisateur}</td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDateTime(n.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        {role === "admin" ? (
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(n.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -373,7 +332,7 @@ type NotifItem = {
   createdAt: string;
 };
 
-function NotificationList({ items, isLoading, onMarkLue }: { items: NotifItem[]; isLoading: boolean; onMarkLue: (id: number) => void }) {
+function NotificationList({ items, isLoading, onMarkLue, onDelete, canDelete }: { items: NotifItem[]; isLoading: boolean; onMarkLue: (id: number) => void; onDelete: (id: number) => void; canDelete: boolean; }) {
   if (isLoading) {
     return (
       <div className="space-y-2">
@@ -422,11 +381,18 @@ function NotificationList({ items, isLoading, onMarkLue }: { items: NotifItem[];
               <span className="text-[10px] opacity-50">{formatDateTime(n.createdAt)}</span>
             </div>
           </div>
-          {!n.lue && (
-            <Button variant="ghost" size="sm" className="shrink-0 text-xs" onClick={() => onMarkLue(n.id)}>
-              <CheckCheck className="h-3.5 w-3.5 mr-1" />Lu
-            </Button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {!n.lue && (
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => onMarkLue(n.id)}>
+                <CheckCheck className="h-3.5 w-3.5 mr-1" />Lu
+              </Button>
+            )}
+            {canDelete && (
+              <Button variant="ghost" size="sm" className="text-xs" onClick={() => onDelete(n.id)}>
+                <Trash2 className="h-3.5 w-3.5 mr-1 text-destructive" />Supprimer
+              </Button>
+            )}
+          </div>
         </div>
       ))}
     </div>
