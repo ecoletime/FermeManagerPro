@@ -69,23 +69,15 @@
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
-
   --opaque-button-border-intensity: -8;
-
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-
-  /* Warm off-white background */
   --background: 40 33% 98%;
   --foreground: 20 10% 10%;
-
   --border: 40 20% 88%;
-
-  /* White cards */
   --card: 0 0% 100%;
   --card-foreground: 20 10% 10%;
   --card-border: 40 20% 88%;
-
   --sidebar: 40 33% 96%;
   --sidebar-foreground: 20 10% 20%;
   --sidebar-border: 40 20% 88%;
@@ -94,41 +86,30 @@
   --sidebar-accent: 40 20% 90%;
   --sidebar-accent-foreground: 20 10% 10%;
   --sidebar-ring: 158 71% 36%;
-
   --popover: 0 0% 100%;
   --popover-foreground: 20 10% 10%;
   --popover-border: 40 20% 88%;
-
-  /* Primary: #1A9E6F */
   --primary: 158 71% 36%;
   --primary-foreground: 0 0% 100%;
-
   --secondary: 40 20% 90%;
   --secondary-foreground: 20 10% 20%;
-
   --muted: 40 20% 92%;
   --muted-foreground: 20 5% 45%;
-
   --accent: 40 20% 90%;
   --accent-foreground: 20 10% 10%;
-
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-
   --input: 40 20% 85%;
   --ring: 158 71% 36%;
-  
   --chart-1: 158 71% 36%;
   --chart-2: 43 100% 50%;
   --chart-3: 200 90% 40%;
   --chart-4: 0 84% 60%;
   --chart-5: 280 60% 50%;
-
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
-  --radius: 0.5rem; 
-
+  --radius: 0.5rem;
   --shadow-2xs: 0px 2px 0px 0px rgba(0,0,0,0.02);
   --shadow-xs: 0px 2px 0px 0px rgba(0,0,0,0.03);
   --shadow-sm: 0px 2px 0px 0px rgba(0,0,0,0.04), 0px 1px 2px -1px rgba(0,0,0,0.02);
@@ -139,7 +120,6 @@
   --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.04);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-
   --sidebar-primary-border: hsl(var(--sidebar-primary));
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(var(--sidebar-accent));
@@ -159,21 +139,15 @@
 .dark {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
-
   --opaque-button-border-intensity: 9;
-
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
-
   --background: 20 10% 10%;
   --foreground: 40 33% 98%;
-
   --border: 20 10% 20%;
-
   --card: 20 10% 12%;
   --card-foreground: 40 33% 98%;
   --card-border: 20 10% 20%;
-
   --sidebar: 20 10% 12%;
   --sidebar-foreground: 40 33% 98%;
   --sidebar-border: 20 10% 20%;
@@ -182,29 +156,21 @@
   --sidebar-accent: 20 10% 20%;
   --sidebar-accent-foreground: 40 33% 98%;
   --sidebar-ring: 158 71% 36%;
-
   --popover: 20 10% 12%;
   --popover-foreground: 40 33% 98%;
   --popover-border: 20 10% 20%;
-
   --primary: 158 71% 36%;
   --primary-foreground: 0 0% 100%;
-
   --secondary: 20 10% 20%;
   --secondary-foreground: 40 33% 98%;
-
   --muted: 20 10% 16%;
   --muted-foreground: 40 10% 60%;
-
   --accent: 20 10% 20%;
   --accent-foreground: 40 33% 98%;
-
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-
   --input: 20 10% 25%;
   --ring: 158 71% 36%;
-  
   --chart-1: 158 71% 36%;
   --chart-2: 43 100% 50%;
   --chart-3: 200 90% 40%;
@@ -267,18 +233,9 @@
     z-index: 999;
   }
   .hover-elevate:hover:not(.no-default-hover-elevate)::after,
-  .active-elevate:active:not(.no-default-active-elevate)::after {
-    background-color: var(--elevate-1);
-  }
+  .active-elevate:not(.no-default-active-elevate)::after,
   .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
-  .active-elevate-2:active:not(.no-default-active-elevate)::after {
-    background-color: var(--elevate-2);
-  }
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
-    inset: -1px;
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    border: 1px solid var(--primary-border);
   }
 }

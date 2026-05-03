@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Cog } from "lucide-react";
+
+const DARK_MODE_KEY = "ferme_dark_mode";
 
 export default function SystemSettings() {
   const { toast } = useToast();
@@ -18,6 +20,21 @@ export default function SystemSettings() {
     autoBackup: true,
     notifications: true,
   });
+
+  useEffect(() => {
+    const saved = localStorage.getItem(DARK_MODE_KEY);
+    if (saved) {
+      const enabled = saved === "true";
+      setSettings((s) => ({ ...s, darkMode: enabled }));
+      document.documentElement.classList.toggle("dark", enabled);
+    }
+  }, []);
+
+  const updateDarkMode = (enabled: boolean) => {
+    setSettings((s) => ({ ...s, darkMode: enabled }));
+    document.documentElement.classList.toggle("dark", enabled);
+    localStorage.setItem(DARK_MODE_KEY, String(enabled));
+  };
 
   const save = () => toast({ title: "Paramètres système enregistrés" });
 
@@ -76,7 +93,7 @@ export default function SystemSettings() {
                 <p className="font-medium">Mode sombre</p>
                 <p className="text-xs text-muted-foreground">Activer l’apparence sombre</p>
               </div>
-              <Switch checked={settings.darkMode} onCheckedChange={(checked) => setSettings((s) => ({ ...s, darkMode: checked }))} />
+              <Switch checked={settings.darkMode} onCheckedChange={updateDarkMode} />
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
