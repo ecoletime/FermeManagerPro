@@ -364,7 +364,7 @@ export default function Notifications() {
                   <SelectContent>
                     <SelectItem value="admin">Admin principal</SelectItem>
                     <SelectItem value="employe">Employé</SelectItem>
-                    <SelectItem value="veterinaire">Vétérinaire</SelectItem>
+                    <SelectItem value="responsable">Responsable</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
