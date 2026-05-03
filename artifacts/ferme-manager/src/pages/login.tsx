@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { getAdminCredentials, updateAdminCredentials } from "@/lib/auth";
+import { getAdminCredentials, setAuthState, updateAdminCredentials } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,13 +42,15 @@ export default function Login() {
   const [empUsername, setEmpUsername] = useState("");
   const [empPassword, setEmpPassword] = useState("");
 
+  const goHome = () => setLocation("/");
+
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const creds = getAdminCredentials();
-    if (adminUsername === creds.username && adminPassword === creds.password) {
-      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: "admin", permissions: ["all"] }));
-      setLocation("/");
-      toast({ title: "Connexion réussie", description: "Bienvenue, Administrateur" });
+    if (adminUsername.trim().toLowerCase() === creds.username.toLowerCase() && adminPassword === creds.password) {
+      setAuthState("admin", ["all"]);
+      goHome();
+      setTimeout(() => toast({ title: "Connexion réussie", description: "Bienvenue, Administrateur" }), 0);
     } else {
       toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" });
     }
@@ -59,13 +61,13 @@ export default function Login() {
     const users = loadUsers();
     const matched = users.find((user: any) => user.email.toLowerCase() === empUsername.toLowerCase() && user.actif !== false);
     if (matched && matched.password === empPassword) {
-      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: matched.role, permissions: matched.modules ?? [] }));
-      setLocation("/");
-      toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` });
+      setAuthState(matched.role, matched.modules ?? []);
+      goHome();
+      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` }), 0);
     } else if (empUsername === "employe" && empPassword === "emp123") {
-      localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: "employee", permissions: ["animaux", "alimentation", "sante"] }));
-      setLocation("/");
-      toast({ title: "Connexion réussie", description: "Bienvenue, Employé" });
+      setAuthState("employee", ["animaux", "alimentation", "sante"]);
+      goHome();
+      setTimeout(() => toast({ title: "Connexion réussie", description: "Bienvenue, Employé" }), 0);
     } else {
       toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" });
     }

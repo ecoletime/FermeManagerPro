@@ -55,6 +55,10 @@ export function updateAdminCredentials(username: string, password: string) {
   localStorage.setItem(ADMIN_CREDENTIALS_KEY, JSON.stringify({ username, password }));
 }
 
+export function setAuthState(role: Role, permissions: Permissions = []) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions }));
+}
+
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -77,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRole(newRole);
     setPermissions(newPermissions);
     setIsLoggedIn(true);
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: true, role: newRole, permissions: newPermissions }));
+    setAuthState(newRole, newPermissions);
   };
 
   const logout = () => {
