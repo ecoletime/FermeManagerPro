@@ -6,13 +6,137 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/
 import { Separator } from "@/components/ui/separator";
 
 const notifications = [
-  { title: "Naissance — Truie #T-009 — 9 porcelets", desc: "Nouvelle portée née ce matin.", time: "02/05/2026 21:32", severity: "succès", color: "bg-green-100", text: "text-green-900" },
-  { title: "Stock faible — Croissance 2 (85 kg)", desc: "Le stock de Croissance 2 est en dessous du seuil d’alerte.", time: "02/05/2026 20:11", severity: "alerte", color: "bg-amber-100", text: "text-amber-900" },
-  { title: "Animal malade — #P-108 — Fièvre 40.8°C", desc: "L’animal #P-108 a été signalé malade.", time: "02/05/2026 19:24", severity: "alerte", color: "bg-yellow-100", text: "text-yellow-900" },
-  { title: "Mise bas imminente — Truie #T-022", desc: "La truie #T-022 approche de la mise bas.", time: "02/05/2026 18:46", severity: "alerte", color: "bg-yellow-100", text: "text-yellow-900" },
-  { title: "Panne urgente — Fuite eau — Bâtiment B", desc: "Une fuite a été signalée au bâtiment B.", time: "02/05/2026 17:50", severity: "urgence", color: "bg-red-100", text: "text-red-900" },
-  { title: "Stock critique — Aliment Maternité (45 kg)", desc: "Le stock a atteint un seuil critique.", time: "02/05/2026 17:20", severity: "critique", color: "bg-pink-100", text: "text-pink-900" },
-  { title: "Vaccin en retard — #P-108 — PRRS", desc: "Le vaccin PRRS est en retard de 3 jours.", time: "02/05/2026 16:58", severity: "alerte", color: "bg-yellow-100", text: "text-yellow-900" },
+  {
+    title: "Naissance — Truie #T-009 — 9 porcelets",
+    desc: "Nouvelle portée née ce matin.",
+    time: "02/05/2026 21:32",
+    severity: "succès",
+    color: "bg-green-100",
+    text: "text-green-900",
+    email: {
+      subject: "Naissance — Truie #T-009 — 9 porcelets",
+      from: "noreply@fermamanager.pro",
+      to: ["admin@ferme.com", "carta.v@ferme.com"],
+      body: "La truie #T-009 a mis bas 9 porcelets en bonne santé.",
+      stock: [
+        { label: "Maternité", value: "45 kg", level: "bad", width: "26%" },
+        { label: "Croissance 1", value: "120 kg", level: "good", width: "100%" },
+        { label: "Croissance 2", value: "85 kg", level: "bad", width: "34%" },
+      ],
+    },
+  },
+  {
+    title: "Stock faible — Croissance 2 (85 kg)",
+    desc: "Le stock de Croissance 2 est en dessous du seuil d’alerte.",
+    time: "02/05/2026 20:11",
+    severity: "alerte",
+    color: "bg-amber-100",
+    text: "text-amber-900",
+    email: {
+      subject: "Stock faible — Croissance 2 (85 kg)",
+      from: "stock@fermamanager.pro",
+      to: ["admin@ferme.com"],
+      body: "Le niveau de l’aliment Croissance 2 est sous le seuil minimal. Un réassort est recommandé.",
+      stock: [
+        { label: "Croissance 1", value: "120 kg", level: "good", width: "100%" },
+        { label: "Croissance 2", value: "85 kg", level: "bad", width: "34%" },
+        { label: "Croissance 3", value: "250 kg", level: "good", width: "87%" },
+      ],
+    },
+  },
+  {
+    title: "Animal malade — #P-108 — Fièvre 40.8°C",
+    desc: "L’animal #P-108 a été signalé malade.",
+    time: "02/05/2026 19:24",
+    severity: "alerte",
+    color: "bg-yellow-100",
+    text: "text-yellow-900",
+    email: {
+      subject: "Animal malade — #P-108 — Fièvre 40.8°C",
+      from: "noreply@fermamanager.pro",
+      to: ["admin@ferme.com", "carta.v@ferme.com"],
+      body: "L’animal #P-108 a été signalé malade avec une température de 40.8°C.",
+      stock: [
+        { label: "Croissance 1", value: "120 kg", level: "good", width: "100%" },
+        { label: "Croissance 2", value: "85 kg", level: "bad", width: "34%" },
+        { label: "Croissance 3", value: "250 kg", level: "good", width: "87%" },
+        { label: "Maternité", value: "45 kg", level: "bad", width: "26%" },
+        { label: "Gestation", value: "180 kg", level: "good", width: "100%" },
+      ],
+    },
+  },
+  {
+    title: "Mise bas imminente — Truie #T-022",
+    desc: "La truie #T-022 approche de la mise bas.",
+    time: "02/05/2026 18:46",
+    severity: "alerte",
+    color: "bg-yellow-100",
+    text: "text-yellow-900",
+    email: {
+      subject: "Mise bas imminente — Truie #T-022",
+      from: "repro@fermamanager.pro",
+      to: ["admin@ferme.com"],
+      body: "La truie #T-022 présente les signes d’une mise bas imminente. Surveillance recommandée.",
+      stock: [
+        { label: "Gestation", value: "180 kg", level: "good", width: "100%" },
+        { label: "Maternité", value: "45 kg", level: "bad", width: "26%" },
+      ],
+    },
+  },
+  {
+    title: "Panne urgente — Fuite eau — Bâtiment B",
+    desc: "Une fuite a été signalée au bâtiment B.",
+    time: "02/05/2026 17:50",
+    severity: "urgence",
+    color: "bg-red-100",
+    text: "text-red-900",
+    email: {
+      subject: "Panne urgente — Fuite eau — Bâtiment B",
+      from: "maintenance@fermamanager.pro",
+      to: ["admin@ferme.com", "tech@ferme.com"],
+      body: "Une fuite d’eau a été détectée au bâtiment B. Intervention urgente requise.",
+      stock: [
+        { label: "Bâtiment A", value: "OK", level: "good", width: "100%" },
+        { label: "Bâtiment B", value: "Urgent", level: "bad", width: "22%" },
+      ],
+    },
+  },
+  {
+    title: "Stock critique — Aliment Maternité (45 kg)",
+    desc: "Le stock a atteint un seuil critique.",
+    time: "02/05/2026 17:20",
+    severity: "critique",
+    color: "bg-pink-100",
+    text: "text-pink-900",
+    email: {
+      subject: "Stock critique — Aliment Maternité (45 kg)",
+      from: "stock@fermamanager.pro",
+      to: ["admin@ferme.com"],
+      body: "Le stock de l’aliment Maternité est critique. Commande urgente nécessaire.",
+      stock: [
+        { label: "Croissance 1", value: "120 kg", level: "good", width: "100%" },
+        { label: "Maternité", value: "45 kg", level: "bad", width: "26%" },
+      ],
+    },
+  },
+  {
+    title: "Vaccin en retard — #P-108 — PRRS",
+    desc: "Le vaccin PRRS est en retard de 3 jours.",
+    time: "02/05/2026 16:58",
+    severity: "alerte",
+    color: "bg-yellow-100",
+    text: "text-yellow-900",
+    email: {
+      subject: "Vaccin en retard — #P-108 — PRRS",
+      from: "sante@fermamanager.pro",
+      to: ["admin@ferme.com", "vet@ferme.com"],
+      body: "Le vaccin PRRS de l’animal #P-108 est en retard de 3 jours.",
+      stock: [
+        { label: "Vaccin PRRS", value: "Retard", level: "bad", width: "32%" },
+        { label: "Vaccin PCV2", value: "À jour", level: "good", width: "100%" },
+      ],
+    },
+  },
 ];
 
 const emailPreview = {
@@ -28,6 +152,8 @@ const emailPreview = {
     { label: "Gestation", value: "180 kg", level: "good", width: "100%" },
   ],
 };
+
+const getEmailPreview = (notification: (typeof notifications)[number]) => notification.email;
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
@@ -148,22 +274,22 @@ export default function Notifications() {
                       </DialogTrigger>
                       <DialogContent className="max-w-2xl">
                         <DialogTitle className="text-base font-semibold">
-                          Email — {emailPreview.subject}
+                          Email — {n.title}
                         </DialogTitle>
                         <div className="rounded-t-lg overflow-hidden border mt-2">
                           <div className="bg-amber-700 text-white px-4 py-3 text-sm">
                             <div className="text-[11px] opacity-90">
-                              De : {emailPreview.from} | À : {emailPreview.to.join(", ")}
+                              De : {getEmailPreview(n).from} | À : {getEmailPreview(n).to.join(", ")}
                             </div>
-                            <div className="font-semibold mt-1">{emailPreview.subject}</div>
+                            <div className="font-semibold mt-1">{getEmailPreview(n).subject}</div>
                           </div>
                           <div className="bg-white p-5 space-y-4">
-                            <div className="text-sm font-semibold text-amber-700">🩺 {emailPreview.subject}</div>
-                            <p className="text-sm text-slate-700">{emailPreview.body}</p>
+                            <div className="text-sm font-semibold text-amber-700">🩺 {getEmailPreview(n).subject}</div>
+                            <p className="text-sm text-slate-700">{getEmailPreview(n).body}</p>
                             <div className="rounded-lg bg-stone-100 p-4">
                               <div className="text-xs font-semibold tracking-wide text-slate-500 uppercase">État des stocks</div>
                               <div className="mt-3 space-y-3">
-                                {emailPreview.stock.map((item) => (
+                                {getEmailPreview(n).stock.map((item) => (
                                   <div key={item.label} className="space-y-1">
                                     <div className="flex items-center justify-between text-sm">
                                       <span>{item.label}</span>
