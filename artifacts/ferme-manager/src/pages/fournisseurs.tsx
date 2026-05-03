@@ -64,6 +64,9 @@ export default function Fournisseurs() {
   const commandes = [
     { date: "24/04/2025", fournisseur: "AgroNutrition SA", produit: "Croissance 3", montant: "150 000 FCFA", statut: "Payé" },
   ];
+  const paiements = [
+    { date: "05/03/2026", fournisseur: "AgroNutrition SA", montant: "60 000 FCFA", mode: "Espèces", statut: "Partiel" },
+  ];
 
   return (
     <div className="space-y-4">
@@ -214,7 +217,74 @@ export default function Fournisseurs() {
         </TabsContent>
 
         <TabsContent value="paiements" className="space-y-4 mt-4">
-          <Card><CardContent className="p-4 text-sm text-muted-foreground">Historique des paiements fournisseurs à afficher ici.</CardContent></Card>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <StatCard value="333 000 FCFA" label="Payé" color="text-green-600" />
+            <StatCard value="60 000 FCFA" label="Partiel" color="text-amber-600" />
+            <StatCard value="65 000 FCFA" label="En attente" color="text-red-600" />
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer un paiement</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Fournisseur *</Label>
+                  <Select defaultValue="">
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>{(fournisseurs ?? []).map(f => <SelectItem key={f.id} value={String(f.id)}>{f.nom}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Montant (FCFA) *</Label>
+                  <Input type="number" placeholder="ex: 60000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Date</Label>
+                  <Input type="date" defaultValue={today} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Mode</Label>
+                  <Select value={paiement} onValueChange={setPaiement}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Payé", "Partiel", "En attente", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                {paiement === "Autre" && (
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Préciser</Label>
+                    <Input value={paiementAutre} onChange={e => setPaiementAutre(e.target.value)} placeholder="Précisez le mode de paiement" />
+                  </div>
+                )}
+              </div>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Enregistrer</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique paiements</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["DATE", "FOURNISSEUR", "MONTANT", "MODE", "STATUT"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {paiements.map(p => (
+                    <tr key={`${p.date}-${p.fournisseur}`} className="hover:bg-muted/20">
+                      <td className="px-4 py-3">{p.date}</td>
+                      <td className="px-4 py-3">{p.fournisseur}</td>
+                      <td className="px-4 py-3">{p.montant}</td>
+                      <td className="px-4 py-3">{p.mode}</td>
+                      <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-medium">{p.statut}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
