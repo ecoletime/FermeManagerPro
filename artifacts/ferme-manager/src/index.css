@@ -186,6 +186,28 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  .dark body {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    color: hsl(var(--foreground));
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  .dark button,
+  .dark a,
+  .dark [role="button"] {
+    color: inherit;
+  }
 }
 
 @layer utilities {
