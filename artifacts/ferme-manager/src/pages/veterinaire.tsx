@@ -146,12 +146,23 @@ export default function Veterinaire() {
             <StatCard value={`${fmt(stats.cout)} FCFA`} label="Coût 2025" color="text-amber-600" />
           </div>
 
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Alertes vétérinaires</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
-              <div className="rounded-md border-l-4 border-l-red-500 bg-red-50 px-4 py-3 text-sm">🔴 Visite imminente — Dr. Moreau dans 2 jours</div>
-              <div className="rounded-md border-l-4 border-l-amber-500 bg-amber-50 px-4 py-3 text-sm">🟠 Ordonnance à renouveler — #P-108 — fin 01/05</div>
-              <div className="rounded-md border-l-4 border-l-green-500 bg-green-50 px-4 py-3 text-sm">🟢 Dernière visite — Dr. Moreau 10/04 — 8 animaux</div>
+          <Card className="border-red-300 bg-red-50/70">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-red-900">Alertes vétérinaires</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-md border border-red-300 bg-white px-4 py-3 text-sm text-red-950 shadow-sm">
+                <div className="font-semibold">Urgent — Visite imminente</div>
+                <div>Dr. Moreau dans 2 jours</div>
+              </div>
+              <div className="rounded-md border border-amber-300 bg-white px-4 py-3 text-sm text-amber-950 shadow-sm">
+                <div className="font-semibold">Attention — Ordonnance à renouveler</div>
+                <div>#P-108 — fin 01/05</div>
+              </div>
+              <div className="rounded-md border border-green-300 bg-white px-4 py-3 text-sm text-green-950 shadow-sm">
+                <div className="font-semibold">Info — Dernière visite</div>
+                <div>Dr. Moreau 10/04 — 8 animaux</div>
+              </div>
             </CardContent>
           </Card>
 
@@ -170,14 +181,14 @@ export default function Veterinaire() {
                     <td className="px-4 py-3">Dr. Moreau</td>
                     <td className="px-4 py-3">Vaccination</td>
                     <td className="px-4 py-3">#P-108, Lot B</td>
-                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-medium">Dans 2 jours</span></td>
+                    <td className="px-4 py-3"><span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-800">Dans 2 jours</span></td>
                   </tr>
                   <tr className="hover:bg-muted/20">
                     <td className="px-4 py-3">10/05/2025</td>
                     <td className="px-4 py-3">Dr. Moreau</td>
                     <td className="px-4 py-3">Routine</td>
                     <td className="px-4 py-3">À définir</td>
-                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 font-medium">Planifiée</span></td>
+                    <td className="px-4 py-3"><span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">Planifiée</span></td>
                   </tr>
                 </tbody>
               </table>
