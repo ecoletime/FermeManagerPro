@@ -31,6 +31,7 @@ export default function Budget() {
   const createDepense = useCreateDepense();
 
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
+  const [recetteForm, setRecetteForm] = useState({ source: "", montant: "", date: new Date().toISOString().slice(0, 10), reference: "" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
   const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
   const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
@@ -46,6 +47,10 @@ export default function Budget() {
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
+  const [recettesList, setRecettesList] = useState([
+    { id: 1, source: "Vente animaux", montant: 1200000, date: "05/03/2026", reference: "M. Dupont" },
+    { id: 2, source: "Subvention", montant: 500000, date: "07/03/2026", reference: "État" },
+  ]);
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
   const depensesList = depenses ?? [];
@@ -98,6 +103,21 @@ export default function Budget() {
       ...current,
     ]);
     setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
+  };
+
+  const addRecette = () => {
+    if (!recetteForm.source || !recetteForm.montant) return;
+    setRecettesList((current) => [
+      {
+        id: Date.now(),
+        source: recetteForm.source,
+        montant: Number(recetteForm.montant),
+        date: recetteForm.date,
+        reference: recetteForm.reference || "—",
+      },
+      ...current,
+    ]);
+    setRecetteForm({ source: "", montant: "", date: new Date().toISOString().slice(0, 10), reference: "" });
   };
 
   const editPlan = (id: number) => {
@@ -201,12 +221,49 @@ export default function Budget() {
 
         <TabsContent value="recettes" className="space-y-4">
           <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Enregistrer une recette</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Source *</Label>
+                  <Select value={recetteForm.source} onValueChange={(value) => setRecetteForm((f) => ({ ...f, source: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Vente animaux" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Vente animaux">Vente animaux</SelectItem>
+                      <SelectItem value="Subvention">Subvention</SelectItem>
+                      <SelectItem value="Vente produits">Vente produits</SelectItem>
+                      <SelectItem value="Autres">Autres</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Montant (FCFA) *</Label>
+                  <Input type="number" placeholder="ex: 500000" value={recetteForm.montant} onChange={(e) => setRecetteForm((f) => ({ ...f, montant: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input type="date" value={recetteForm.date} onChange={(e) => setRecetteForm((f) => ({ ...f, date: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Référence</Label>
+                  <Input placeholder="ex: M. Dupont" value={recetteForm.reference} onChange={(e) => setRecetteForm((f) => ({ ...f, reference: e.target.value }))} />
+                </div>
+              </div>
+              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addRecette}>Ajouter une recette</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle className="text-base">Recettes enregistrées</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30"><tr>{["Date", "Source", "Description", "Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
-                  {recettes.map(r => <tr key={r.id} className="hover:bg-muted/20"><td className="px-4 py-3">{r.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">{r.source}</span></td><td className="px-4 py-3">{r.description}</td><td className="px-4 py-3 font-medium">{fmt(r.montant)}</td></tr>)}
+                  {recettesList.map(r => <tr key={r.id} className="hover:bg-muted/20"><td className="px-4 py-3">{r.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">{r.source}</span></td><td className="px-4 py-3">{r.reference}</td><td className="px-4 py-3 font-medium">{fmt(r.montant)}</td></tr>)}
                 </tbody>
               </table>
             </CardContent>
