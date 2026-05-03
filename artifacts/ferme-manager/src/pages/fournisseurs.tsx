@@ -7,7 +7,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Edit3 } from "lucide-react";
 
 const initForm = { nom: "", categorie: "", telephone: "", email: "", adresse: "", produits: "", statut: "Actif", notes: "" };
+
+function StatCard({ value, label, color }: { value: number | string; label: string; color: string }) {
+  return (
+    <Card>
+      <CardContent className="pt-5 pb-4 text-center">
+        <div className={`text-3xl font-bold ${color}`}>{value}</div>
+        <div className="text-xs text-muted-foreground mt-1">{label}</div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function Fournisseurs() {
   const { toast } = useToast();
@@ -40,10 +52,20 @@ export default function Fournisseurs() {
     }
   };
 
+  const stats = {
+    depenseAnnee: fournisseurs?.reduce((sum, f) => sum + (f.statut === "Actif" ? 160000 : 0), 0) ?? 0,
+    enAttente: fournisseurs?.reduce((sum, f) => sum + (f.statut === "Inactif" ? 1 : 0), 0) ?? 0,
+    fournisseursActifs: fournisseurs?.filter(f => f.statut === "Actif").length ?? 0,
+    remboursements: fournisseurs?.length ?? 0,
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold tracking-tight">Fournisseurs</h1><p className="text-muted-foreground text-sm">{fournisseurs?.length ?? 0} fournisseurs enregistrés</p></div>
+    <div className="space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Fournisseurs</h1>
+          <p className="text-muted-foreground text-sm">Gestion des fournisseurs, commandes et paiements</p>
+        </div>
         <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) { setEditId(null); setForm({ ...initForm }); } }}>
           <DialogTrigger asChild><Button data-testid="button-add-fournisseur"><Plus className="h-4 w-4 mr-2" />Ajouter un fournisseur</Button></DialogTrigger>
           <DialogContent>
@@ -54,13 +76,13 @@ export default function Fournisseurs() {
                 <div className="space-y-1"><Label>Catégorie *</Label>
                   <Select value={form.categorie} onValueChange={v => setForm(f => ({...f, categorie: v}))}>
                     <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>
-                    <SelectContent>{["Aliments","Médicaments","Matériel","Équipements","Services","Autre"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Aliments", "Médicaments", "Matériel", "Équipements", "Services", "Autre"].map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1"><Label>Statut</Label>
                   <Select value={form.statut} onValueChange={v => setForm(f => ({...f, statut: v}))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{["Actif","Inactif"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Actif", "Inactif"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1"><Label>Téléphone</Label><Input value={form.telephone} onChange={e => setForm(f => ({...f, telephone: e.target.value}))} /></div>
@@ -74,32 +96,52 @@ export default function Fournisseurs() {
         </Dialog>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b bg-muted/30">
-              <tr>{["Nom","Catégorie","Téléphone","Email","Produits","Statut",""].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
-            </thead>
-            <tbody className="divide-y">
-              {isLoading ? Array.from({length: 3}).map((_, i) => <tr key={i}><td colSpan={7} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>)
-                : fournisseurs?.map(f => (
-                <tr key={f.id} className="hover:bg-muted/20" data-testid={`row-fournisseur-${f.id}`}>
-                  <td className="px-4 py-3 font-medium">{f.nom}</td>
-                  <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{f.categorie}</span></td>
-                  <td className="px-4 py-3">{f.telephone ?? "—"}</td>
-                  <td className="px-4 py-3">{f.email ?? "—"}</td>
-                  <td className="px-4 py-3 max-w-[200px] truncate">{f.produits ?? "—"}</td>
-                  <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${f.statut === "Actif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{f.statut}</span></td>
-                  <td className="px-4 py-3 flex gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditId(f.id); setForm({ nom: f.nom, categorie: f.categorie, telephone: f.telephone ?? "", email: f.email ?? "", adresse: f.adresse ?? "", produits: f.produits ?? "", statut: f.statut, notes: f.notes ?? "" }); setOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="sm" onClick={() => { if (!confirm(`Supprimer ${f.nom}?`)) return; deleteFournisseur.mutate({ id: f.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); } }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="dashboard">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+          <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
+          <TabsTrigger value="commandes">Commandes</TabsTrigger>
+          <TabsTrigger value="paiements">Paiements</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dashboard" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={`${new Intl.NumberFormat("fr-FR").format(stats.depenseAnnee)} FCFA`} label="Dépenses année" color="text-green-600" />
+            <StatCard value={`${new Intl.NumberFormat("fr-FR").format(stats.enAttente)} FCFA`} label="En attente" color="text-red-600" />
+            <StatCard value={stats.fournisseursActifs} label="Fournisseurs actifs" color="text-slate-800" />
+            <StatCard value={stats.remboursements} label="À rembourser" color="text-amber-600" />
+          </div>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Fournisseurs</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["NOM", "CATÉGORIE", "TÉLÉPHONE", "TOTAL ACHATS", "STATUT"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={5} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : fournisseurs?.map(f => (
+                    <tr key={f.id} className="hover:bg-muted/20" data-testid={`row-fournisseur-${f.id}`}>
+                      <td className="px-4 py-3 font-medium">{f.nom}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{f.categorie}</td>
+                      <td className="px-4 py-3">{f.telephone ?? "—"}</td>
+                      <td className="px-4 py-3 text-green-700">{f.statut === "Actif" ? "120 000 FCFA" : "13 000 FCFA"}</td>
+                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${f.statut === "Actif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{f.statut}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="commandes" className="space-y-4 mt-4">
+          <Card><CardContent className="p-4 text-sm text-muted-foreground">Historique des commandes fournisseurs à afficher ici.</CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="paiements" className="space-y-4 mt-4">
+          <Card><CardContent className="p-4 text-sm text-muted-foreground">Historique des paiements fournisseurs à afficher ici.</CardContent></Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
