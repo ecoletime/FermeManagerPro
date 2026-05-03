@@ -73,7 +73,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     {
       title: "Système",
       items: [
-        { href: "/notifications", label: "Notifications", icon: Clock },
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
       ],
     },

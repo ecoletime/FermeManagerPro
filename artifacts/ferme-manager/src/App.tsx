@@ -17,7 +17,6 @@ import Employes from "@/pages/employes";
 import Veterinaire from "@/pages/veterinaire";
 import Fournisseurs from "@/pages/fournisseurs";
 import Budget from "@/pages/budget";
-import Notifications from "@/pages/notifications";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,7 +67,6 @@ function Router() {
       <Route path="/veterinaire">{() => <ProtectedRoute component={Veterinaire} />}</Route>
       <Route path="/fournisseurs">{() => <ProtectedRoute component={Fournisseurs} />}</Route>
       <Route path="/budget">{() => <ProtectedRoute component={Budget} adminOnly />}</Route>
-      <Route path="/notifications">{() => <ProtectedRoute component={Notifications} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
