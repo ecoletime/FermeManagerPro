@@ -6,6 +6,7 @@ import {
   useMarkNotificationLue,
   useMarkAllNotificationsLues,
   getMarkNotificationLueUrl,
+  getMarkAllNotificationsLuesUrl,
   getGetNotificationsQueryKey,
   getGetNotificationsStatsQueryKey,
 } from "@workspace/api-client-react";
@@ -119,7 +120,7 @@ export default function Notifications() {
   };
 
   const handleDelete = (id: number) => {
-    fetch(getMarkNotificationLueUrl(id).replace("/lue", ""), { method: "DELETE" })
+    fetch(`/api/notifications/${id}`, { method: "DELETE" })
       .then(async (res) => {
         if (!res.ok) throw new Error();
         toast({ title: "Notification supprimée" });

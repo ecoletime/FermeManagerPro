@@ -1,7 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and } from "drizzle-orm";
 import { db, notificationsTable } from "@workspace/db";
-import { CreateNotificationBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -34,9 +33,25 @@ router.get("/notifications", async (req, res): Promise<void> => {
 });
 
 router.post("/notifications", async (req, res): Promise<void> => {
-  const parsed = CreateNotificationBody.safeParse(req.body);
-  if (!parsed.success) { res.status(400).json({ error: String(parsed.error) }); return; }
-  const [row] = await db.insert(notificationsTable).values(parsed.data).returning();
+  const body = req.body;
+  if (
+    typeof body?.utilisateur !== "string" ||
+    typeof body?.module !== "string" ||
+    typeof body?.action !== "string" ||
+    typeof body?.detail !== "string"
+  ) {
+    res.status(400).json({ error: "invalid body" });
+    return;
+  }
+
+  const [row] = await db.insert(notificationsTable).values({
+    utilisateur: body.utilisateur,
+    role: typeof body.role === "string" ? body.role : "admin",
+    module: body.module,
+    action: body.action,
+    detail: body.detail,
+    lue: typeof body.lue === "boolean" ? body.lue : false,
+  }).returning();
   res.status(201).json(mapRow(row));
 });
 
