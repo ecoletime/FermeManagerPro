@@ -19,8 +19,11 @@ import {
   AlertTriangle,
   Info,
   CheckCircle,
-  Activity
+  Activity,
+  Wheat,
+  Truck,
 } from "lucide-react";
+import { Link } from "wouter";
 import { 
   PieChart, 
   Pie, 
@@ -86,8 +89,35 @@ export default function Dashboard() {
     { name: 'Avr', alimentation: 480000, veterinaire: 50000, maintenance: 200000 },
   ];
 
+  const shortcuts = [
+    { href: "/animaux", label: "Animaux", icon: PiggyBank },
+    { href: "/sante", label: "Santé & Vaccins", icon: HeartPulse },
+    { href: "/reproduction", label: "Reproduction", icon: Baby },
+    { href: "/alimentation", label: "Alimentation", icon: Wheat },
+    { href: "/loges", label: "Loges & Bâtiments", icon: HomeIcon },
+    { href: "/maintenance", label: "Maintenance", icon: Wrench },
+    { href: "/employes", label: "Employés", icon: Users },
+    { href: "/fournisseurs", label: "Fournisseurs", icon: Truck },
+  ];
+
   return (
     <div className="flex flex-col gap-6 pb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {shortcuts.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link key={item.href} href={item.href}>
+              <div className="flex h-full min-h-[56px] cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 text-sm font-medium shadow-sm transition hover:bg-muted/50">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="leading-tight">{item.label}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <KpiCard 
