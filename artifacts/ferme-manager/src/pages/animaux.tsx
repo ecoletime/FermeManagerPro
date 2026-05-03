@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Trash2, Search } from "lucide-react";
 
 const statutColors: Record<string, string> = {
@@ -120,79 +121,100 @@ export default function Animaux() {
         </Dialog>
       </div>
 
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card><CardContent className="pt-4"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Total animaux</div></CardContent></Card>
-          {Object.entries(stats.parType ?? {}).slice(0,3).map(([t, n]) => (
-            <Card key={t}><CardContent className="pt-4"><div className="text-2xl font-bold">{String(n)}</div><div className="text-xs text-muted-foreground">{t}s</div></CardContent></Card>
-          ))}
-        </div>
-      )}
+      <Tabs defaultValue="registre">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+          <TabsTrigger value="registre">Registre</TabsTrigger>
+          <TabsTrigger value="pesees">Pesées</TabsTrigger>
+          <TabsTrigger value="transferts">Transferts</TabsTrigger>
+          <TabsTrigger value="sorties">Sorties</TabsTrigger>
+        </TabsList>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Filtres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3">
-            <div className="relative flex-1 min-w-[180px]">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input data-testid="input-search" placeholder="Rechercher par tag..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
+        <TabsContent value="registre" className="space-y-4 mt-4">
+          {stats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <Card><CardContent className="pt-4"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-muted-foreground">Total animaux</div></CardContent></Card>
+              {Object.entries(stats.parType ?? {}).slice(0,3).map(([t, n]) => (
+                <Card key={t}><CardContent className="pt-4"><div className="text-2xl font-bold">{String(n)}</div><div className="text-xs text-muted-foreground">{t}s</div></CardContent></Card>
+              ))}
             </div>
-            <Select value={filterStatut || "all"} onValueChange={v => setFilterStatut(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[160px]" data-testid="select-statut"><SelectValue placeholder="Statut" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les statuts</SelectItem>
-                {["Sain","Malade","Gestante","En quarantaine"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Select value={filterType || "all"} onValueChange={v => setFilterType(v === "all" ? "" : v)}>
-              <SelectTrigger className="w-[160px]" data-testid="select-type-filter"><SelectValue placeholder="Type" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous les types</SelectItem>
-                {["Truie","Verrat","Porcelet","Engraissement"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+          )}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Filtres</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-3">
+                <div className="relative flex-1 min-w-[180px]">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input data-testid="input-search" placeholder="Rechercher par tag..." className="pl-8" value={search} onChange={e => setSearch(e.target.value)} />
+                </div>
+                <Select value={filterStatut || "all"} onValueChange={v => setFilterStatut(v === "all" ? "" : v)}>
+                  <SelectTrigger className="w-[160px]" data-testid="select-statut"><SelectValue placeholder="Statut" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    {["Sain","Malade","Gestante","En quarantaine"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={filterType || "all"} onValueChange={v => setFilterType(v === "all" ? "" : v)}>
+                  <SelectTrigger className="w-[160px]" data-testid="select-type-filter"><SelectValue placeholder="Type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous les types</SelectItem>
+                    {["Truie","Verrat","Porcelet","Engraissement"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b bg-muted/30">
+                    <tr>
+                      {["Tag","Type","Sexe","Naissance","Poids (kg)","Bâtiment","Statut",""].map(h => (
+                        <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {isLoading ? Array.from({length: 5}).map((_, i) => (
+                      <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>
+                    )) : animaux?.map(a => (
+                      <tr key={a.id} className="hover:bg-muted/20 transition-colors" data-testid={`row-animal-${a.id}`}>
+                        <td className="px-4 py-3 font-mono font-medium">{a.tag}</td>
+                        <td className="px-4 py-3">{a.type}</td>
+                        <td className="px-4 py-3">{a.sexe === "M" ? "Mâle" : "Femelle"}</td>
+                        <td className="px-4 py-3">{a.dateNaissance ?? "—"}</td>
+                        <td className="px-4 py-3">{a.poids != null ? Number(a.poids).toFixed(1) : "—"}</td>
+                        <td className="px-4 py-3">{a.batiment ?? "—"}</td>
+                        <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statutColors[a.statut] ?? "bg-gray-100 text-gray-800"}`}>{a.statut}</span></td>
+                        <td className="px-4 py-3">
+                          <Button variant="ghost" size="sm" data-testid={`button-delete-${a.id}`} onClick={() => handleDelete(a.id, a.tag)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                        </td>
+                      </tr>
+                    ))}
+                    {!isLoading && animaux?.length === 0 && (
+                      <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Aucun animal trouvé</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b bg-muted/30">
-                <tr>
-                  {["Tag","Type","Sexe","Naissance","Poids (kg)","Bâtiment","Statut",""].map(h => (
-                    <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {isLoading ? Array.from({length: 5}).map((_, i) => (
-                  <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>
-                )) : animaux?.map(a => (
-                  <tr key={a.id} className="hover:bg-muted/20 transition-colors" data-testid={`row-animal-${a.id}`}>
-                    <td className="px-4 py-3 font-mono font-medium">{a.tag}</td>
-                    <td className="px-4 py-3">{a.type}</td>
-                    <td className="px-4 py-3">{a.sexe === "M" ? "Mâle" : "Femelle"}</td>
-                    <td className="px-4 py-3">{a.dateNaissance ?? "—"}</td>
-                    <td className="px-4 py-3">{a.poids != null ? Number(a.poids).toFixed(1) : "—"}</td>
-                    <td className="px-4 py-3">{a.batiment ?? "—"}</td>
-                    <td className="px-4 py-3"><span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statutColors[a.statut] ?? "bg-gray-100 text-gray-800"}`}>{a.statut}</span></td>
-                    <td className="px-4 py-3">
-                      <Button variant="ghost" size="sm" data-testid={`button-delete-${a.id}`} onClick={() => handleDelete(a.id, a.tag)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                    </td>
-                  </tr>
-                ))}
-                {!isLoading && animaux?.length === 0 && (
-                  <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">Aucun animal trouvé</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="pesees" className="mt-4">
+          <Card><CardContent className="p-4 text-sm text-muted-foreground">Pesées à afficher ici.</CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="transferts" className="mt-4">
+          <Card><CardContent className="p-4 text-sm text-muted-foreground">Transferts à afficher ici.</CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="sorties" className="mt-4">
+          <Card><CardContent className="p-4 text-sm text-muted-foreground">Sorties à afficher ici.</CardContent></Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
