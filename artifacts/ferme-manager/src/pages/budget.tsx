@@ -203,6 +203,7 @@ export default function Budget() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="mensuel">Mensuel</SelectItem>
+                      <SelectItem value="semestriel">Semestriel</SelectItem>
                       <SelectItem value="trimestriel">Trimestriel</SelectItem>
                       <SelectItem value="annuel">Annuel</SelectItem>
                     </SelectContent>
