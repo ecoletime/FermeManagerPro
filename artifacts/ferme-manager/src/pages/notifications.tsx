@@ -174,6 +174,13 @@ const recipients = [
   },
 ];
 
+const notificationTypeOptions = [
+  { label: "Critiques", icon: "🔴" },
+  { label: "Alertes", icon: "⚠️" },
+  { label: "Infos", icon: "ℹ️" },
+  { label: "Résumé quotidien", icon: "📊" },
+];
+
 function StatCard({ value, label }: { value: string; label: string }) {
   return (
     <Card>
@@ -278,6 +285,7 @@ export default function Notifications() {
                     <div className="min-w-0">
                       <div className="text-sm font-semibold truncate">
                         <span className="text-muted-foreground font-medium">[FermeManager]</span> {" "}
+                        {n.severity === "succès" ? "🟢" : n.severity === "critique" ? "🔴" : n.severity === "urgence" ? "🚨" : "⚠️"} {" "}
                         {n.title}
                       </div>
                       <div className="text-[11px] text-muted-foreground truncate">
@@ -371,10 +379,10 @@ export default function Notifications() {
               <div className="space-y-2">
                 <Label>Types de notifications à recevoir</Label>
                 <div className="flex flex-wrap gap-3 text-sm">
-                  {["Critiques", "Alertes", "Infos", "Résumé quotidien"].map((item) => (
-                    <label key={item} className="flex items-center gap-2">
-                      <input type="checkbox" defaultChecked={item !== "Infos"} />
-                      <span>{item}</span>
+                  {notificationTypeOptions.map((item) => (
+                    <label key={item.label} className="flex items-center gap-2">
+                      <input type="checkbox" defaultChecked={item.label !== "Infos"} />
+                      <span>{item.icon} {item.label}</span>
                     </label>
                   ))}
                 </div>
@@ -400,7 +408,7 @@ export default function Notifications() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {recipient.types.map((type) => (
                           <span key={type} className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                            {type}
+                            {notificationTypeOptions.find((option) => option.label === type)?.icon} {type}
                           </span>
                         ))}
                       </div>
