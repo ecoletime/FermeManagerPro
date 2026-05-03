@@ -170,67 +170,59 @@ export default function Veterinaire() {
         <TabsContent value="visites" className="space-y-4 mt-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Nouvelle visite vétérinaire</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Planifier une visite</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm(); }}>
-                <DialogTrigger asChild>
-                  <Button className="w-full"><Plus className="mr-2 h-4 w-4" />Nouvelle visite</Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-lg">
-                  <DialogHeader><DialogTitle>{editId ? "Modifier" : "Nouvelle"} visite</DialogTitle></DialogHeader>
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1"><Label>Vétérinaire *</Label><Input value={form.veterinaire} onChange={e => setForm(f => ({ ...f, veterinaire: e.target.value }))} required /></div>
-                      <div className="space-y-1"><Label>Date *</Label><Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} required /></div>
-                      <div className="space-y-1"><Label>Type *</Label>
-                        <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{["Vaccination", "Consultation", "Visite préventive", "Urgence", "Contrôle"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1"><Label>Statut</Label>
-                        <Select value={form.statut} onValueChange={v => setForm(f => ({ ...f, statut: v }))}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{["Planifiee", "Terminée", "Annulée"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-1"><Label>Animaux concernés</Label><Input value={form.animauxConcernes} onChange={e => setForm(f => ({ ...f, animauxConcernes: e.target.value }))} /></div>
-                      <div className="space-y-1"><Label>Coût (FCFA)</Label><Input type="number" value={form.cout} onChange={e => setForm(f => ({ ...f, cout: e.target.value }))} /></div>
-                      <div className="space-y-1 col-span-2"><Label>Diagnostic</Label><Input value={form.diagnostic} onChange={e => setForm(f => ({ ...f, diagnostic: e.target.value }))} /></div>
-                      <div className="space-y-1 col-span-2"><Label>Traitement prescrit</Label><Input value={form.traitement} onChange={e => setForm(f => ({ ...f, traitement: e.target.value }))} /></div>
-                      <div className="space-y-1 col-span-2"><Label>Notes</Label><Input value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} /></div>
-                    </div>
-                    <Button type="submit" className="w-full" disabled={createVisite.isPending || updateVisite.isPending}>{editId ? "Mettre à jour" : "Enregistrer"}</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Vétérinaire *</Label>
+                  <Select value={form.veterinaire || "all"} onValueChange={v => setForm(f => ({ ...f, veterinaire: v === "all" ? "" : v }))}>
+                    <SelectTrigger><SelectValue placeholder="Dr. Jean‑François Moreau" /></SelectTrigger>
+                    <SelectContent>
+                      {["Dr. Jean‑François Moreau", "Dr. Moreau", "Dr. Martin"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Date *</Label>
+                  <Input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Type</Label>
+                  <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Routine", "Vaccination", "Urgence", "Contrôle"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Coût prévu (FCFA)</Label>
+                  <Input type="number" placeholder="ex: 25000" value={form.cout} onChange={e => setForm(f => ({ ...f, cout: e.target.value }))} />
+                </div>
+                <div className="space-y-1 col-span-1 md:col-span-2">
+                  <Label>Animaux à examiner</Label>
+                  <Input placeholder="ex: #P-108, Lot B" value={form.animauxConcernes} onChange={e => setForm(f => ({ ...f, animauxConcernes: e.target.value }))} />
+                </div>
+              </div>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">Planifier</Button>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Liste des visites</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique visites</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
-                  <tr>{["Vétérinaire", "Date", "Type", "Animaux", "Diagnostic", "Coût (FCFA)", "Statut", ""].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                  <tr>{["Date", "Vétérinaire", "Type", "Animaux", "Coût", "Statut"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={8} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : visites?.map(v => (
-                    <tr key={v.id} className="hover:bg-muted/20">
-                      <td className="px-4 py-3 font-medium">{v.veterinaire}</td>
-                      <td className="px-4 py-3">{v.date}</td>
-                      <td className="px-4 py-3">{v.type}</td>
-                      <td className="px-4 py-3">{v.animauxConcernes ?? "—"}</td>
-                      <td className="px-4 py-3 max-w-[200px] truncate">{v.diagnostic ?? "—"}</td>
-                      <td className="px-4 py-3">{v.cout != null ? fmt(Number(v.cout)) : "—"}</td>
-                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[v.statut] ?? "bg-gray-100 text-gray-800"}`}>{v.statut}</span></td>
-                      <td className="px-4 py-3 flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => { setEditId(v.id); setForm({ veterinaire: v.veterinaire, date: v.date, type: v.type, animauxConcernes: v.animauxConcernes ?? "", diagnostic: v.diagnostic ?? "", traitement: v.traitement ?? "", cout: v.cout ? String(v.cout) : "", statut: v.statut, notes: v.notes ?? "" }); setOpen(true); }}><Edit3 className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => { if (!confirm("Supprimer cette visite ?")) return; deleteVisite.mutate({ id: v.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); } }); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                      </td>
-                    </tr>
-                  ))}
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3">10/04/2025</td>
+                    <td className="px-4 py-3">Dr. Moreau</td>
+                    <td className="px-4 py-3">Vaccination</td>
+                    <td className="px-4 py-3">8 animaux</td>
+                    <td className="px-4 py-3">32 000 FCFA</td>
+                    <td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 font-medium">Payé</span></td>
+                  </tr>
                 </tbody>
               </table>
             </CardContent>
