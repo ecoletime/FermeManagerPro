@@ -353,8 +353,67 @@ export default function Animaux() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="sorties" className="mt-4">
-          <Card><CardContent className="p-4 text-sm text-muted-foreground">Sorties à afficher ici.</CardContent></Card>
+        <TabsContent value="sorties" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer une sortie</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Tag *</Label>
+                  <Input placeholder="ex: #P-088" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Date</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Type</Label>
+                  <Select defaultValue="Vente">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{["Vente", "Décès", "Consommation", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Poids (kg)</Label>
+                  <Input placeholder="ex: 95" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Prix (FCFA)</Label>
+                  <Input placeholder="ex: 180000" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Acheteur</Label>
+                  <Input placeholder="ex: M. Dupont" />
+                </div>
+              </div>
+              <Button className="w-full bg-red-600 hover:bg-red-700">Enregistrer la sortie</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique sorties</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["DATE", "TAG", "TYPE", "POIDS", "PRIX", "ACHETEUR"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3">20/04/2025</td>
+                    <td className="px-4 py-3">#P-088</td>
+                    <td className="px-4 py-3 text-green-700">Vente</td>
+                    <td className="px-4 py-3">95 kg</td>
+                    <td className="px-4 py-3 text-green-700">180 000 FCFA</td>
+                    <td className="px-4 py-3">Marché local</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
