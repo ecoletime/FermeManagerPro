@@ -12,11 +12,17 @@ interface AuthState {
   logout: () => void;
 }
 
+interface AuthSnapshot {
+  isLoggedIn: boolean;
+  role: Role;
+  permissions: Permissions;
+}
+
 const AUTH_KEY = "ferme_auth";
 const SETTINGS_KEY = "ferme_system_settings";
 const ADMIN_CREDENTIALS_KEY = "ferme_admin_credentials";
 
-function loadAuth(): { isLoggedIn: boolean; role: Role; permissions: Permissions } {
+function loadAuth(): AuthSnapshot {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
     if (!raw) return { isLoggedIn: false, role: null, permissions: [] };
@@ -62,10 +68,7 @@ export function setAuthState(role: Role, permissions: Permissions = []) {
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const initial = loadAuth();
-  const [isLoggedIn, setIsLoggedIn] = useState(initial.isLoggedIn);
-  const [role, setRole] = useState<Role>(initial.role);
-  const [permissions, setPermissions] = useState<Permissions>(initial.permissions);
+  const [state, setState] = useState<AuthSnapshot>(loadAuth());
 
   useEffect(() => {
     try {
@@ -77,22 +80,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  useEffect(() => {
+    const sync = () => setState(loadAuth());
+    sync();
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
   const login = (newRole: Role, newPermissions: Permissions = []) => {
-    setRole(newRole);
-    setPermissions(newPermissions);
-    setIsLoggedIn(true);
-    setAuthState(newRole, newPermissions);
+    const snapshot = { isLoggedIn: Boolean(newRole), role: newRole, permissions: newPermissions };
+    setState(snapshot);
+    localStorage.setItem(AUTH_KEY, JSON.stringify(snapshot));
+    window.dispatchEvent(new Event("storage"));
   };
 
   const logout = () => {
-    setRole(null);
-    setPermissions([]);
-    setIsLoggedIn(false);
+    setState({ isLoggedIn: false, role: null, permissions: [] });
     localStorage.removeItem(AUTH_KEY);
+    window.dispatchEvent(new Event("storage"));
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, role, permissions, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: state.isLoggedIn, role: state.role, permissions: state.permissions, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
