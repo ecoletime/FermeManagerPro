@@ -18,6 +18,7 @@ import Veterinaire from "@/pages/veterinaire";
 import Fournisseurs from "@/pages/fournisseurs";
 import Budget from "@/pages/budget";
 import Utilisateurs from "@/pages/utilisateurs";
+import SystemSettings from "@/pages/system-settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -69,6 +70,7 @@ function Router() {
       <Route path="/fournisseurs">{() => <ProtectedRoute component={Fournisseurs} />}</Route>
       <Route path="/budget">{() => <ProtectedRoute component={Budget} adminOnly />}</Route>
       <Route path="/utilisateurs">{() => <ProtectedRoute component={Utilisateurs} adminOnly />}</Route>
+      <Route path="/systeme">{() => <ProtectedRoute component={SystemSettings} adminOnly />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
