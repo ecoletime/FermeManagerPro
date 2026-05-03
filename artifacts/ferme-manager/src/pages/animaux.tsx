@@ -203,8 +203,74 @@ export default function Animaux() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="pesees" className="mt-4">
-          <Card><CardContent className="p-4 text-sm text-muted-foreground">Pesées à afficher ici.</CardContent></Card>
+        <TabsContent value="pesees" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Enregistrer une pesée</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Animal *</Label>
+                  <Select defaultValue="">
+                    <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Choisir...</SelectItem>
+                      {(animaux ?? []).map(a => <SelectItem key={a.id} value={a.tag}>{a.tag}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Date *</Label>
+                  <Input type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Poids (kg) *</Label>
+                  <Input type="number" step="0.1" placeholder="ex: 47" />
+                </div>
+                <div className="space-y-1">
+                  <Label>Par</Label>
+                  <Select defaultValue="Jean-Pierre D.">
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Jean-Pierre D.">Jean-Pierre D.</SelectItem>
+                      <SelectItem value="Marie K.">Marie K.</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Button className="w-full bg-green-600 hover:bg-green-700">Enregistrer</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique pesées</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["TAG", "DATE", "POIDS", "GAIN/PERTE", "PAR"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium">#T-022</td>
+                    <td className="px-4 py-3">25/04/2025</td>
+                    <td className="px-4 py-3">80 kg</td>
+                    <td className="px-4 py-3 text-green-600">+5 kg</td>
+                    <td className="px-4 py-3">Jean-Pierre D.</td>
+                  </tr>
+                  <tr className="hover:bg-muted/20">
+                    <td className="px-4 py-3 font-medium">#P-108</td>
+                    <td className="px-4 py-3">20/04/2025</td>
+                    <td className="px-4 py-3">52 kg</td>
+                    <td className="px-4 py-3 text-red-600">-3 kg</td>
+                    <td className="px-4 py-3">Jean-Pierre D.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="transferts" className="mt-4">
