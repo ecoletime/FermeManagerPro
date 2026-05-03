@@ -236,6 +236,28 @@ export default function Veterinaire() {
             <StatCard value="40 000 FCFA" label="Prévision fixée" color="text-red-600" />
             <StatCard value="2 298 FCFA" label="Coût / animal / an" color="text-slate-800" />
           </div>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Historique des coûts</CardTitle></CardHeader>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>{["Date", "Vétérinaire", "Type", "Animaux", "Coût", "Statut"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : visites?.map(v => (
+                    <tr key={v.id} className="hover:bg-muted/20">
+                      <td className="px-4 py-3">{v.date}</td>
+                      <td className="px-4 py-3">{v.veterinaire}</td>
+                      <td className="px-4 py-3">{v.type}</td>
+                      <td className="px-4 py-3">{v.animauxConcernes ?? "—"}</td>
+                      <td className="px-4 py-3">{v.cout != null ? `${fmt(Number(v.cout))} FCFA` : "—"}</td>
+                      <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[v.statut] ?? "bg-gray-100 text-gray-800"}`}>{v.statut}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
