@@ -34,6 +34,8 @@ export default function Fournisseurs() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...initForm });
+  const [paiement, setPaiement] = useState("Payé");
+  const [paiementAutre, setPaiementAutre] = useState("");
   const today = new Date().toISOString().slice(0, 10);
 
   const { data: fournisseurs, isLoading } = useGetFournisseurs({ query: { queryKey: getGetFournisseursQueryKey() } });
@@ -170,11 +172,17 @@ export default function Fournisseurs() {
                 </div>
                 <div className="space-y-1">
                   <Label>Paiement</Label>
-                  <Select defaultValue="Payé">
+                  <Select value={paiement} onValueChange={setPaiement}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{["Payé", "En attente"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
+                    <SelectContent>{["Payé", "Partiel", "En attente", "Autre"].map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
+                {paiement === "Autre" && (
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Préciser</Label>
+                    <Input value={paiementAutre} onChange={e => setPaiementAutre(e.target.value)} placeholder="Précisez le type de paiement" />
+                  </div>
+                )}
               </div>
               <Button className="w-full bg-green-600 hover:bg-green-700">Enregistrer</Button>
             </CardContent>
