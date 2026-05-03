@@ -32,7 +32,6 @@ export default function Login() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
   const [resetStep, setResetStep] = useState<ResetStep>("request");
   const [forgotUsername, setForgotUsername] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -59,7 +58,7 @@ export default function Login() {
     e.preventDefault();
     const users = loadUsers();
     const matched = users.find((user: any) => user.email.toLowerCase() === empUsername.toLowerCase() && user.actif !== false);
-    if (matched) {
+    if (matched && matched.password === empPassword) {
       localStorage.setItem("ferme_auth", JSON.stringify({ isLoggedIn: true, role: matched.role, permissions: matched.modules ?? [] }));
       setLocation("/");
       toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom}` });
@@ -132,7 +131,6 @@ export default function Login() {
     const creds = getAdminCredentials();
     updateAdminCredentials(creds.username, newPassword);
     localStorage.removeItem(RESET_CODE_KEY);
-    setResetOpen(false);
     setForgotOpen(false);
     setResetStep("request");
     setNewPassword("");
