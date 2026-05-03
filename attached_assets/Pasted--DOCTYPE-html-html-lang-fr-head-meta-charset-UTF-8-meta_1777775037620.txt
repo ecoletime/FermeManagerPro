@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FermeManager Pro — Système de Notifications</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root{
+  --green:#16a34a;--green-l:#dcfce7;--green-d:#14532d;
+  --amber:#d97706;--amber-l:#fef3c7;--amber-d:#78350f;
+  --red:#dc2626;--red-l:#fee2e2;
+  --blue:#2563eb;--blue-l:#dbeafe;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --bg:#f8f7f4;--bg2:#fff;--bg3:#f1ede8;
+  --border:#e5e0d8;--text:#1c1917;--text2:#57534e;--text3:#a8a29e;
+  --radius:10px;--radius-sm:6px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --shadow:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:13px}
+ 
+/* LAYOUT */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--green-d);flex-shrink:0;display:flex;flex-direction:column}
+.sidebar-logo{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px}
+.sidebar-logo-text{font-size:14px;font-weight:700;color:white}
+.sidebar-logo-sub{font-size:10px;color:rgba(255,255,255,.4)}
+.sidebar-nav{flex:1;padding:8px}
+.nav-group-label{font-size:9px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.08em;padding:10px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;color:rgba(255,255,255,.65);font-size:12px;font-weight:500;transition:all .15s;margin-bottom:1px}
+.nav-item:hover{background:rgba(255,255,255,.1);color:white}
+.nav-item.active{background:rgba(255,255,255,.18);color:white;font-weight:600}
+.nav-badge{background:var(--red);color:white;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:auto}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{background:white;border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.topbar-title{font-size:16px;font-weight:700}
+.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.content{flex:1;overflow-y:auto;padding:16px 20px}
+.sec{display:none}.sec.active{display:block}
+ 
+/* COMMON */
+.card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.kpi{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;text-align:center;box-shadow:var(--shadow)}
+.kpi-v{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.kpi-l{font-size:10px;color:var(--text3);margin-top:3px;font-weight:500}
+label{font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:3px}
+input,select,textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:var(--font);color:var(--text);background:var(--bg);transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--green);background:white}
+.fg{margin-bottom:10px}
+.btn{padding:8px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--text);font-family:var(--font);transition:all .15s}
+.btn:hover{background:var(--bg3)}
+.btn-g{background:var(--green);color:white;border-color:var(--green)}.btn-g:hover{background:var(--green-d)}
+.btn-r{background:var(--red);color:white;border-color:var(--red)}
+.btn-a{background:var(--amber);color:white;border-color:var(--amber)}
+.btn-b{background:var(--blue);color:white;border-color:var(--blue)}
+.btn-sm{padding:3px 9px;font-size:11px}
+.btn-full{width:100%;padding:10px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.b-g{background:var(--green-l);color:var(--green-d)}
+.b-r{background:var(--red-l);color:var(--red)}
+.b-a{background:var(--amber-l);color:var(--amber-d)}
+.b-b{background:var(--blue-l);color:var(--blue)}
+.b-p{background:var(--purple-l);color:var(--purple)}
+.b-gray{background:var(--bg3);color:var(--text2)}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 10px;text-align:left;background:var(--bg3);color:var(--text2);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg)}
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:8px;font-weight:500}
+.alert-r{background:var(--red-l);color:var(--red);border-left:3px solid var(--red)}
+.alert-a{background:var(--amber-l);color:var(--amber-d);border-left:3px solid var(--amber)}
+.alert-g{background:var(--green-l);color:var(--green-d);border-left:3px solid var(--green)}
+.alert-b{background:var(--blue-l);color:var(--blue);border-left:3px solid var(--blue)}
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+ 
+/* TOAST */
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;box-shadow:var(--shadow-md);display:flex;align-items:flex-start;gap:10px;max-width:320px;pointer-events:all;animation:toastIn .3s ease;position:relative;overflow:hidden}
+.toast::after{content:'';position:absolute;bottom:0;left:0;height:3px;background:var(--green);animation:toastBar 4s linear forwards}
+.toast.r::after{background:var(--red)}
+.toast.a::after{background:var(--amber)}
+.toast.b::after{background:var(--blue)}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastBar{from{width:100%}to{width:0%}}
+.toast-icon{font-size:18px;flex-shrink:0}
+.toast-body{flex:1}
+.toast-title{font-size:12px;font-weight:700;color:var(--text);margin-bottom:2px}
+.toast-msg{font-size:11px;color:var(--text3)}
+.toast-close{font-size:14px;color:var(--text3);cursor:pointer;background:none;border:none;padding:0;line-height:1;flex-shrink:0}
+ 
+/* NOTIF LIST */
+.notif-item{display:flex;align-items:flex-start;gap:12px;padding:12px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.notif-item:hover{background:var(--bg)}
+.notif-item.unread{background:#fefce8;border-left:3px solid var(--amber)}
+.notif-item.unread.critical{background:var(--red-l);border-left:3px solid var(--red)}
+.notif-item.unread.info{background:var(--blue-l);border-left:3px solid var(--blue)}
+.notif-item.unread.success{background:var(--green-l);border-left:3px solid var(--green)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--amber);flex-shrink:0;margin-top:4px}
+.notif-dot.critical{background:var(--red)}
+.notif-dot.info{background:var(--blue)}
+.notif-dot.success{background:var(--green)}
+.notif-dot.read{background:var(--text3);opacity:.4}
+.notif-content{flex:1}
+.notif-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.notif-desc{font-size:11px;color:var(--text3);line-height:1.4}
+.notif-meta{font-size:10px;color:var(--text3);margin-top:4px;display:flex;gap:10px}
+.notif-actions{display:flex;gap:6px;margin-top:6px}
+ 
+/* EMAIL PREVIEW */
+.email-preview{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.email-header{background:var(--green-d);color:white;padding:16px 20px}
+.email-from{font-size:11px;opacity:.7;margin-bottom:2px}
+.email-subject{font-size:14px;font-weight:700}
+.email-body{padding:20px;background:white}
+.email-section{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.email-section:last-child{border-bottom:none;margin-bottom:0}
+.email-kpi-row{display:flex;gap:10px;margin-top:10px}
+.email-kpi{flex:1;background:var(--bg3);border-radius:var(--radius-sm);padding:10px;text-align:center}
+.email-kpi-v{font-size:18px;font-weight:700}
+.email-kpi-l{font-size:10px;color:var(--text3)}
+ 
+/* TOGGLE */
+.toggle{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.toggle:last-child{border-bottom:none}
+.toggle-info{flex:1}
+.toggle-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:2px}
+.toggle-sub{font-size:11px;color:var(--text3)}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:20px;transition:.3s}
+.slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+input:checked+.slider{background:var(--green)}
+input:checked+.slider:before{transform:translateX(16px)}
+ 
+/* EMAIL SIM */
+.email-log-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.email-log-item:last-child{border-bottom:none}
+.email-log-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.email-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+ 
+/* THRESHOLD */
+.threshold-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.threshold-row:last-child{border-bottom:none}
+.threshold-name{flex:1;font-size:12px;font-weight:500}
+.threshold-input{width:80px}
+.threshold-unit{font-size:11px;color:var(--text3);white-space:nowrap}
+ 
+/* PROGRESS */
+.prog-bar{height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;margin-top:3px}
+.prog-fill{height:100%;border-radius:3px;transition:width .3s}
+ 
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.open{display:flex}
+.modal{background:white;border-radius:14px;padding:20px;max-width:520px;width:92%;max-height:90vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-md)}
+.modal-close{position:absolute;top:12px;right:14px;cursor:pointer;font-size:18px;color:var(--text3);background:none;border:none}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px}
+</style>
+</head>
+<body>
+ 
+<div class="toast-container" id="toast-container"></div>
+ 
+<!-- MODAL EMAIL PREVIEW -->
+<div class="modal-overlay" id="modal-email" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="document.getElementById('modal-email').classList.remove('open')">✕</button>
+    <div class="modal-title" id="email-modal-title">Aperçu de l'email</div>
+    <div id="email-modal-body"></div>
+  </div>
+</div>
+ 
+<!-- MODAL NOTIF DETAIL -->
+<div class="modal-overlay" id="modal-notif" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-notif').classList.remove('open')">✕</button>
+    <div id="notif-detail-body"></div>
+  </div>
+</div>
+ 
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <span style="font-size:26px">🐷</span>
+      <div><div class="sidebar-logo-text">FermeManager Pro</div><div class="sidebar-logo-sub">Système de notifications</div></div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-group-label">Notifications</div>
+      <div class="nav-item active" onclick="showSec('tableau',this)"><span>🔔</span>Tableau de bord <span class="nav-badge" id="nb-badge">0</span></div>
+      <div class="nav-item" onclick="showSec('centre',this)"><span>📬</span>Centre de notifs</div>
+      <div class="nav-item" onclick="showSec('email-log',this)"><span>📧</span>Journal des emails</div>
+      <div class="nav-group-label" style="margin-top:8px">Configuration</div>
+      <div class="nav-item" onclick="showSec('destinataires',this)"><span>👥</span>Destinataires</div>
+      <div class="nav-item" onclick="showSec('regles',this)"><span>⚙️</span>Règles & Seuils</div>
+      <div class="nav-item" onclick="showSec('templates',this)"><span>📄</span>Templates emails</div>
+      <div class="nav-group-label" style="margin-top:8px">Test</div>
+      <div class="nav-item" onclick="showSec('simulateur',this)"><span>🧪</span>Simulateur d'événements</div>
+    </div>
+  </div>
+ 
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">🔔 Système de Notifications</div>
+        <div class="topbar-sub" id="topbar-clock">FermeManager Pro — Notifications en temps réel</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="notif-live-indicator" style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green)">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 2s infinite"></span>
+          Système actif
+        </span>
+        <button class="btn btn-g btn-sm" onclick="sendTestEmail()">📧 Test email</button>
+        <button class="btn btn-sm" onclick="marquerToutLu()">✓ Tout marquer lu</button>
+      </div>
+    </div>
+ 
+    <div class="content">
+ 
+      <!-- TABLEAU DE BORD -->
+      <div class="sec active" id="sec-tableau">
+        <div class="grid4" style="margin-bottom:12px">
+          <div class="kpi"><div class="kpi-v" style="color:var(--red)" id="k-nonlues">—</div><div class="kpi-l">Non lues</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--amber)" id="k-critiques">—</div><div class="kpi-l">Critiques</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--blue)" id="k-emails-sent">—</div><div class="kpi-l">Emails envoyés</div></div>
+          <div class="kpi"><div class="kpi-v" style="color:var(--green)" id="k-destinataires">—</div><div class="kpi-l">Destinataires actifs</div></div>
+        </div>
+ 
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Alertes critiques actives</div>
+            <div id="alertes-critiques"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Activité récente</div>
+            <div id="activite-recente"></div>
+          </div>
+        </div>
+ 
+        <div class="card">
+          <div class="card-title">Stocks critiques — surveillance temps réel</div>
+          <div id="stocks-monitoring"></div>
+        </div>
+ 
+        <div class="card">
+          <div class="card-title">Statistiques des notifications — 7 derniers jours</div>
+          <div class="grid3" style="margin-top:4px">
+            <div style="text-align:center;padding:10px;background:var(--red-l);border-radius:var(--radius-sm)">
+              <div style="font-size:20px;font-weight:700;color:var(--red)" id="stat-critique">—</div>
+              <div style="font-size:10px;color:var(--red)">Critiques</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--amber-l);border-radius:var(--radius-sm)">
+              <div style="font-size:20px;font-weight:700;color:var(--amber)" id="stat-alerte">—</div>
+              <div style="font-size:10px;color:var(--amber)">Alertes</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--blue-l);border-radius:var(--radius-sm)">
+              <div style="font-size:20px;font-weight:700;color:var(--blue)" id="stat-info">—</div>
+              <div style="font-size:10px;color:var(--blue)">Informations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- CENTRE DE NOTIFS -->
+      <div class="sec" id="sec-centre">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-end">
+          <div><label>Type</label>
+            <select id="f-type" onchange="renderNotifs()" style="width:auto;padding:6px 10px">
+              <option value="">Tous</option>
+              <option value="critique">Critique</option>
+              <option value="alerte">Alerte</option>
+              <option value="info">Info</option>
+              <option value="succes">Succès</option>
+            </select>
+          </div>
+          <div><label>Catégorie</label>
+            <select id="f-cat" onchange="renderNotifs()" style="width:auto;padding:6px 10px">
+              <option value="">Toutes</option>
+              <option value="stock">Stock</option>
+              <option value="sante">Santé</option>
+              <option value="reproduction">Reproduction</option>
+              <option value="employe">Employés</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="finance">Finance</option>
+              <option value="veterinaire">Vétérinaire</option>
+            </select>
+          </div>
+          <div><label>Statut</label>
+            <select id="f-statut" onchange="renderNotifs()" style="width:auto;padding:6px 10px">
+              <option value="">Tous</option>
+              <option value="unread">Non lues</option>
+              <option value="read">Lues</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-r" onclick="supprimerLues()">🗑️ Suppr. lues</button>
+        </div>
+        <div class="card" style="padding:0;overflow:hidden">
+          <div id="notifs-list"></div>
+          <div id="notifs-empty" style="display:none;padding:24px;text-align:center;color:var(--text3);font-size:13px">Aucune notification</div>
+        </div>
+      </div>
+ 
+      <!-- JOURNAL EMAILS -->
+      <div class="sec" id="sec-email-log">
+        <div class="card">
+          <div class="card-title">Emails envoyés</div>
+          <div id="email-log-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Statistiques emails</div>
+          <div class="grid3">
+            <div class="kpi"><div class="kpi-v" style="color:var(--green)" id="e-envoyes">—</div><div class="kpi-l">Envoyés</div></div>
+            <div class="kpi"><div class="kpi-v" style="color:var(--red)" id="e-echecs">—</div><div class="kpi-l">Échecs</div></div>
+            <div class="kpi"><div class="kpi-v" style="color:var(--blue)" id="e-destinataires">—</div><div class="kpi-l">Destinataires touchés</div></div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- DESTINATAIRES -->
+      <div class="sec" id="sec-destinataires">
+        <div class="card">
+          <div class="card-title">Ajouter un destinataire administrateur</div>
+          <div class="grid2">
+            <div class="fg"><label>Nom complet *</label><input type="text" id="dest-nom" placeholder="ex: Jean-Pierre Dupont"></div>
+            <div class="fg"><label>Email *</label><input type="email" id="dest-email" placeholder="ex: admin@ferme.com"></div>
+            <div class="fg"><label>Rôle</label>
+              <select id="dest-role">
+                <option value="admin_principal">👑 Administrateur principal</option>
+                <option value="admin">Administrateur</option>
+                <option value="responsable">Responsable</option>
+              </select>
+            </div>
+            <div class="fg"><label>Téléphone (pour SMS futur)</label><input type="text" id="dest-tel" placeholder="ex: +509 3344-5566"></div>
+          </div>
+          <div class="fg"><label>Notifications à recevoir</label>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:12px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400"><input type="checkbox" id="dn-critique" checked style="width:auto"> 🚨 Critiques</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400"><input type="checkbox" id="dn-alerte" checked style="width:auto"> ⚠️ Alertes</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400"><input type="checkbox" id="dn-info" style="width:auto"> ℹ️ Informations</label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:400"><input type="checkbox" id="dn-resume" checked style="width:auto"> 📊 Résumé quotidien</label>
+            </div>
+          </div>
+          <button class="btn btn-g btn-full" onclick="addDestinataire()">Ajouter le destinataire</button>
+        </div>
+        <div class="card">
+          <div class="card-title">Destinataires enregistrés</div>
+          <div id="destinataires-list"></div>
+        </div>
+      </div>
+ 
+      <!-- RÈGLES & SEUILS -->
+      <div class="sec" id="sec-regles">
+        <div class="card">
+          <div class="card-title">Activation des règles de notification</div>
+          <div id="regles-toggles"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Seuils d'alerte — Stocks alimentaires</div>
+          <div id="seuils-stock">
+            <div class="threshold-row">
+              <div class="threshold-name">🌽 Croissance 1</div>
+              <input type="number" class="threshold-input" value="40" min="0" id="seuil-cr1"> <span class="threshold-unit">kg min</span>
+            </div>
+            <div class="threshold-row">
+              <div class="threshold-name">🌽 Croissance 2</div>
+              <input type="number" class="threshold-input" value="100" min="0" id="seuil-cr2"> <span class="threshold-unit">kg min</span>
+            </div>
+            <div class="threshold-row">
+              <div class="threshold-name">🌽 Croissance 3</div>
+              <input type="number" class="threshold-input" value="100" min="0" id="seuil-cr3"> <span class="threshold-unit">kg min</span>
+            </div>
+            <div class="threshold-row">
+              <div class="threshold-name">🐷 Maternité</div>
+              <input type="number" class="threshold-input" value="60" min="0" id="seuil-mat"> <span class="threshold-unit">kg min</span>
+            </div>
+            <div class="threshold-row">
+              <div class="threshold-name">🐷 Gestation</div>
+              <input type="number" class="threshold-input" value="60" min="0" id="seuil-gest"> <span class="threshold-unit">kg min</span>
+            </div>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-g" onclick="sauvegarderSeuils()">Sauvegarder les seuils</button>
+            <button class="btn" onclick="testerSeuils()">🧪 Tester les seuils</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Fréquence des emails de résumé</div>
+          <div class="grid2">
+            <div class="fg"><label>Résumé quotidien — Heure d'envoi</label><input type="time" id="heure-resume" value="06:00"></div>
+            <div class="fg"><label>Résumé hebdomadaire — Jour</label>
+              <select id="jour-hebdo">
+                <option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option>
+                <option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option>
+              </select>
+            </div>
+            <div class="fg"><label>Délai entre 2 notifications du même type (min)</label><input type="number" id="delai-notif" value="30" min="1"></div>
+            <div class="fg"><label>Nombre max de notifs par heure</label><input type="number" id="max-notif" value="10" min="1"></div>
+          </div>
+          <button class="btn btn-g" onclick="sauvegarderFreq()">Sauvegarder</button>
+        </div>
+      </div>
+ 
+      <!-- TEMPLATES -->
+      <div class="sec" id="sec-templates">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-g active" onclick="showTemplate('critique',this)">🚨 Critique</button>
+          <button class="btn btn-sm" onclick="showTemplate('alerte',this)">⚠️ Alerte stock</button>
+          <button class="btn btn-sm" onclick="showTemplate('resume',this)">📊 Résumé quotidien</button>
+          <button class="btn btn-sm" onclick="showTemplate('naissance',this)">🐷 Naissance</button>
+          <button class="btn btn-sm" onclick="showTemplate('maintenance',this)">🔧 Maintenance</button>
+        </div>
+        <div id="template-preview"></div>
+      </div>
+ 
+      <!-- SIMULATEUR -->
+      <div class="sec" id="sec-simulateur">
+        <div class="alert alert-b" style="margin-bottom:12px">🧪 Le simulateur déclenche de vraies notifications dans l'application et simule l'envoi d'emails aux destinataires enregistrés.</div>
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">Simuler un événement</div>
+            <div class="fg"><label>Type d'événement</label>
+              <select id="sim-event">
+                <optgroup label="🌽 Stock">
+                  <option value="stock_critique">Stock alimentaire critique</option>
+                  <option value="stock_faible">Stock alimentaire faible</option>
+                  <option value="livraison">Nouvelle livraison reçue</option>
+                </optgroup>
+                <optgroup label="🐷 Élevage">
+                  <option value="naissance">Naissance de porcelets</option>
+                  <option value="mise_bas">Mise bas imminente</option>
+                  <option value="animal_malade">Animal malade détecté</option>
+                  <option value="animal_mort">Décès d'un animal</option>
+                  <option value="vaccination">Vaccin administré</option>
+                  <option value="vaccin_retard">Vaccin en retard</option>
+                </optgroup>
+                <optgroup label="👷 Employés">
+                  <option value="check_in">Check-in employé</option>
+                  <option value="absence">Absence non justifiée</option>
+                  <option value="conge">Demande de congé</option>
+                </optgroup>
+                <optgroup label="🔧 Maintenance">
+                  <option value="maint_urgente">Panne / Maintenance urgente</option>
+                  <option value="maint_terminee">Maintenance terminée</option>
+                </optgroup>
+                <optgroup label="💰 Finance">
+                  <option value="vente">Vente d'animaux</option>
+                  <option value="facture">Nouvelle facture</option>
+                  <option value="budget_depasse">Budget dépassé</option>
+                </optgroup>
+                <optgroup label="⚕️ Vétérinaire">
+                  <option value="visite_vet">Visite vétérinaire planifiée</option>
+                  <option value="visite_imminente">Visite vétérinaire imminente</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="fg"><label>Détails supplémentaires (optionnel)</label><input type="text" id="sim-details" placeholder="ex: #P-108, Bât. B, 45 kg..."></div>
+            <button class="btn btn-g btn-full" onclick="simulerEvenement()">🚀 Déclencher l'événement</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Déclencher une vérification des stocks</div>
+            <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Vérifie tous les stocks actuels et envoie des notifications pour ceux qui sont en dessous des seuils configurés.</div>
+            <div id="stocks-status" style="margin-bottom:12px"></div>
+            <button class="btn btn-a btn-full" onclick="verifierTousStocks()">🔍 Vérifier tous les stocks maintenant</button>
+            <div style="margin-top:10px">
+              <button class="btn btn-full" style="margin-top:6px" onclick="envoyerResumeQuotidien()">📊 Envoyer résumé quotidien maintenant</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Journal du simulateur</div>
+          <div id="sim-log"></div>
+        </div>
+      </div>
+ 
+    </div>
+  </div>
+</div>
+ 
+<style>
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+ 
+<script>
+// ── DATA ──
+let notifications=[];
+let emailLog=[];
+let destinataires=[
+  {id:1,nom:'Administrateur Principal',email:'admin@ferme.com',role:'admin_principal',notifs:{critique:true,alerte:true,info:false,resume:true},actif:true},
+  {id:2,nom:'Carla V. (Responsable)',email:'carla.v@ferme.com',role:'responsable',notifs:{critique:true,alerte:true,info:false,resume:true},actif:true},
+];
+let nextDestId=3;
+let nextNotifId=1;
+let unreadCount=0;
+ 
+const REGLES=[
+  {id:'stock_critique',label:'Stock alimentaire critique',desc:'Alerte immédiate quand un stock passe sous le seuil minimum',cat:'stock',type:'critique',active:true},
+  {id:'stock_faible',label:'Stock alimentaire faible',desc:'Alerte quand un stock atteint 2x le seuil minimum',cat:'stock',type:'alerte',active:true},
+  {id:'animal_malade',label:'Animal malade détecté',desc:'Notification à chaque signalement d\'animal malade',cat:'sante',type:'alerte',active:true},
+  {id:'animal_mort',label:'Décès d\'un animal',desc:'Notification immédiate pour tout décès',cat:'sante',type:'critique',active:true},
+  {id:'vaccin_retard',label:'Vaccin en retard',desc:'Alerte si un vaccin prévu n\'a pas été administré',cat:'sante',type:'alerte',active:true},
+  {id:'mise_bas',label:'Mise bas imminente',desc:'Notification 24-48h avant une mise bas prévue',cat:'reproduction',type:'alerte',active:true},
+  {id:'naissance',label:'Naissance de porcelets',desc:'Notification pour chaque nouvelle naissance',cat:'reproduction',type:'info',active:true},
+  {id:'absence',label:'Absence non justifiée',desc:'Alerte si un employé est absent sans justification',cat:'employe',type:'alerte',active:true},
+  {id:'maint_urgente',label:'Maintenance urgente',desc:'Alerte immédiate pour toute panne ou urgence',cat:'maintenance',type:'critique',active:true},
+  {id:'budget_depasse',label:'Budget dépassé',desc:'Alerte quand un poste budgétaire dépasse le seuil',cat:'finance',type:'critique',active:true},
+  {id:'visite_imminente',label:'Visite vétérinaire imminente',desc:'Rappel 48h avant une visite vétérinaire',cat:'veterinaire',type:'info',active:true},
+  {id:'resume_quotidien',label:'Résumé quotidien automatique',desc:'Email récapitulatif envoyé chaque matin à 06h00',cat:'general',type:'info',active:true},
+  {id:'check_in',label:'Notifications de pointage',desc:'Email à chaque check-in/check-out employé',cat:'employe',type:'info',active:false},
+  {id:'vente',label:'Vente d\'animaux',desc:'Notification pour chaque vente enregistrée',cat:'finance',type:'info',active:true},
+];
+ 
+const STOCKS=[
+  {nom:'Croissance 1',qte:120,seuil:40,unit:'kg'},
+  {nom:'Croissance 2',qte:85,seuil:100,unit:'kg'},
+  {nom:'Croissance 3',qte:250,seuil:100,unit:'kg'},
+  {nom:'Maternité',qte:45,seuil:60,unit:'kg'},
+  {nom:'Gestation',qte:180,seuil:60,unit:'kg'},
+];
+ 
+const EVENT_TEMPLATES={
+  stock_critique:{type:'critique',cat:'stock',icon:'🚨',title:'Stock critique — {detail}',desc:'Le stock de {detail} est passé sous le seuil minimum. Commande urgente requise.',email:true},
+  stock_faible:{type:'alerte',cat:'stock',icon:'⚠️',title:'Stock faible — {detail}',desc:'Le stock de {detail} atteint le niveau d\'alerte. Planifier une commande.',email:true},
+  livraison:{type:'succes',cat:'stock',icon:'✅',title:'Livraison reçue — {detail}',desc:'Une nouvelle livraison a été enregistrée : {detail}.',email:false},
+  naissance:{type:'succes',cat:'reproduction',icon:'🐷',title:'Naissance — {detail}',desc:'De nouveaux porcelets sont nés : {detail}. Traçabilité mise à jour.',email:true},
+  mise_bas:{type:'alerte',cat:'reproduction',icon:'⚠️',title:'Mise bas imminente — {detail}',desc:'La truie {detail} approche de sa date de mise bas. Préparer la loge maternité.',email:true},
+  animal_malade:{type:'alerte',cat:'sante',icon:'🏥',title:'Animal malade — {detail}',desc:'L\'animal {detail} a été signalé malade. Intervention vétérinaire recommandée.',email:true},
+  animal_mort:{type:'critique',cat:'sante',icon:'💀',title:'Décès — {detail}',desc:'L\'animal {detail} est décédé. Registre mis à jour. Enquête recommandée.',email:true},
+  vaccination:{type:'info',cat:'sante',icon:'💉',title:'Vaccination — {detail}',desc:'Vaccin administré à {detail}. Rappel planifié automatiquement.',email:false},
+  vaccin_retard:{type:'alerte',cat:'sante',icon:'⚠️',title:'Vaccin en retard — {detail}',desc:'Le vaccin prévu pour {detail} n\'a pas été administré. Action requise.',email:true},
+  check_in:{type:'info',cat:'employe',icon:'👷',title:'Check-in — {detail}',desc:'{detail} a pointé son arrivée à la ferme.',email:false},
+  absence:{type:'alerte',cat:'employe',icon:'❌',title:'Absence non justifiée — {detail}',desc:'{detail} est absent sans justification. Contacter l\'employé.',email:true},
+  conge:{type:'info',cat:'employe',icon:'📅',title:'Demande de congé — {detail}',desc:'{detail} a soumis une demande de congé. Validation requise.',email:true},
+  maint_urgente:{type:'critique',cat:'maintenance',icon:'🔧',title:'Panne urgente — {detail}',desc:'Une panne critique a été signalée : {detail}. Intervention immédiate requise.',email:true},
+  maint_terminee:{type:'succes',cat:'maintenance',icon:'✅',title:'Maintenance terminée — {detail}',desc:'La tâche de maintenance "{detail}" a été clôturée.',email:false},
+  vente:{type:'succes',cat:'finance',icon:'💰',title:'Vente enregistrée — {detail}',desc:'Une vente a été enregistrée : {detail}.',email:false},
+  facture:{type:'info',cat:'finance',icon:'🧾',title:'Nouvelle facture — {detail}',desc:'Une nouvelle facture a été enregistrée : {detail}.',email:true},
+  budget_depasse:{type:'critique',cat:'finance',icon:'🚨',title:'Budget dépassé — {detail}',desc:'Le poste budgétaire {detail} a dépassé l\'enveloppe allouée. Révision nécessaire.',email:true},
+  visite_vet:{type:'info',cat:'veterinaire',icon:'⚕️',title:'Visite vétérinaire planifiée — {detail}',desc:'Dr. {detail} est planifié pour une visite. Préparer les animaux.',email:false},
+  visite_imminente:{type:'alerte',cat:'veterinaire',icon:'⚕️',title:'Visite imminente — {detail}',desc:'La visite du Dr. {detail} est dans moins de 48h. Préparer les dossiers.',email:true},
+};
+ 
+// ── UTILS ──
+function now(){return new Date().toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+function nowShort(){return new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}
+ 
+function typeBadge(type){
+  const map={critique:'b-r',alerte:'b-a',info:'b-b',succes:'b-g'};
+  return `<span class="badge ${map[type]||'b-gray'}">${type.charAt(0).toUpperCase()+type.slice(1)}</span>`;
+}
+function catBadge(cat){
+  const map={stock:'b-a',sante:'b-r',reproduction:'b-p',employe:'b-b',maintenance:'b-gray',finance:'b-g',veterinaire:'b-b',general:'b-gray'};
+  const icons={stock:'🌽',sante:'🏥',reproduction:'🐷',employe:'👷',maintenance:'🔧',finance:'💰',veterinaire:'⚕️',general:'📊'};
+  return `<span class="badge ${map[cat]||'b-gray'}">${icons[cat]||''} ${cat.charAt(0).toUpperCase()+cat.slice(1)}</span>`;
+}
+ 
+// ── NOTIFICATIONS ──
+function creerNotification(eventType,detail,sendEmail=true){
+  const tmpl=EVENT_TEMPLATES[eventType];if(!tmpl)return;
+  const regle=REGLES.find(r=>r.id===eventType);
+  if(regle&&!regle.active)return;
+  const d=detail||'—';
+  const notif={
+    id:nextNotifId++,
+    type:tmpl.type,
+    cat:tmpl.cat,
+    icon:tmpl.icon,
+    title:tmpl.title.replace('{detail}',d),
+    desc:tmpl.desc.replace(/{detail}/g,d),
+    time:now(),
+    read:false,
+    eventType,
+    detail:d,
+  };
+  notifications.unshift(notif);
+  unreadCount++;
+  updateBadge();
+  showInAppToast(notif);
+  if(sendEmail&&tmpl.email)simulerEnvoiEmail(notif);
+  renderDashboard();
+  if(document.getElementById('sec-centre').classList.contains('active'))renderNotifs();
+  if(document.getElementById('sec-email-log').classList.contains('active'))renderEmailLog();
+  return notif;
+}
+ 
+function showInAppToast(notif){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  const typeClass=notif.type==='critique'?'r':notif.type==='alerte'?'a':notif.type==='succes'?'g':'b';
+  t.className=`toast ${typeClass}`;
+  t.innerHTML=`<span class="toast-icon">${notif.icon}</span><div class="toast-body"><div class="toast-title">${notif.title}</div><div class="toast-msg">${notif.desc.substring(0,80)}${notif.desc.length>80?'...':''}</div></div><button class="toast-close" onclick="this.parentElement.remove()">✕</button>`;
+  c.appendChild(t);
+  setTimeout(()=>{if(t.parentElement)t.style.animation='toastIn .3s ease reverse';setTimeout(()=>t.remove(),300);},5000);
+}
+ 
+function simulerEnvoiEmail(notif){
+  const actifs=destinataires.filter(d=>d.actif&&d.notifs[notif.type==='succes'?'info':notif.type]);
+  actifs.forEach(dest=>{
+    emailLog.unshift({
+      id:emailLog.length+1,
+      to:dest.email,
+      toName:dest.nom,
+      subject:`[FermeManager] ${notif.icon} ${notif.title}`,
+      type:notif.type,
+      cat:notif.cat,
+      time:now(),
+      statut:'envoyé',
+      notifId:notif.id,
+      preview:notif.desc,
+      notif,
+    });
+  });
+  if(actifs.length>0)addSimLog(`📧 Email envoyé à ${actifs.length} destinataire(s) : "${notif.title}"`,notif.type==='critique'?'r':'g');
+}
+ 
+// ── RENDER DASHBOARD ──
+function renderDashboard(){
+  const nonLues=notifications.filter(n=>!n.read).length;
+  const critiques=notifications.filter(n=>n.type==='critique'&&!n.read).length;
+  document.getElementById('k-nonlues').textContent=nonLues;
+  document.getElementById('k-critiques').textContent=critiques;
+  document.getElementById('k-emails-sent').textContent=emailLog.length;
+  document.getElementById('k-destinataires').textContent=destinataires.filter(d=>d.actif).length;
+  document.getElementById('nb-badge').textContent=nonLues;
+  document.getElementById('nb-badge').style.display=nonLues>0?'':'none';
+ 
+  // Alertes critiques
+  const critiqs=notifications.filter(n=>n.type==='critique'&&!n.read).slice(0,5);
+  const elAC=document.getElementById('alertes-critiques');
+  elAC.innerHTML=critiqs.length===0?'<div style="color:var(--text3);font-size:12px;padding:8px 0">Aucune alerte critique non lue ✓</div>':
+    critiqs.map(n=>`<div class="alert alert-r" style="cursor:pointer" onclick="ouvrirNotif(${n.id})">${n.icon} <strong>${n.title}</strong><br><span style="font-size:11px">${n.time}</span></div>`).join('');
+ 
+  // Activité récente
+  const recents=notifications.slice(0,6);
+  const elAR=document.getElementById('activite-recente');
+  elAR.innerHTML=recents.length===0?'<div style="color:var(--text3);font-size:12px">Aucune activité</div>':
+    recents.map(n=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="ouvrirNotif(${n.id})">
+      <span style="font-size:14px">${n.icon}</span>
+      <div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--text)">${n.title}</div><div style="font-size:10px;color:var(--text3)">${n.time}</div></div>
+      ${typeBadge(n.type)}
+    </div>`).join('');
+ 
+  // Stocks monitoring
+  const elSM=document.getElementById('stocks-monitoring');
+  elSM.innerHTML=STOCKS.map(s=>{
+    const pct=Math.min(100,Math.round(s.qte/Math.max(s.seuil*3,1)*100));
+    const color=s.qte<s.seuil?'var(--red)':s.qte<s.seuil*2?'var(--amber)':'var(--green)';
+    const badge=s.qte<s.seuil?'<span class="badge b-r">Critique</span>':s.qte<s.seuil*2?'<span class="badge b-a">Faible</span>':'<span class="badge b-g">OK</span>';
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-size:12px;font-weight:500">🌽 ${s.nom}</span>
+        <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--text3)">${s.qte} kg / seuil ${s.seuil} kg</span>${badge}</div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+ 
+  // Stats 7j
+  document.getElementById('stat-critique').textContent=notifications.filter(n=>n.type==='critique').length;
+  document.getElementById('stat-alerte').textContent=notifications.filter(n=>n.type==='alerte').length;
+  document.getElementById('stat-info').textContent=notifications.filter(n=>n.type==='info'||n.type==='succes').length;
+}
+ 
+// ── RENDER NOTIFS ──
+function renderNotifs(){
+  const ft=document.getElementById('f-type').value;
+  const fc=document.getElementById('f-cat').value;
+  const fs=document.getElementById('f-statut').value;
+  let filtered=notifications.filter(n=>
+    (!ft||n.type===ft)&&
+    (!fc||n.cat===fc)&&
+    (!fs||(fs==='unread'?!n.read:n.read))
+  );
+  const el=document.getElementById('notifs-list');
+  const empty=document.getElementById('notifs-empty');
+  if(filtered.length===0){el.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  el.innerHTML=filtered.map(n=>`
+    <div class="notif-item ${n.read?'':'unread '+n.type}" onclick="ouvrirNotif(${n.id});marquerLu(${n.id})">
+      <div class="notif-dot ${n.read?'read':n.type}"></div>
+      <div style="font-size:16px">${n.icon}</div>
+      <div class="notif-content">
+        <div class="notif-title">${n.title}</div>
+        <div class="notif-desc">${n.desc}</div>
+        <div class="notif-meta">
+          <span>🕐 ${n.time}</span>
+          <span>${catBadge(n.cat)}</span>
+          <span>${typeBadge(n.type)}</span>
+        </div>
+        <div class="notif-actions">
+          ${!n.read?`<button class="btn btn-sm btn-g" onclick="event.stopPropagation();marquerLu(${n.id})">✓ Marquer lu</button>`:''}
+          <button class="btn btn-sm" onclick="event.stopPropagation();ouvrirAperçuEmail(${n.id})">📧 Voir email</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+ 
+function marquerLu(id){
+  const n=notifications.find(x=>x.id===id);
+  if(n&&!n.read){n.read=true;unreadCount=Math.max(0,unreadCount-1);updateBadge();renderDashboard();if(document.getElementById('sec-centre').classList.contains('active'))renderNotifs();}
+}
+function marquerToutLu(){
+  notifications.forEach(n=>n.read=true);unreadCount=0;updateBadge();renderDashboard();
+  if(document.getElementById('sec-centre').classList.contains('active'))renderNotifs();
+  showAppToast('Toutes les notifications marquées comme lues','g');
+}
+function supprimerLues(){
+  notifications=notifications.filter(n=>!n.read);renderNotifs();renderDashboard();
+  showAppToast('Notifications lues supprimées','a');
+}
+function updateBadge(){
+  const b=document.getElementById('nb-badge');
+  const n=notifications.filter(x=>!x.read).length;
+  b.textContent=n;b.style.display=n>0?'':'none';
+  document.getElementById('k-nonlues').textContent=n;
+}
+ 
+function ouvrirNotif(id){
+  const n=notifications.find(x=>x.id===id);if(!n)return;
+  marquerLu(id);
+  document.getElementById('notif-detail-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:36px">${n.icon}</div>
+      <div><div style="font-size:15px;font-weight:700">${n.title}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${n.time}</div></div>
+    </div>
+    <div style="margin-bottom:14px">${typeBadge(n.type)} ${catBadge(n.cat)}</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:14px">${n.desc}</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-b btn-sm" onclick="ouvrirAperçuEmail(${n.id})">📧 Aperçu email</button>
+      <button class="btn btn-sm" onclick="document.getElementById('modal-notif').classList.remove('open')">Fermer</button>
+    </div>`;
+  document.getElementById('modal-notif').classList.add('open');
+}
+ 
+// ── EMAIL LOG ──
+function renderEmailLog(){
+  const el=document.getElementById('email-log-list');
+  if(emailLog.length===0){el.innerHTML='<div style="padding:12px;color:var(--text3);font-size:12px">Aucun email envoyé pour l\'instant.</div>';return;}
+  el.innerHTML=emailLog.slice(0,20).map(e=>`
+    <div class="email-log-item">
+      <div class="email-log-icon" style="background:${e.type==='critique'?'var(--red-l)':e.type==='alerte'?'var(--amber-l)':'var(--green-l)'}">📧</div>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${e.subject}</div>
+        <div style="font-size:11px;color:var(--text3)">À : ${e.toName} (${e.to}) — ${e.time}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${e.preview.substring(0,80)}...</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span><span class="email-status-dot" style="background:var(--green)"></span><span style="font-size:10px;color:var(--green)">Envoyé</span></span>
+        <button class="btn btn-sm" onclick="ouvrirAperçuEmailDirect(${e.id-1})">Voir</button>
+        ${typeBadge(e.type)}
+      </div>
+    </div>`).join('');
+  const total=emailLog.length;
+  document.getElementById('e-envoyes').textContent=total;
+  document.getElementById('e-echecs').textContent=0;
+  document.getElementById('e-destinataires').textContent=new Set(emailLog.map(e=>e.to)).size;
+}
+ 
+function ouvrirAperçuEmail(notifId){
+  const n=notifications.find(x=>x.id===notifId);if(!n)return;
+  afficherEmailPreview(n);
+}
+function ouvrirAperçuEmailDirect(idx){
+  const e=emailLog[idx];if(!e)return;
+  afficherEmailPreview(e.notif);
+}
+ 
+function afficherEmailPreview(n){
+  const dest=destinataires.filter(d=>d.actif).map(d=>d.email).join(', ');
+  const color=n.type==='critique'?'#dc2626':n.type==='alerte'?'#d97706':n.type==='succes'?'#16a34a':'#2563eb';
+  document.getElementById('email-modal-title').textContent='Aperçu de l\'email — '+n.title;
+  document.getElementById('email-modal-body').innerHTML=`
+    <div class="email-preview">
+      <div class="email-header" style="background:${color}">
+        <div class="email-from">De : noreply@fermemanager.pro | À : ${dest||'admin@ferme.com'}</div>
+        <div class="email-subject">${n.icon} ${n.title}</div>
+      </div>
+      <div class="email-body">
+        <div class="email-section">
+          <div style="font-size:22px;margin-bottom:6px">${n.icon}</div>
+          <div style="font-size:16px;font-weight:700;color:${color};margin-bottom:8px">${n.title}</div>
+          <div style="font-size:13px;color:#57534e;line-height:1.6">${n.desc}</div>
+        </div>
+        <div class="email-section">
+          <div style="font-size:11px;color:#a8a29e;margin-bottom:6px;text-transform:uppercase;font-weight:700;letter-spacing:.05em">Détails de l'événement</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="background:#f1ede8;border-radius:6px;padding:8px 12px;font-size:12px"><strong>Catégorie</strong><br>${n.cat}</div>
+            <div style="background:#f1ede8;border-radius:6px;padding:8px 12px;font-size:12px"><strong>Type</strong><br>${n.type}</div>
+            <div style="background:#f1ede8;border-radius:6px;padding:8px 12px;font-size:12px"><strong>Date/Heure</strong><br>${n.time}</div>
+          </div>
+        </div>
+        <div class="email-section">
+          <div style="font-size:11px;color:#a8a29e;margin-bottom:6px;text-transform:uppercase;font-weight:700;letter-spacing:.05em">État actuel des stocks</div>
+          ${STOCKS.map(s=>{const pct=Math.min(100,Math.round(s.qte/Math.max(s.seuil*3,1)*100));const color=s.qte<s.seuil?'#dc2626':s.qte<s.seuil*2?'#d97706':'#16a34a';return `<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span>${s.nom}</span><span style="color:${color};font-weight:700">${s.qte} kg</span></div><div style="height:6px;background:#e5e0d8;border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${color};border-radius:3px"></div></div></div>`;}).join('')}
+        </div>
+        <div style="text-align:center;padding:14px;background:#f1ede8;border-radius:8px">
+          <div style="font-size:12px;color:#57534e;margin-bottom:6px">Accéder au système FermeManager Pro</div>
+          <div style="display:inline-block;background:#16a34a;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700">🐷 Ouvrir FermeManager Pro →</div>
+        </div>
+        <div style="margin-top:14px;font-size:10px;color:#a8a29e;text-align:center">Cet email a été envoyé automatiquement par FermeManager Pro. Ne pas répondre à cet email.<br>Pour modifier vos préférences de notification, connectez-vous à FermeManager Pro.</div>
+      </div>
+    </div>`;
+  document.getElementById('modal-email').classList.add('open');
+}
+ 
+// ── DESTINATAIRES ──
+function renderDestinatairesList(){
+  const el=document.getElementById('destinataires-list');
+  el.innerHTML=destinataires.map(d=>`
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="width:36px;height:36px;border-radius:50%;background:${d.role==='admin_principal'?'var(--amber-l)':'var(--green-l)'};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${d.role==='admin_principal'?'👑':'👤'}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${d.nom}</div>
+        <div style="font-size:11px;color:var(--text3)">📧 ${d.email}${d.tel?' | 📱 '+d.tel:''}</div>
+        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">
+          ${d.notifs.critique?'<span class="badge b-r">Critiques</span>':''}
+          ${d.notifs.alerte?'<span class="badge b-a">Alertes</span>':''}
+          ${d.notifs.info?'<span class="badge b-b">Infos</span>':''}
+          ${d.notifs.resume?'<span class="badge b-g">Résumé</span>':''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <span class="badge ${d.actif?'b-g':'b-gray'}">${d.actif?'Actif':'Inactif'}</span>
+        <div style="display:flex;gap:4px">
+          <button class="btn btn-sm" onclick="toggleDestinataire(${d.id})">${d.actif?'Désactiver':'Activer'}</button>
+          ${d.id>1?`<button class="btn btn-sm btn-r" onclick="supprimerDestinataire(${d.id})">🗑️</button>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+function addDestinataire(){
+  const nom=document.getElementById('dest-nom').value.trim();
+  const email=document.getElementById('dest-email').value.trim();
+  if(!nom||!email){alert('Nom et email requis.');return;}
+  if(!email.includes('@')){alert('Email invalide.');return;}
+  destinataires.push({
+    id:nextDestId++,nom,email,role:document.getElementById('dest-role').value,
+    notifs:{
+      critique:document.getElementById('dn-critique').checked,
+      alerte:document.getElementById('dn-alerte').checked,
+      info:document.getElementById('dn-info').checked,
+      resume:document.getElementById('dn-resume').checked,
+    },
+    actif:true,
+  });
+  showAppToast('"'+nom+'" ajouté comme destinataire','g');
+  ['dest-nom','dest-email','dest-tel'].forEach(id=>document.getElementById(id).value='');
+  renderDestinatairesList();renderDashboard();
+}
+function toggleDestinataire(id){
+  const d=destinataires.find(x=>x.id===id);if(d){d.actif=!d.actif;renderDestinatairesList();renderDashboard();showAppToast(d.nom+(d.actif?' activé':' désactivé'),'a');}
+}
+function supprimerDestinataire(id){
+  if(!confirm('Supprimer ce destinataire ?'))return;
+  destinataires=destinataires.filter(x=>x.id!==id);renderDestinatairesList();renderDashboard();showAppToast('Destinataire supprimé','a');
+}
+ 
+// ── RÈGLES ──
+function renderRegles(){
+  const el=document.getElementById('regles-toggles');
+  el.innerHTML=REGLES.map(r=>`
+    <div class="toggle">
+      <div class="toggle-info">
+        <div class="toggle-label">${r.label} <span class="badge ${r.type==='critique'?'b-r':r.type==='alerte'?'b-a':'b-b'}">${r.type}</span></div>
+        <div class="toggle-sub">${r.desc}</div>
+      </div>
+      <label class="switch">
+        <input type="checkbox" ${r.active?'checked':''} onchange="toggleRegle('${r.id}',this.checked)">
+        <span class="slider"></span>
+      </label>
+    </div>`).join('');
+}
+function toggleRegle(id,val){
+  const r=REGLES.find(x=>x.id===id);if(r){r.active=val;showAppToast('Règle "'+r.label+'" '+(val?'activée':'désactivée'),'g');}
+}
+function sauvegarderSeuils(){
+  STOCKS[0].seuil=parseInt(document.getElementById('seuil-cr1').value)||40;
+  STOCKS[1].seuil=parseInt(document.getElementById('seuil-cr2').value)||100;
+  STOCKS[2].seuil=parseInt(document.getElementById('seuil-cr3').value)||100;
+  STOCKS[3].seuil=parseInt(document.getElementById('seuil-mat').value)||60;
+  STOCKS[4].seuil=parseInt(document.getElementById('seuil-gest').value)||60;
+  showAppToast('Seuils sauvegardés','g');renderDashboard();
+}
+function testerSeuils(){verifierTousStocks();}
+function sauvegarderFreq(){showAppToast('Fréquences sauvegardées','g');}
+ 
+// ── TEMPLATES ──
+const TEMPLATE_PREVIEWS={
+  critique:{subject:'🚨 [CRITIQUE] Animal malade — #P-108',type:'critique'},
+  alerte:{subject:'⚠️ [ALERTE] Stock critique — Aliment Maternité',type:'alerte'},
+  resume:{subject:'📊 Résumé quotidien de votre ferme — 25/04/2025',type:'info'},
+  naissance:{subject:'🐷 Naissance — 10 porcelets — Truie #T-022',type:'succes'},
+  maintenance:{subject:'🔧 [URGENT] Panne signalée — Fuite eau Bât. B',type:'critique'},
+};
+function showTemplate(id,btn){
+  document.querySelectorAll('#sec-templates .btn').forEach(b=>b.classList.remove('btn-g'));
+  btn.classList.add('btn-g');
+  const t=TEMPLATE_PREVIEWS[id];
+  const fakeNotif={icon:id==='critique'?'🚨':id==='alerte'?'⚠️':id==='resume'?'📊':id==='naissance'?'🐷':'🔧',title:t.subject.replace(/^\S+\s/,''),desc:id==='resume'?'Résumé de l\'activité quotidienne de votre ferme porcine. 142 animaux actifs, 4 malades, 3 naissances aujourd\'hui, 380 kg de stock restant.':'Description détaillée de l\'événement. Toutes les informations pertinentes sont incluses pour une action rapide.',type:t.type,cat:id==='alerte'?'stock':id==='naissance'?'reproduction':id==='maintenance'?'maintenance':'sante',time:now()};
+  afficherEmailPreview(fakeNotif);
+}
+ 
+// ── SIMULATEUR ──
+let simLog=[];
+function addSimLog(msg,type='g'){
+  simLog.unshift({msg,type,time:nowShort()});
+  const el=document.getElementById('sim-log');
+  if(el)el.innerHTML=simLog.slice(0,15).map(l=>`<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="color:var(--text3);font-family:var(--mono);flex-shrink:0">${l.time}</span><span style="color:${l.type==='r'?'var(--red)':l.type==='a'?'var(--amber)':'var(--green)'}">●</span><span>${l.msg}</span></div>`).join('');
+}
+ 
+function simulerEvenement(){
+  const event=document.getElementById('sim-event').value;
+  const details=document.getElementById('sim-details').value.trim();
+  const defaults={
+    stock_critique:'Aliment Maternité (45 kg)',stock_faible:'Croissance 2 (85 kg)',
+    livraison:'500 kg Croissance 3 — AgroNutrition SA',
+    naissance:'10 porcelets — Truie #T-022 × #B-002',
+    mise_bas:'Truie #T-022',animal_malade:'#P-108 — Fièvre 40.8°C',
+    animal_mort:'#P-041 — Pneumonie',vaccination:'#T-022 — PRRS 2ml',
+    vaccin_retard:'#P-108 — PRRS (3 jours de retard)',
+    check_in:'Jean-Pierre D. — 06h15',absence:'Thomas B. — non justifiée',
+    conge:'Lucie F. — 5 jours',
+    maint_urgente:'Fuite eau — Bâtiment B',maint_terminee:'Révision groupe électrogène',
+    vente:'#P-088 — 180 000 FCFA — M. Dupont',
+    facture:'FAC-042 — AgroNutrition SA — 150 000 FCFA',
+    budget_depasse:'Salaires — 90% du budget mensuel',
+    visite_vet:'Moreau — 27/04/2025',visite_imminente:'Moreau — demain 09h00',
+  };
+  const d=details||defaults[event]||'—';
+  const n=creerNotification(event,d,true);
+  if(n)addSimLog(`🚀 Événement déclenché : "${n.title}" → ${n.type.toUpperCase()}`,n.type==='critique'?'r':n.type==='alerte'?'a':'g');
+  document.getElementById('sim-details').value='';
+}
+ 
+function verifierTousStocks(){
+  let count=0;
+  STOCKS.forEach(s=>{
+    if(s.qte<s.seuil){creerNotification('stock_critique',s.nom+' ('+s.qte+' kg restants)',true);count++;}
+    else if(s.qte<s.seuil*2){creerNotification('stock_faible',s.nom+' ('+s.qte+' kg restants)',false);count++;}
+  });
+  const el=document.getElementById('stocks-status');
+  el.innerHTML=STOCKS.map(s=>`<div class="alert ${s.qte<s.seuil?'alert-r':s.qte<s.seuil*2?'alert-a':'alert-g'}">${s.nom} : ${s.qte} kg (seuil : ${s.seuil} kg) — ${s.qte<s.seuil?'🚨 Critique':s.qte<s.seuil*2?'⚠️ Faible':'✅ OK'}</div>`).join('');
+  addSimLog(`🔍 Vérification des stocks : ${count} alerte(s) générée(s)`,count>0?'a':'g');
+  showAppToast('Vérification des stocks terminée — '+count+' alerte(s)',count>0?'a':'g');
+}
+ 
+function envoyerResumeQuotidien(){
+  const fakeNotif={id:nextNotifId++,type:'info',cat:'general',icon:'📊',
+    title:'Résumé quotidien — '+new Date().toLocaleDateString('fr-FR'),
+    desc:`État de la ferme au ${now()} : 142 animaux actifs, 4 malades, 3 naissances ce mois, stock global : 680 kg. 12 employés présents. 3 tâches de maintenance en cours.`,
+    time:now(),read:false,eventType:'resume_quotidien',detail:'Résumé automatique'};
+  notifications.unshift(fakeNotif);unreadCount++;updateBadge();
+  simulerEnvoiEmail(fakeNotif);
+  showInAppToast(fakeNotif);
+  renderDashboard();
+  addSimLog('📊 Résumé quotidien généré et envoyé aux destinataires','g');
+  showAppToast('Résumé quotidien envoyé','g');
+}
+ 
+function sendTestEmail(){
+  creerNotification('maint_urgente','TEST — Ceci est un email de test du système FermeManager Pro',true);
+  showAppToast('Email de test envoyé aux '+destinataires.filter(d=>d.actif).length+' destinataires actifs','g');
+}
+ 
+// ── TOAST APP ──
+function showAppToast(msg,type){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div');
+  t.className=`toast ${type||'g'}`;
+  t.innerHTML=`<span class="toast-icon">${type==='r'?'❌':type==='a'?'⚠️':'✓'}</span><div class="toast-body"><div class="toast-title">${msg}</div></div><button class="toast-close" onclick="this.parentElement.remove()">✕</button>`;
+  c.appendChild(t);setTimeout(()=>{if(t.parentElement){t.style.animation='toastIn .3s ease reverse';setTimeout(()=>t.remove(),300);}},3500);
+}
+ 
+// ── NAV ──
+function showSec(id,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  if(el)el.classList.add('active');
+  if(id==='centre')renderNotifs();
+  if(id==='email-log')renderEmailLog();
+  if(id==='destinataires')renderDestinatairesList();
+  if(id==='regles')renderRegles();
+  if(id==='simulateur')verifierStocksAffichage();
+  if(id==='templates')showTemplate('critique',document.querySelector('#sec-templates .btn'));
+}
+ 
+function verifierStocksAffichage(){
+  const el=document.getElementById('stocks-status');
+  if(el)el.innerHTML=STOCKS.map(s=>`<div class="alert ${s.qte<s.seuil?'alert-r':s.qte<s.seuil*2?'alert-a':'alert-g'}">${s.nom} : ${s.qte} kg (seuil : ${s.seuil} kg) — ${s.qte<s.seuil?'🚨 Critique':s.qte<s.seuil*2?'⚠️ Faible':'✅ OK'}</div>`).join('');
+}
+ 
+// ── CLOCK ──
+function startClock(){
+  const update=()=>{document.getElementById('topbar-clock').textContent='FermeManager Pro — '+new Date().toLocaleString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});};
+  update();setInterval(update,10000);
+}
+ 
+// ── INIT ──
+function init(){
+  startClock();
+  // Charger quelques notifs initiales
+  setTimeout(()=>creerNotification('vaccin_retard','#P-108, #P-212 — PRRS',true),200);
+  setTimeout(()=>creerNotification('stock_critique','Aliment Maternité (45 kg)',true),400);
+  setTimeout(()=>creerNotification('maint_urgente','Fuite eau — Bâtiment B',true),600);
+  setTimeout(()=>creerNotification('mise_bas','Truie #T-022 — mise bas prévue aujourd\'hui',true),800);
+  setTimeout(()=>creerNotification('animal_malade','#P-108 — Fièvre 40.8°C depuis 48h',true),1000);
+  setTimeout(()=>creerNotification('stock_faible','Croissance 2 (85 kg)',false),1200);
+  setTimeout(()=>creerNotification('naissance','Truie #T-009 — 9 porcelets nés vivants',false),1400);
+  setTimeout(()=>creerNotification('visite_imminente','Moreau — dans 2 jours (27/04/2025)',true),1600);
+  setTimeout(()=>{renderDashboard();renderDestinatairesList();},1800);
+}
+init();
+</script>
+</body>
+</html>

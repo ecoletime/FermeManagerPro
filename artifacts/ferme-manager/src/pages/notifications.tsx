@@ -179,6 +179,7 @@ const notificationTypeOptions = [
   { label: "Alertes", icon: "⚠️" },
   { label: "Infos", icon: "ℹ️" },
   { label: "Résumé quotidien", icon: "📊" },
+  { label: "Succès", icon: "✅" },
 ];
 
 const severityIconMap: Record<string, string> = {
@@ -413,7 +414,7 @@ export default function Notifications() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {recipient.types.map((type) => (
                           <span key={type} className="text-[11px] px-2 py-0.5 rounded-full bg-green-100 text-green-700">
-                        {notificationTypeOptions.find((option) => option.label === type)?.icon} {type}
+                        {notificationTypeOptions.find((option) => option.label === type)?.icon ?? "•"} {type}
                           </span>
                         ))}
                       </div>
