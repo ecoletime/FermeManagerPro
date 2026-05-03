@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Home, Plus, Bell, Activity } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 function StatCard({ value, label, color }: { value: number | string; label: string; color: string }) {
   return (
@@ -71,6 +72,7 @@ export default function Loges() {
           <TabsTrigger value="batiments">Bâtiments</TabsTrigger>
           <TabsTrigger value="loges">Loges</TabsTrigger>
           <TabsTrigger value="nouveau">+ Nouvelle</TabsTrigger>
+          <TabsTrigger value="graphiques">Graphiques</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4 mt-4">
@@ -195,6 +197,34 @@ export default function Loges() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="graphiques" className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <StatCard value={batimentCount} label="Bâtiments" color="text-slate-700" />
+            <StatCard value={logeCount} label="Loges" color="text-slate-700" />
+            <StatCard value={animauxLoges} label="Animaux logés" color="text-green-600" />
+            <StatCard value={occupation} label="Taux occupation" color="text-indigo-600" />
+          </div>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Occupation par bâtiment</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={(batiments ?? []).map((b) => {
+                  const totalLoges = (loges ?? []).filter((l) => l.batimentId === b.id).length;
+                  const totalAnimaux = (loges ?? []).filter((l) => l.batimentId === b.id).reduce((sum, l) => sum + l.occupe, 0);
+                  return { nom: b.nom, loges: totalLoges, animaux: totalAnimaux };
+                })}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="nom" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="loges" fill="#1A9E6F" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="animaux" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

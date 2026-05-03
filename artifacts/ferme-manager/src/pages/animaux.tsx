@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Plus, Trash2, Search } from "lucide-react";
 import { useGetEmployes, getGetEmployesQueryKey } from "@workspace/api-client-react";
 
@@ -129,6 +130,7 @@ export default function Animaux() {
           <TabsTrigger value="pesees">Pesées</TabsTrigger>
           <TabsTrigger value="transferts">Transferts</TabsTrigger>
           <TabsTrigger value="sorties">Sorties</TabsTrigger>
+          <TabsTrigger value="graphiques">Graphiques</TabsTrigger>
         </TabsList>
 
         <TabsContent value="registre" className="space-y-4 mt-4">
@@ -412,6 +414,33 @@ export default function Animaux() {
                   </tr>
                 </tbody>
               </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="graphiques" className="space-y-4 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card><CardContent className="pt-5 pb-4 text-center"><div className="text-2xl font-bold">{stats?.total ?? 0}</div><div className="text-xs text-muted-foreground mt-1">Total animaux</div></CardContent></Card>
+            <Card><CardContent className="pt-5 pb-4 text-center"><div className="text-2xl font-bold">{stats?.parType?.Truie ?? 0}</div><div className="text-xs text-muted-foreground mt-1">Truies</div></CardContent></Card>
+            <Card><CardContent className="pt-5 pb-4 text-center"><div className="text-2xl font-bold">{stats?.parType?.Verrat ?? 0}</div><div className="text-xs text-muted-foreground mt-1">Verrats</div></CardContent></Card>
+          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Répartition du troupeau</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={[
+                  { nom: "Truie", value: stats?.parType?.Truie ?? 0 },
+                  { nom: "Verrat", value: stats?.parType?.Verrat ?? 0 },
+                  { nom: "Porcelet", value: stats?.parType?.Porcelet ?? 0 },
+                  { nom: "Engraissement", value: stats?.parType?.Engraissement ?? 0 },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="nom" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#1A9E6F" radius={[4,4,0,0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         </TabsContent>
