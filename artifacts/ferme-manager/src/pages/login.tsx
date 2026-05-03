@@ -11,6 +11,9 @@ import { PiggyBank } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const USER_STORAGE_KEY = "ferme_utilisateurs";
+const RESET_CODE_KEY = "ferme_admin_reset_code";
+
+type ResetStep = "request" | "verify" | "password";
 
 function loadUsers() {
   try {
@@ -21,12 +24,18 @@ function loadUsers() {
   return [];
 }
 
+function generateCode() {
+  return String(Math.floor(10000 + Math.random() * 90000));
+}
+
 export default function Login() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const [forgotOpen, setForgotOpen] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  const [resetStep, setResetStep] = useState<ResetStep>("request");
   const [forgotUsername, setForgotUsername] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
@@ -63,6 +72,15 @@ export default function Login() {
     }
   };
 
+  const openForgot = () => {
+    setForgotOpen(true);
+    setResetStep("request");
+    setForgotUsername("");
+    setResetCode("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
   const handleForgot = () => {
     if (!forgotUsername.trim()) {
       toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur admin" });
@@ -73,7 +91,33 @@ export default function Login() {
       toast({ variant: "destructive", title: "Erreur", description: "Compte administrateur introuvable" });
       return;
     }
-    setResetOpen(true);
+    const code = generateCode();
+    localStorage.setItem(RESET_CODE_KEY, JSON.stringify({ username: creds.username, code, expiresAt: Date.now() + 10 * 60 * 1000 }));
+    setResetStep("verify");
+    toast({ title: "Code envoyé", description: `Code à 5 chiffres généré pour ${creds.username}` });
+  };
+
+  const handleVerifyCode = () => {
+    try {
+      const raw = localStorage.getItem(RESET_CODE_KEY);
+      if (!raw) {
+        toast({ variant: "destructive", title: "Erreur", description: "Code expiré" });
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      if (Date.now() > parsed.expiresAt) {
+        localStorage.removeItem(RESET_CODE_KEY);
+        toast({ variant: "destructive", title: "Erreur", description: "Code expiré" });
+        return;
+      }
+      if (String(parsed.code) !== resetCode.trim()) {
+        toast({ variant: "destructive", title: "Erreur", description: "Code incorrect" });
+        return;
+      }
+      setResetStep("password");
+    } catch {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de vérifier le code" });
+    }
   };
 
   const handleResetPassword = () => {
@@ -85,12 +129,16 @@ export default function Login() {
       toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas" });
       return;
     }
-    updateAdminCredentials(forgotUsername.trim(), newPassword);
+    const creds = getAdminCredentials();
+    updateAdminCredentials(creds.username, newPassword);
+    localStorage.removeItem(RESET_CODE_KEY);
     setResetOpen(false);
     setForgotOpen(false);
+    setResetStep("request");
     setNewPassword("");
     setConfirmPassword("");
     setForgotUsername("");
+    setResetCode("");
     toast({ title: "Mot de passe mis à jour" });
   };
 
@@ -127,6 +175,11 @@ export default function Login() {
                     <Label htmlFor="emp-password">Mot de passe</Label>
                     <Input id="emp-password" type="password" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required />
                   </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <button type="button" className="text-sm text-primary hover:underline" onClick={openForgot}>
+                      Mot de passe oublié ?
+                    </button>
+                  </div>
                   <Button type="submit" className="w-full font-medium">Se connecter</Button>
                 </form>
               </TabsContent>
@@ -142,7 +195,7 @@ export default function Login() {
                     <Input id="admin-password" type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} required />
                   </div>
                   <div className="flex items-center justify-between gap-3">
-                    <button type="button" className="text-sm text-primary hover:underline" onClick={() => setForgotOpen(true)}>
+                    <button type="button" className="text-sm text-primary hover:underline" onClick={openForgot}>
                       Mot de passe oublié ?
                     </button>
                   </div>
@@ -160,35 +213,45 @@ export default function Login() {
               <DialogDescription>Entrez votre nom d'utilisateur administrateur pour réinitialiser le mot de passe.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label>Nom d'utilisateur admin</Label>
-                <Input value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="admin" />
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={handleForgot}>Continuer</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Nouveau mot de passe</DialogTitle>
-              <DialogDescription>Choisissez un nouveau mot de passe pour l'administrateur.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label>Nouveau mot de passe</Label>
-                <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Confirmer le mot de passe</Label>
-                <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-              </div>
-              <div className="flex justify-end">
-                <Button onClick={handleResetPassword}>Mettre à jour</Button>
-              </div>
+              {resetStep === "request" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Nom d'utilisateur admin</Label>
+                    <Input value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="admin" />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handleForgot}>Envoyer le code</Button>
+                  </div>
+                </>
+              )}
+              {resetStep === "verify" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Code à 5 chiffres</Label>
+                    <Input value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="12345" maxLength={5} inputMode="numeric" />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setResetStep("request")}>Retour</Button>
+                    <Button onClick={handleVerifyCode}>Vérifier</Button>
+                  </div>
+                </>
+              )}
+              {resetStep === "password" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Nouveau mot de passe</Label>
+                    <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Confirmer le mot de passe</Label>
+                    <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setResetStep("verify")}>Retour</Button>
+                    <Button onClick={handleResetPassword}>Mettre à jour</Button>
+                  </div>
+                </>
+              )}
             </div>
           </DialogContent>
         </Dialog>
