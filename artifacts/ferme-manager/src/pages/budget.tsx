@@ -33,7 +33,7 @@ export default function Budget() {
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [recetteForm, setRecetteForm] = useState({ source: "", montant: "", date: new Date().toISOString().slice(0, 10), reference: "" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
-  const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+  const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025", avancement: "0" });
   const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
   const [plans, setPlans] = useState([
     { id: 1, poste: "Alimentation", budget: 2000000, periode: "Mensuel", mois: "Mai 2025", avancement: 72 },
@@ -45,6 +45,9 @@ export default function Budget() {
     { id: 2, categorie: "Maintenance", montant: 180000, date: "06/05/2026", fournisseur: "Tech Ferme", paiement: "En attente" },
   ]);
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+  const [editingBudgetPrevId, setEditingBudgetPrevId] = useState<number | null>(null);
+  const [budgetPrevForm, setBudgetPrevForm] = useState({ recettes: "", depenses: "" });
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
   const [recettesList, setRecettesList] = useState([
@@ -59,12 +62,14 @@ export default function Budget() {
     { id: 2, date: "2026-05-02", source: "Vente aliment", description: "Réassort externe", montant: 850000 },
     { id: 3, date: "2026-05-03", source: "Subvention", description: "Aide mensuelle", montant: 1500000 },
   ]), []);
-  const budgetPrevisionnel = useMemo(() => ([
-    { mois: "Jan", recettes: 2450000, depenses: 1980000 },
-    { mois: "Fév", recettes: 2320000, depenses: 2140000 },
-    { mois: "Mar", recettes: 2780000, depenses: 2190000 },
-    { mois: "Avr", recettes: 2600000, depenses: 2300000 },
-  ]), []);
+  const [budgetPrevisionnel, setBudgetPrevisionnel] = useState([
+    { id: 1, mois: "Jan", recettes: 2450000, depenses: 1980000 },
+    { id: 2, mois: "Fév", recettes: 2320000, depenses: 2140000 },
+    { id: 3, mois: "Mar", recettes: 2780000, depenses: 2190000 },
+    { id: 4, mois: "Avr", recettes: 2600000, depenses: 2300000 },
+    { id: 5, mois: "Mai", recettes: 2900000, depenses: 2450000 },
+    { id: 6, mois: "Juin", recettes: 2750000, depenses: 2380000 },
+  ]);
 
   const addPlan = () => {
     if (!planForm.poste || !planForm.budget) return;
@@ -73,7 +78,7 @@ export default function Budget() {
       budget: Number(planForm.budget),
       periode: planForm.periode.charAt(0).toUpperCase() + planForm.periode.slice(1),
       mois: planForm.mois,
-      avancement: editingPlanId ? 50 : 0,
+      avancement: Math.min(100, Math.max(0, Number(planForm.avancement) || 0)),
     };
     if (editingPlanId) {
       setPlans((current) =>
@@ -86,24 +91,55 @@ export default function Budget() {
         ...current,
       ]);
     }
-    setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025" });
+    setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025", avancement: "0" });
   };
 
-  const addPlannedExpense = () => {
+  const addPlannedExpenseOrUpdate = () => {
     if (!expensePlanForm.categorie || !expensePlanForm.montant) return;
-    setPlannedExpenses((current) => [
-      {
-        id: Date.now(),
-        categorie: expensePlanForm.categorie,
-        montant: Number(expensePlanForm.montant),
-        date: expensePlanForm.date,
-        fournisseur: expensePlanForm.fournisseur || "—",
-        paiement: expensePlanForm.paiement === "paye" ? "Payé" : "En attente",
-      },
-      ...current,
-    ]);
+    const entry = {
+      categorie: expensePlanForm.categorie,
+      montant: Number(expensePlanForm.montant),
+      date: expensePlanForm.date,
+      fournisseur: expensePlanForm.fournisseur || "—",
+      paiement: expensePlanForm.paiement === "paye" ? "Payé" : expensePlanForm.paiement === "partiel" ? "Partiel" : "En attente",
+    };
+    if (editingExpenseId !== null) {
+      setPlannedExpenses((cur) => cur.map((e) => e.id === editingExpenseId ? { ...e, ...entry } : e));
+      setEditingExpenseId(null);
+    } else {
+      setPlannedExpenses((cur) => [{ id: Date.now(), ...entry }, ...cur]);
+    }
     setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
   };
+
+  const editPlannedExpense = (id: number) => {
+    const e = plannedExpenses.find((x) => x.id === id);
+    if (!e) return;
+    setEditingExpenseId(id);
+    const paiementKey = e.paiement === "Payé" ? "paye" : e.paiement === "Partiel" ? "partiel" : "attente";
+    setExpensePlanForm({ categorie: e.categorie, montant: String(e.montant), date: e.date, fournisseurId: "", fournisseur: e.fournisseur === "—" ? "" : e.fournisseur, paiement: paiementKey });
+  };
+
+  const startEditBudgetPrev = (id: number) => {
+    const row = budgetPrevisionnel.find((r) => r.id === id);
+    if (!row) return;
+    setEditingBudgetPrevId(id);
+    setBudgetPrevForm({ recettes: String(row.recettes), depenses: String(row.depenses) });
+  };
+
+  const saveBudgetPrev = () => {
+    if (editingBudgetPrevId === null) return;
+    setBudgetPrevisionnel((cur) =>
+      cur.map((r) =>
+        r.id === editingBudgetPrevId
+          ? { ...r, recettes: Number(budgetPrevForm.recettes), depenses: Number(budgetPrevForm.depenses) }
+          : r
+      )
+    );
+    setEditingBudgetPrevId(null);
+    setBudgetPrevForm({ recettes: "", depenses: "" });
+  };
+
 
   const addRecette = () => {
     if (!recetteForm.source || !recetteForm.montant) return;
@@ -129,6 +165,7 @@ export default function Budget() {
       budget: String(plan.budget),
       periode: plan.periode.toLowerCase(),
       mois: plan.mois,
+      avancement: String(plan.avancement),
     });
   };
 
@@ -331,7 +368,16 @@ export default function Budget() {
                   </Select>
                 </div>
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlannedExpense}>Ajouter une dépense</Button>
+              <div className="flex gap-2">
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={addPlannedExpenseOrUpdate}>
+                  {editingExpenseId !== null ? "Enregistrer les modifications" : "Ajouter une dépense"}
+                </Button>
+                {editingExpenseId !== null && (
+                  <Button variant="outline" onClick={() => { setEditingExpenseId(null); setExpensePlanForm({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" }); }}>
+                    Annuler
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -407,10 +453,30 @@ export default function Budget() {
                     </SelectContent>
                   </Select>
                 </div>
+                {editingPlanId && (
+                  <div className="space-y-2">
+                    <Label>Avancement (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="ex: 50"
+                      value={planForm.avancement}
+                      onChange={(e) => setPlanForm((f) => ({ ...f, avancement: e.target.value }))}
+                    />
+                  </div>
+                )}
               </div>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={addPlan}>
-                {editingPlanId ? "Modifier le plan" : "Ajouter au plan"}
-              </Button>
+              <div className="flex gap-2">
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={addPlan}>
+                  {editingPlanId ? "Enregistrer les modifications" : "Ajouter au plan"}
+                </Button>
+                {editingPlanId && (
+                  <Button variant="outline" onClick={() => { setEditingPlanId(null); setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025", avancement: "0" }); }}>
+                    Annuler
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -452,18 +518,69 @@ export default function Budget() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="text-base">Budget prévisionnel</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Budget prévisionnel mensuel</CardTitle>
+                <div className="flex gap-1.5 text-xs items-center">
+                  <span className="w-3 h-3 rounded-sm inline-block bg-[#1A9E6F]" />Recettes
+                  <span className="w-3 h-3 rounded-sm inline-block bg-[#E11D48] ml-2" />Dépenses
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={budgetPrevisionnel}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="mois" />
                   <YAxis tickFormatter={v => `${Math.round(v/1000)}k`} />
                   <Tooltip formatter={(v: number) => [`${fmt(v)} FCFA`, "Montant"]} />
-                  <Bar dataKey="recettes" fill="#1A9E6F" radius={[4,4,0,0]} />
-                  <Bar dataKey="depenses" fill="#E11D48" radius={[4,4,0,0]} />
+                  <Bar dataKey="recettes" fill="#1A9E6F" radius={[4,4,0,0]} name="Recettes" />
+                  <Bar dataKey="depenses" fill="#E11D48" radius={[4,4,0,0]} name="Dépenses" />
                 </BarChart>
               </ResponsiveContainer>
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/30">
+                  <tr>
+                    {["Mois","Recettes prévisionnelles (FCFA)","Dépenses prévisionnelles (FCFA)","Solde",""].map(h => (
+                      <th key={h} className="px-4 py-2 text-left font-medium text-muted-foreground">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {budgetPrevisionnel.map((row) => (
+                    <tr key={row.id} className="hover:bg-muted/20">
+                      {editingBudgetPrevId === row.id ? (
+                        <>
+                          <td className="px-4 py-2 font-medium">{row.mois}</td>
+                          <td className="px-4 py-2"><Input type="number" className="h-7 text-sm w-36" value={budgetPrevForm.recettes} onChange={e => setBudgetPrevForm(f => ({ ...f, recettes: e.target.value }))} /></td>
+                          <td className="px-4 py-2"><Input type="number" className="h-7 text-sm w-36" value={budgetPrevForm.depenses} onChange={e => setBudgetPrevForm(f => ({ ...f, depenses: e.target.value }))} /></td>
+                          <td className="px-4 py-2 font-medium" />
+                          <td className="px-4 py-2">
+                            <div className="flex gap-1">
+                              <Button size="sm" className="h-7 text-xs" onClick={saveBudgetPrev}>Sauvegarder</Button>
+                              <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setEditingBudgetPrevId(null)}>Annuler</Button>
+                            </div>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2 font-medium">{row.mois}</td>
+                          <td className="px-4 py-2 text-green-700">{fmt(row.recettes)}</td>
+                          <td className="px-4 py-2 text-red-600">{fmt(row.depenses)}</td>
+                          <td className={`px-4 py-2 font-semibold ${row.recettes - row.depenses >= 0 ? "text-green-700" : "text-red-600"}`}>
+                            {row.recettes - row.depenses >= 0 ? "+" : ""}{fmt(row.recettes - row.depenses)}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => startEditBudgetPrev(row.id)}>
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
 
@@ -473,7 +590,7 @@ export default function Budget() {
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
                   <tr>
-                    {["Date", "Catégorie", "Fournisseur", "Montant (FCFA)", "Paiement"].map((h) => (
+                    {["Date", "Catégorie", "Fournisseur", "Montant (FCFA)", "Paiement", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>
                     ))}
                   </tr>
@@ -485,7 +602,21 @@ export default function Budget() {
                       <td className="px-4 py-3">{expense.categorie}</td>
                       <td className="px-4 py-3">{expense.fournisseur}</td>
                       <td className="px-4 py-3 font-medium">{fmt(expense.montant)}</td>
-                      <td className="px-4 py-3">{expense.paiement}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded font-medium ${expense.paiement === "Payé" ? "bg-green-100 text-green-700" : expense.paiement === "Partiel" ? "bg-yellow-100 text-yellow-700" : "bg-orange-100 text-orange-700"}`}>
+                          {expense.paiement}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => editPlannedExpense(expense.id)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => setPlannedExpenses(cur => cur.filter(e => e.id !== expense.id))}>
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
