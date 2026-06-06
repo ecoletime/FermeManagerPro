@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Plus, Trash2, Search } from "lucide-react";
@@ -46,9 +47,11 @@ export default function Animaux() {
   const { data: employes } = useGetEmployes({ query: { queryKey: getGetEmployesQueryKey() } });
   const createAnimal = useCreateAnimal();
   const deleteAnimal = useDeleteAnimal();
+  const confirm = useConfirm();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: "Confirmer l'ajout", description: "Voulez-vous ajouter cet animal au registre ?" }))) return;
     createAnimal.mutate({ data: { ...form, poids: form.poids ? Number(form.poids) : null, dateNaissance: form.dateNaissance || null } }, {
       onSuccess: () => {
         toast({ title: "Animal ajouté" });
@@ -61,8 +64,8 @@ export default function Animaux() {
     });
   };
 
-  const handleDelete = (id: number, tag: string) => {
-    if (!confirm(`Supprimer l'animal ${tag}?`)) return;
+  const handleDelete = async (id: number, tag: string) => {
+    if (!(await confirm({ title: "Supprimer l'animal", description: `Supprimer définitivement l'animal ${tag} ? Cette action est irréversible.`, confirmText: "Supprimer", destructive: true }))) return;
     deleteAnimal.mutate({ id }, {
       onSuccess: () => {
         toast({ title: "Animal supprimé" });

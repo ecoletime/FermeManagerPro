@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { CheckCircle2, AlertTriangle, Bell, Plus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
@@ -81,6 +82,7 @@ export default function Reproduction() {
   const createAcc = useCreateAccouplement();
   const createNaissance = useCreateNaissance();
   const createSevrage = useCreateSevrage();
+  const confirm = useConfirm();
 
   const [accForm, setAccForm] = useState({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" });
   const [naisForm, setNaisForm] = useState({ mere: "", pere: "", date: today, totalNes: "", vivants: "", mortNes: "0", poidsMovyen: "" });
@@ -125,22 +127,25 @@ export default function Reproduction() {
     return joursRestants(a.dateMiseBasPrevue!) - joursRestants(b.dateMiseBasPrevue!);
   }) as Accouplement[];
 
-  const submitAcc = (e: React.FormEvent) => {
+  const submitAcc = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: "Enregistrer l'accouplement", description: "Voulez-vous enregistrer cet accouplement ?" }))) return;
     createAcc.mutate({ data: { ...accForm, dateMiseBasPrevue: accForm.dateMiseBasPrevue || null, notes: accForm.notes || null } }, {
       onSuccess: () => { toast({ title: "Accouplement enregistré" }); qc.invalidateQueries({ queryKey: getGetAccouplementsQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); setAccForm({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" }); },
       onError: () => toast({ variant: "destructive", title: "Erreur" }),
     });
   };
-  const submitNaissance = (e: React.FormEvent) => {
+  const submitNaissance = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: "Enregistrer la naissance", description: "Voulez-vous enregistrer cette mise bas ?" }))) return;
     createNaissance.mutate({ data: { mere: naisForm.mere, pere: naisForm.pere, date: naisForm.date, totalNes: Number(naisForm.totalNes), vivants: Number(naisForm.vivants), mortNes: Number(naisForm.mortNes), poidsMovyen: naisForm.poidsMovyen ? Number(naisForm.poidsMovyen) : null } }, {
       onSuccess: () => { toast({ title: "Naissance enregistrée" }); qc.invalidateQueries({ queryKey: getGetNaissancesQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); setNaisForm({ mere: "", pere: "", date: today, totalNes: "", vivants: "", mortNes: "0", poidsMovyen: "" }); },
       onError: () => toast({ variant: "destructive", title: "Erreur" }),
     });
   };
-  const submitSevrage = (e: React.FormEvent) => {
+  const submitSevrage = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: "Enregistrer le sevrage", description: "Voulez-vous enregistrer ce sevrage ?" }))) return;
     createSevrage.mutate({ data: { mere: sevForm.mere, date: sevForm.date, nbSevres: Number(sevForm.nbSevres), ageJours: Number(sevForm.ageJours), poidsMoyen: sevForm.poidsMoyen ? Number(sevForm.poidsMoyen) : null, destination: sevForm.destination || null } }, {
       onSuccess: () => { toast({ title: "Sevrage enregistré" }); qc.invalidateQueries({ queryKey: getGetSevragesQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); setSevForm({ mere: "", date: today, nbSevres: "", ageJours: "28", poidsMoyen: "", destination: "" }); },
       onError: () => toast({ variant: "destructive", title: "Erreur" }),

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { CheckCircle, Clock3, Plus, Trash2 } from "lucide-react";
 
 type EmployeForm = {
@@ -120,6 +121,7 @@ export default function Employes() {
   const createEmploye = useCreateEmploye();
   const updateEmploye = useUpdateEmploye();
   const deleteEmploye = useDeleteEmploye();
+  const confirm = useConfirm();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getGetEmployesQueryKey() });
   const resetForm = () => {
@@ -127,8 +129,9 @@ export default function Employes() {
     setEditId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: editId ? "Modifier l'employé" : "Ajouter un employé", description: editId ? "Confirmer les modifications apportées à cet employé ?" : "Voulez-vous ajouter cet employé ?" }))) return;
     const data = {
       ...form,
       telephone: form.telephone || null,
@@ -649,7 +652,7 @@ export default function Employes() {
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" data-testid={`button-delete-${e.id}`} onClick={() => { if (!confirm(`Supprimer ${e.nom}?`)) return; deleteEmploye.mutate({ id: e.id }, { onSuccess: () => { toast({ title: 'Supprimé' }); invalidate(); } }); }}>
+                        <Button variant="ghost" size="sm" data-testid={`button-delete-${e.id}`} onClick={async () => { if (!(await confirm({ title: "Supprimer l'employé", description: `Supprimer définitivement ${e.nom} ? Cette action est irréversible.`, confirmText: "Supprimer", destructive: true }))) return; deleteEmploye.mutate({ id: e.id }, { onSuccess: () => { toast({ title: 'Supprimé' }); invalidate(); } }); }}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </td>

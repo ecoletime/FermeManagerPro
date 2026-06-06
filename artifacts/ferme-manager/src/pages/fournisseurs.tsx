@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Plus, Trash2, Edit3 } from "lucide-react";
 
 const initForm = { nom: "", categorie: "", telephone: "", email: "", adresse: "", produits: "", statut: "Actif", notes: "" };
@@ -42,11 +43,13 @@ export default function Fournisseurs() {
   const createFournisseur = useCreateFournisseur();
   const updateFournisseur = useUpdateFournisseur();
   const deleteFournisseur = useDeleteFournisseur();
+  const confirm = useConfirm();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getGetFournisseursQueryKey() });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: editId ? "Modifier le fournisseur" : "Ajouter le fournisseur", description: editId ? "Confirmer les modifications de ce fournisseur ?" : "Voulez-vous ajouter ce fournisseur ?" }))) return;
     const data = { ...form, telephone: form.telephone || null, email: form.email || null, adresse: form.adresse || null, produits: form.produits || null, notes: form.notes || null };
     if (editId) {
       updateFournisseur.mutate({ id: editId, data }, { onSuccess: () => { toast({ title: "Fournisseur mis à jour" }); invalidate(); setOpen(false); setEditId(null); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) });

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { AlertTriangle, Bell, CheckCircle, Edit3, Plus, Trash2 } from "lucide-react";
 
 type VisiteForm = {
@@ -69,6 +70,7 @@ export default function Veterinaire() {
   const createVisite = useCreateVisiteVeterinaire();
   const updateVisite = useUpdateVisiteVeterinaire();
   const deleteVisite = useDeleteVisiteVeterinaire();
+  const confirm = useConfirm();
 
   const invalidate = () => qc.invalidateQueries({ queryKey: getGetVisitesVeterinaireQueryKey() });
 
@@ -77,8 +79,9 @@ export default function Veterinaire() {
     setEditId(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: editId ? "Modifier la visite" : "Enregistrer la visite", description: editId ? "Confirmer les modifications de cette visite vétérinaire ?" : "Voulez-vous enregistrer cette visite vétérinaire ?" }))) return;
     const data = {
       ...form,
       animauxConcernes: form.animauxConcernes || null,

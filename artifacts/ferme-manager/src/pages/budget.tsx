@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Plus, TrendingUp, TrendingDown, Wallet, FileDown, PiggyBank, Receipt, CalendarRange, Pencil, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { exportBudgetPdf } from "@/lib/export-pdf";
@@ -71,8 +72,11 @@ export default function Budget() {
     { id: 6, mois: "Juin", recettes: 2750000, depenses: 2380000 },
   ]);
 
-  const addPlan = () => {
+  const confirm = useConfirm();
+
+  const addPlan = async () => {
     if (!planForm.poste || !planForm.budget) return;
+    if (!(await confirm({ title: editingPlanId ? "Modifier le plan" : "Ajouter au plan", description: editingPlanId ? "Confirmer la modification de ce poste budgétaire ?" : "Voulez-vous ajouter ce poste au plan budgétaire ?" }))) return;
     const normalizedPlan = {
       poste: planForm.poste.charAt(0).toUpperCase() + planForm.poste.slice(1),
       budget: Number(planForm.budget),
@@ -94,8 +98,9 @@ export default function Budget() {
     setPlanForm({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025", avancement: "0" });
   };
 
-  const addPlannedExpenseOrUpdate = () => {
+  const addPlannedExpenseOrUpdate = async () => {
     if (!expensePlanForm.categorie || !expensePlanForm.montant) return;
+    if (!(await confirm({ title: editingExpenseId !== null ? "Modifier la dépense" : "Ajouter la dépense", description: editingExpenseId !== null ? "Confirmer la modification de cette dépense prévisionnelle ?" : "Voulez-vous enregistrer cette dépense prévisionnelle ?" }))) return;
     const entry = {
       categorie: expensePlanForm.categorie,
       montant: Number(expensePlanForm.montant),
@@ -127,8 +132,9 @@ export default function Budget() {
     setBudgetPrevForm({ recettes: String(row.recettes), depenses: String(row.depenses) });
   };
 
-  const saveBudgetPrev = () => {
+  const saveBudgetPrev = async () => {
     if (editingBudgetPrevId === null) return;
+    if (!(await confirm({ title: "Sauvegarder le budget", description: "Confirmer les nouvelles valeurs prévisionnelles ?" }))) return;
     setBudgetPrevisionnel((cur) =>
       cur.map((r) =>
         r.id === editingBudgetPrevId
@@ -188,7 +194,7 @@ export default function Budget() {
             <DialogTrigger asChild><Button variant="outline" data-testid="button-add-categorie"><Plus className="h-4 w-4 mr-2" />Catégorie</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Nouvelle catégorie budgétaire</DialogTitle></DialogHeader>
-              <form onSubmit={e => { e.preventDefault(); createCategorie.mutate({ data: { nom: catForm.nom, budget: Number(catForm.budget), depense: Number(catForm.depense), couleur: catForm.couleur || null } }, { onSuccess: () => { toast({ title: "Catégorie créée" }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); setOpenCat(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+              <form onSubmit={async e => { e.preventDefault(); if (!(await confirm({ title: "Créer la catégorie", description: "Voulez-vous créer cette catégorie budgétaire ?" }))) return; createCategorie.mutate({ data: { nom: catForm.nom, budget: Number(catForm.budget), depense: Number(catForm.depense), couleur: catForm.couleur || null } }, { onSuccess: () => { toast({ title: "Catégorie créée" }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); setOpenCat(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
                 <div className="space-y-1"><Label>Nom *</Label><Input value={catForm.nom} onChange={e => setCatForm(f => ({...f, nom: e.target.value}))} required /></div>
                 <div className="space-y-1"><Label>Budget (FCFA) *</Label><Input type="number" value={catForm.budget} onChange={e => setCatForm(f => ({...f, budget: e.target.value}))} required /></div>
                 <Button type="submit" className="w-full" disabled={createCategorie.isPending}>Créer</Button>
@@ -199,7 +205,7 @@ export default function Budget() {
             <DialogTrigger asChild><Button data-testid="button-add-depense"><Plus className="h-4 w-4 mr-2" />Dépense</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Nouvelle dépense</DialogTitle></DialogHeader>
-              <form onSubmit={e => { e.preventDefault(); createDepense.mutate({ data: { categorieId: Number(depForm.categorieId), description: depForm.description, montant: Number(depForm.montant), date: depForm.date } }, { onSuccess: () => { toast({ title: "Dépense enregistrée" }); qc.invalidateQueries({ queryKey: getGetDepensesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); setOpenDep(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+              <form onSubmit={async e => { e.preventDefault(); if (!(await confirm({ title: "Enregistrer la dépense", description: "Voulez-vous enregistrer cette dépense ?" }))) return; createDepense.mutate({ data: { categorieId: Number(depForm.categorieId), description: depForm.description, montant: Number(depForm.montant), date: depForm.date } }, { onSuccess: () => { toast({ title: "Dépense enregistrée" }); qc.invalidateQueries({ queryKey: getGetDepensesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); setOpenDep(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
                 <div className="space-y-1"><Label>Catégorie *</Label>
                   <Select value={depForm.categorieId} onValueChange={v => setDepForm(f => ({...f, categorieId: v}))}>
                     <SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger>

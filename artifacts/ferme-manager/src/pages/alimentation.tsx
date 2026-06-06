@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { AlertTriangle, CheckCircle2, Plus, Truck, BarChart3 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -53,6 +54,7 @@ export default function Alimentation() {
   const createRepas = useCreateRepas();
   const createStock = useCreateStock();
   const createLivraison = useCreateLivraison();
+  const confirm = useConfirm();
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -197,8 +199,9 @@ export default function Alimentation() {
           </div>
           {openS && (
             <Card><CardContent className="pt-4">
-              <form onSubmit={e => {
+              <form onSubmit={async e => {
                 e.preventDefault();
+                if (!(await confirm({ title: "Créer le stock", description: "Voulez-vous créer ce stock d'aliment ?" }))) return;
                 createStock.mutate({ data: { aliment: stockForm.aliment, quantite: Number(stockForm.quantite), capaciteMax: Number(stockForm.capaciteMax) } }, {
                   onSuccess: () => { toast({ title: "Stock créé" }); qc.invalidateQueries({ queryKey: getGetStocksQueryKey() }); qc.invalidateQueries({ queryKey: getGetAlimentationStatsQueryKey() }); setOpenS(false); setStockForm({ aliment: "", quantite: "", capaciteMax: "" }); },
                   onError: () => toast({ variant: "destructive", title: "Erreur" }),
@@ -242,8 +245,9 @@ export default function Alimentation() {
         <TabsContent value="enregistrer">
           <Card><CardHeader><CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">Enregistrer un repas distribué</CardTitle></CardHeader>
             <CardContent>
-              <form onSubmit={e => {
+              <form onSubmit={async e => {
                 e.preventDefault();
+                if (!(await confirm({ title: "Enregistrer le repas", description: "Voulez-vous enregistrer ce repas distribué ?" }))) return;
                 createRepas.mutate({ data: { ...repasForm, quantiteDistribuee: Number(repasForm.quantiteDistribuee), quantiteRefusee: Number(repasForm.quantiteRefusee), distribue_par: repasForm.distribue_par || null } }, {
                   onSuccess: () => { toast({ title: "Repas enregistré" }); qc.invalidateQueries({ queryKey: getGetRepasQueryKey() }); qc.invalidateQueries({ queryKey: getGetAlimentationStatsQueryKey() }); setRepasForm({ date: today, heure: "07:00", batiment: "", aliment: "", quantiteDistribuee: "", quantiteRefusee: "0", distribue_par: "" }); },
                   onError: () => toast({ variant: "destructive", title: "Erreur" }),
@@ -272,8 +276,9 @@ export default function Alimentation() {
           </div>
           {openL && (
             <Card><CardContent className="pt-4">
-              <form onSubmit={e => {
+              <form onSubmit={async e => {
                 e.preventDefault();
+                if (!(await confirm({ title: "Enregistrer la livraison", description: "Voulez-vous enregistrer cette livraison ?" }))) return;
                 createLivraison.mutate({ data: { ...livForm, quantite: Number(livForm.quantite), prixTotal: livForm.prixTotal ? Number(livForm.prixTotal) : null, qualite: livForm.qualite || null } }, {
                   onSuccess: () => { toast({ title: "Livraison enregistrée" }); qc.invalidateQueries({ queryKey: getGetLivraisonsQueryKey() }); setOpenL(false); setLivForm({ fournisseur: "", date: today, aliment: "", quantite: "", prixTotal: "", qualite: "" }); },
                   onError: () => toast({ variant: "destructive", title: "Erreur" }),

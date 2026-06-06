@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Plus, Trash2, CheckCircle, Bell } from "lucide-react";
 
 type MaintenanceForm = {
@@ -80,6 +81,7 @@ export default function Maintenance() {
   const { data: stats } = useGetMaintenanceStats({ query: { queryKey: getGetMaintenanceStatsQueryKey() } });
   const createTask = useCreateMaintenance();
   const deleteTask = useDeleteMaintenance();
+  const confirm = useConfirm();
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: getGetMaintenancesQueryKey(params) });
@@ -90,8 +92,9 @@ export default function Maintenance() {
     setForm({ ...initForm });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!(await confirm({ title: "Créer la tâche", description: "Voulez-vous enregistrer cette tâche de maintenance ?" }))) return;
     const data = {
       ...form,
       coutEstime: form.coutEstime ? Number(form.coutEstime) : null,
@@ -107,7 +110,8 @@ export default function Maintenance() {
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n);
   const tasksList = tasks ?? [];
-  const finishTask = (id: number) => {
+  const finishTask = async (id: number) => {
+    if (!(await confirm({ title: "Terminer la tâche", description: "Marquer cette tâche comme terminée ?" }))) return;
     deleteTask.mutate(
       { id },
       {
@@ -230,8 +234,8 @@ export default function Maintenance() {
                         <Button
                           variant="destructive"
                           size="sm"
-                          onClick={() => {
-                            if (!confirm("Supprimer cette tâche ?")) return;
+                          onClick={async () => {
+                            if (!(await confirm({ title: "Supprimer la tâche", description: "Supprimer définitivement cette tâche ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
                             deleteTask.mutate(
                               { id: t.id },
                               {

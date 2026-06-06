@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Building2, Home, Plus, Bell, Activity } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -40,6 +41,7 @@ export default function Loges() {
   const createBatiment = useCreateBatiment();
   const createLoge = useCreateLoge();
   const createAllocation = useCreateAllocation();
+  const confirm = useConfirm();
 
   const [batForm, setBatForm] = useState({ nom: "", code: "", vocation: "", superficie: "" });
   const [logeForm, setLogeForm] = useState({ nom: "", type: "Truies", batimentId: "", capacite: "", occupe: "0", superficie: "", statut: "Active", notes: "" });
@@ -161,7 +163,7 @@ export default function Loges() {
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouveau bâtiment</CardTitle></CardHeader>
               <CardContent>
-                <form onSubmit={e => { e.preventDefault(); createBatiment.mutate({ data: { ...batForm, superficie: batForm.superficie ? Number(batForm.superficie) : null, vocation: batForm.vocation || null } }, { onSuccess: () => { toast({ title: "Bâtiment créé" }); qc.invalidateQueries({ queryKey: getGetBatimentsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setBatForm({ nom: "", code: "", vocation: "", superficie: "" }); setOpenB(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                <form onSubmit={async e => { e.preventDefault(); if (!(await confirm({ title: "Créer le bâtiment", description: "Voulez-vous créer ce bâtiment ?" }))) return; createBatiment.mutate({ data: { ...batForm, superficie: batForm.superficie ? Number(batForm.superficie) : null, vocation: batForm.vocation || null } }, { onSuccess: () => { toast({ title: "Bâtiment créé" }); qc.invalidateQueries({ queryKey: getGetBatimentsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setBatForm({ nom: "", code: "", vocation: "", superficie: "" }); setOpenB(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
                   <div className="space-y-1"><Label>Nom *</Label><Input value={batForm.nom} onChange={e => setBatForm(f => ({ ...f, nom: e.target.value }))} required /></div>
                   <div className="space-y-1"><Label>Code *</Label><Input value={batForm.code} onChange={e => setBatForm(f => ({ ...f, code: e.target.value }))} required /></div>
                   <div className="space-y-1"><Label>Vocation</Label><Input value={batForm.vocation} onChange={e => setBatForm(f => ({ ...f, vocation: e.target.value }))} /></div>
@@ -174,7 +176,7 @@ export default function Loges() {
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle loge</CardTitle></CardHeader>
               <CardContent>
-                <form onSubmit={e => { e.preventDefault(); createLoge.mutate({ data: { nom: logeForm.nom, type: logeForm.type, batimentId: Number(logeForm.batimentId), capacite: logeForm.capacite ? Number(logeForm.capacite) : null, superficie: logeForm.superficie ? Number(logeForm.superficie) : null, statut: logeForm.statut, notes: logeForm.notes || null } }, { onSuccess: () => { toast({ title: "Loge créée" }); qc.invalidateQueries({ queryKey: getGetLogesQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setLogeForm({ nom: "", type: "Truies", batimentId: "", capacite: "", occupe: "0", superficie: "", statut: "Active", notes: "" }); setOpenL(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                <form onSubmit={async e => { e.preventDefault(); if (!(await confirm({ title: "Créer la loge", description: "Voulez-vous créer cette loge ?" }))) return; createLoge.mutate({ data: { nom: logeForm.nom, type: logeForm.type, batimentId: Number(logeForm.batimentId), capacite: logeForm.capacite ? Number(logeForm.capacite) : null, superficie: logeForm.superficie ? Number(logeForm.superficie) : null, statut: logeForm.statut, notes: logeForm.notes || null } }, { onSuccess: () => { toast({ title: "Loge créée" }); qc.invalidateQueries({ queryKey: getGetLogesQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); setLogeForm({ nom: "", type: "Truies", batimentId: "", capacite: "", occupe: "0", superficie: "", statut: "Active", notes: "" }); setOpenL(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
                   <div className="space-y-1"><Label>Nom *</Label><Input value={logeForm.nom} onChange={e => setLogeForm(f => ({ ...f, nom: e.target.value }))} required /></div>
                   <div className="space-y-1"><Label>Type *</Label><Select value={logeForm.type} onValueChange={v => setLogeForm(f => ({ ...f, type: v }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["Truies", "Verrats", "Porcelet", "Engraissement", "Nurserie", "Quarantaine"].map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent></Select></div>
                   <div className="space-y-1"><Label>Bâtiment *</Label><Select value={logeForm.batimentId} onValueChange={v => setLogeForm(f => ({ ...f, batimentId: v }))}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{batiments?.map(b => <SelectItem key={b.id} value={String(b.id)}>{b.nom}</SelectItem>)}</SelectContent></Select></div>
@@ -187,7 +189,7 @@ export default function Loges() {
             <Card>
               <CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Plus className="h-4 w-4" />Nouvelle allocation</CardTitle></CardHeader>
               <CardContent>
-                <form onSubmit={e => { e.preventDefault(); createAllocation.mutate({ data: { date: allocForm.date, animalTag: allocForm.animalTag, logeId: Number(allocForm.logeId), raison: allocForm.raison || null } }, { onSuccess: () => { toast({ title: "Allocation créée" }); qc.invalidateQueries({ queryKey: getGetAllocationsQueryKey() }); setAllocForm({ date: new Date().toISOString().slice(0, 10), animalTag: "", logeId: "", raison: "" }); setOpenA(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
+                <form onSubmit={async e => { e.preventDefault(); if (!(await confirm({ title: "Créer l'allocation", description: "Voulez-vous affecter cet animal à cette loge ?" }))) return; createAllocation.mutate({ data: { date: allocForm.date, animalTag: allocForm.animalTag, logeId: Number(allocForm.logeId), raison: allocForm.raison || null } }, { onSuccess: () => { toast({ title: "Allocation créée" }); qc.invalidateQueries({ queryKey: getGetAllocationsQueryKey() }); setAllocForm({ date: new Date().toISOString().slice(0, 10), animalTag: "", logeId: "", raison: "" }); setOpenA(false); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }} className="space-y-3">
                   <div className="space-y-1"><Label>Tag animal *</Label><Input value={allocForm.animalTag} onChange={e => setAllocForm(f => ({ ...f, animalTag: e.target.value }))} required /></div>
                   <div className="space-y-1"><Label>Date *</Label><Input type="date" value={allocForm.date} onChange={e => setAllocForm(f => ({ ...f, date: e.target.value }))} required /></div>
                   <div className="space-y-1"><Label>Loge *</Label><Select value={allocForm.logeId} onValueChange={v => setAllocForm(f => ({ ...f, logeId: v }))}><SelectTrigger><SelectValue placeholder="Sélectionner..." /></SelectTrigger><SelectContent>{loges?.map(l => <SelectItem key={l.id} value={String(l.id)}>{l.nom} ({l.batimentNom})</SelectItem>)}</SelectContent></Select></div>

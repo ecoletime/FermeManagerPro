@@ -10,6 +10,7 @@ import {
 } from "@workspace/api-client-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -107,6 +108,7 @@ export default function Notifications() {
 
   const markLue = useMarkNotificationLue();
   const markAll = useMarkAllNotificationsLues();
+  const confirm = useConfirm();
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: getGetNotificationsQueryKey() });
@@ -117,7 +119,8 @@ export default function Notifications() {
     markLue.mutate({ id }, { onSuccess: invalidate, onError: () => toast({ variant: "destructive", title: "Erreur" }) });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer la notification", description: "Supprimer définitivement cette notification ?", confirmText: "Supprimer", destructive: true }))) return;
     fetch(`/api/notifications/${id}`, { method: "DELETE" })
       .then(async (res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -127,7 +130,8 @@ export default function Notifications() {
       .catch(() => toast({ variant: "destructive", title: "Impossible de supprimer" }));
   };
 
-  const handleMarkAll = () => {
+  const handleMarkAll = async () => {
+    if (!(await confirm({ title: "Tout marquer comme lu", description: "Marquer toutes les notifications comme lues ?" }))) return;
     markAll.mutate(undefined, {
       onSuccess: (data) => {
         toast({ title: `${data.updated} notification(s) marquée(s) comme lues` });

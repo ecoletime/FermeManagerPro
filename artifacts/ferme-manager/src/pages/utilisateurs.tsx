@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/use-confirm";
 import { Plus, Pencil, Trash2, UserCircle2 } from "lucide-react";
 import { updateAdminCredentials } from "@/lib/auth";
 
@@ -61,6 +62,7 @@ const EMPTY_FORM = { username: "", nom: "", prenom: "", email: "", role: "employ
 
 export default function Utilisateurs() {
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [users, setUsers] = useState<UserRecord[]>(loadUsers);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -94,9 +96,10 @@ export default function Utilisateurs() {
     setOpen(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.username || !form.nom || !form.prenom || !form.email) return;
+    if (!(await confirm({ title: editingId ? "Modifier l'utilisateur" : "Créer l'utilisateur", description: editingId ? "Confirmer les modifications de cet utilisateur ?" : "Voulez-vous créer cet utilisateur ?" }))) return;
 
     if (editingId) {
       setUsers((current) => current.map((u) => u.id === editingId ? { ...u, username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password || u.password } : u));
@@ -117,7 +120,8 @@ export default function Utilisateurs() {
     setEditingId(null);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer l'utilisateur", description: "Supprimer définitivement cet utilisateur ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
     setUsers((current) => current.filter((u) => u.id !== id));
     setDeleteId(null);
     toast({ title: "Utilisateur supprimé" });
