@@ -34,6 +34,8 @@ tags:
     description: Dashboard summary
   - name: notifications
     description: Activity log and notifications
+  - name: journal-audit
+    description: Audit journal (admin only)
 
 paths:
   /healthz:
@@ -48,6 +50,38 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── JOURNAL AUDIT ──────────────────────────────────────────────────────────
+  /journal-audit:
+    get:
+      operationId: getJournalAudit
+      tags: [journal-audit]
+      summary: Get audit journal entries (admin only)
+      parameters:
+        - in: query
+          name: module
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: utilisateur
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          required: false
+      responses:
+        "200":
+          description: List of journal entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JournalAuditEntry"
 
   # ── NOTIFICATIONS ──────────────────────────────────────────────────────────
   /notifications:
@@ -2272,6 +2306,31 @@ components:
         date:
           type: string
       required: [categorieId, description, montant, date]
+
+    JournalAuditEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        timestamp:
+          type: string
+        utilisateur:
+          type: string
+        role:
+          type: string
+        action:
+          type: string
+        module:
+          type: string
+        description:
+          type: string
+        methode:
+          type: string
+        chemin:
+          type: string
+        statut:
+          type: integer
+      required: [id, timestamp, utilisateur, role, action, module, description, methode, chemin, statut]
 
     Notification:
       type: object

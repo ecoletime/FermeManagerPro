@@ -49,14 +49,17 @@ import type {
   CreateVaccinBody,
   CreateVisiteVeterinaireBody,
   DashboardSummary,
+  DeleteNotification200,
   Depense,
   Employe,
   Fournisseur,
   GetAnimauxParams,
+  GetJournalAuditParams,
   GetMaintenancesParams,
   GetNotificationsParams,
   GetNotificationsStats200,
   HealthStatus,
+  JournalAuditEntry,
   Livraison,
   Loge,
   LogesStats,
@@ -153,6 +156,100 @@ export function useHealthCheck<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getHealthCheckQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get audit journal entries (admin only)
+ */
+export const getGetJournalAuditUrl = (params?: GetJournalAuditParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/journal-audit?${stringifiedParams}`
+    : `/api/journal-audit`;
+};
+
+export const getJournalAudit = async (
+  params?: GetJournalAuditParams,
+  options?: RequestInit,
+): Promise<JournalAuditEntry[]> => {
+  return customFetch<JournalAuditEntry[]>(getGetJournalAuditUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetJournalAuditQueryKey = (params?: GetJournalAuditParams) => {
+  return [`/api/journal-audit`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetJournalAuditQueryOptions = <
+  TData = Awaited<ReturnType<typeof getJournalAudit>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetJournalAuditParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJournalAudit>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetJournalAuditQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getJournalAudit>>> = ({
+    signal,
+  }) => getJournalAudit(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getJournalAudit>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetJournalAuditQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getJournalAudit>>
+>;
+export type GetJournalAuditQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get audit journal entries (admin only)
+ */
+
+export function useGetJournalAudit<
+  TData = Awaited<ReturnType<typeof getJournalAudit>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetJournalAuditParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getJournalAudit>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetJournalAuditQueryOptions(params, options);
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;
@@ -510,6 +607,90 @@ export const useMarkAllNotificationsLues = <
   TContext
 > => {
   return useMutation(getMarkAllNotificationsLuesMutationOptions(options));
+};
+
+/**
+ * @summary Delete a notification
+ */
+export const getDeleteNotificationUrl = (id: number) => {
+  return `/api/notifications/${id}`;
+};
+
+export const deleteNotification = async (
+  id: number,
+  options?: RequestInit,
+): Promise<DeleteNotification200> => {
+  return customFetch<DeleteNotification200>(getDeleteNotificationUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteNotificationMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteNotification>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteNotification>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteNotification"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteNotification>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteNotification(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteNotificationMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteNotification>>
+>;
+
+export type DeleteNotificationMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a notification
+ */
+export const useDeleteNotification = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteNotification>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteNotification>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteNotificationMutationOptions(options));
 };
 
 /**

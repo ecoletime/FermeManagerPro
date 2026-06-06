@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ConfirmProvider } from "@/hooks/use-confirm";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { setExtraHeadersGetter } from "@workspace/api-client-react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -21,6 +22,21 @@ import Budget from "@/pages/budget";
 import Utilisateurs from "@/pages/utilisateurs";
 import SystemSettings from "@/pages/system-settings";
 import Notifications from "@/pages/notifications";
+import JournalAudit from "@/pages/journal-audit";
+
+setExtraHeadersGetter((): Record<string, string> => {
+  try {
+    const raw = localStorage.getItem("ferme_auth");
+    if (!raw) return {};
+    const auth = JSON.parse(raw) as { username?: string; role?: string };
+    return {
+      "x-utilisateur": auth.username || "inconnu",
+      "x-role": auth.role || "employee",
+    };
+  } catch {
+    return {};
+  }
+});
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,6 +90,7 @@ function Router() {
       <Route path="/utilisateurs">{() => <ProtectedRoute component={Utilisateurs} adminOnly />}</Route>
       <Route path="/systeme">{() => <ProtectedRoute component={SystemSettings} adminOnly />}</Route>
       <Route path="/notifications">{() => <ProtectedRoute component={Notifications} />}</Route>
+      <Route path="/journal-audit">{() => <ProtectedRoute component={JournalAudit} adminOnly />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

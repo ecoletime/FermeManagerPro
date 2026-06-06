@@ -9,3 +9,4 @@ export * from "./veterinaire";
 export * from "./fournisseurs";
 export * from "./budget";
 export * from "./notifications";
+export * from "./journal-audit";

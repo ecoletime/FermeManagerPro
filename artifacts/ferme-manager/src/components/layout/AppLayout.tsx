@@ -18,6 +18,7 @@ import {
   UserCog,
   Settings,
   Bell,
+  ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         ...(role === "admin" ? [{ href: "/budget", label: "Budgétisation", icon: Calculator }] : []),
         ...(role === "admin" ? [{ href: "/utilisateurs", label: "Utilisateurs", icon: UserCog }] : []),
         ...(role === "admin" ? [{ href: "/systeme", label: "Paramètres système", icon: Settings }] : []),
+        ...(role === "admin" ? [{ href: "/journal-audit", label: "Journal d'audit", icon: ScrollText }] : []),
         { href: "/notifications", label: "Notifications", icon: Bell, badge: nonLuesCount },
       ].filter((item) => hasAccess(item.href)),
     },

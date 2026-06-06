@@ -17,6 +17,11 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _extraHeadersGetter: (() => Record<string, string>) | null = null;
+
+export function setExtraHeadersGetter(getter: (() => Record<string, string>) | null): void {
+  _extraHeadersGetter = getter;
+}
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -356,6 +361,12 @@ export async function customFetch<T = unknown>(
     if (token) {
       headers.set("authorization", `Bearer ${token}`);
     }
+  }
+
+  // Attach extra headers (e.g. X-Utilisateur, X-Role for audit logging).
+  if (_extraHeadersGetter) {
+    const extra = _extraHeadersGetter();
+    Object.entries(extra).forEach(([k, v]) => headers.set(k, v));
   }
 
   const requestInfo = { method, url: resolveUrl(input) };

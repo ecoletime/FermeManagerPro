@@ -503,6 +503,19 @@ export interface CreateDepenseBody {
   date: string;
 }
 
+export interface JournalAuditEntry {
+  id: number;
+  timestamp: string;
+  utilisateur: string;
+  role: string;
+  action: string;
+  module: string;
+  description: string;
+  methode: string;
+  chemin: string;
+  statut: number;
+}
+
 export interface Notification {
   id: number;
   utilisateur: string;
@@ -536,6 +549,12 @@ export interface BudgetStats {
   depensesMensuelles: BudgetStatsDepensesMensuellesItem[];
 }
 
+export type GetJournalAuditParams = {
+  module?: string;
+  utilisateur?: string;
+  limit?: number;
+};
+
 export type GetNotificationsParams = {
   module?: string;
   utilisateur?: string;
@@ -544,6 +563,10 @@ export type GetNotificationsParams = {
 
 export type MarkAllNotificationsLues200 = {
   updated: number;
+};
+
+export type DeleteNotification200 = {
+  ok: boolean;
 };
 
 export type GetNotificationsStats200ParModuleItem = {

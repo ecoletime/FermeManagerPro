@@ -12,11 +12,13 @@ import veterinaireRouter from "./veterinaire";
 import fournisseursRouter from "./fournisseurs";
 import budgetRouter from "./budget";
 import notificationsRouter from "./notifications";
+import journalAuditRouter from "./journal-audit";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
 router.use(notificationsRouter);
+router.use(journalAuditRouter);
 router.use(dashboardRouter);
 router.use(animauxRouter);
 router.use(santeRouter);

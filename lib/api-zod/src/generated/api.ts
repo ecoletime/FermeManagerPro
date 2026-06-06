@@ -15,6 +15,29 @@ export const HealthCheckResponse = zod.object({
 });
 
 /**
+ * @summary Get audit journal entries (admin only)
+ */
+export const GetJournalAuditQueryParams = zod.object({
+  module: zod.coerce.string().optional(),
+  utilisateur: zod.coerce.string().optional(),
+  limit: zod.coerce.number().optional(),
+});
+
+export const GetJournalAuditResponseItem = zod.object({
+  id: zod.number(),
+  timestamp: zod.string(),
+  utilisateur: zod.string(),
+  role: zod.string(),
+  action: zod.string(),
+  module: zod.string(),
+  description: zod.string(),
+  methode: zod.string(),
+  chemin: zod.string(),
+  statut: zod.number(),
+});
+export const GetJournalAuditResponse = zod.array(GetJournalAuditResponseItem);
+
+/**
  * @summary Get all notifications/activity log
  */
 export const GetNotificationsQueryParams = zod.object({
@@ -70,6 +93,17 @@ export const MarkNotificationLueResponse = zod.object({
  */
 export const MarkAllNotificationsLuesResponse = zod.object({
   updated: zod.number(),
+});
+
+/**
+ * @summary Delete a notification
+ */
+export const DeleteNotificationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteNotificationResponse = zod.object({
+  ok: zod.boolean(),
 });
 
 /**
