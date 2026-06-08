@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, ScrollText, Search, Download } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { RefreshCw, ScrollText, Search, Download, X, CalendarRange } from "lucide-react";
 
 const METHOD_COLORS: Record<string, string> = {
   POST: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -32,6 +33,8 @@ const MODULES = [
 export default function JournalAudit() {
   const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [searchText, setSearchText] = useState("");
+  const [dateDebut, setDateDebut] = useState("");
+  const [dateFin, setDateFin] = useState("");
 
   const { data: entries = [], isLoading, refetch, isFetching } = useGetJournalAudit(
     { limit: 500 },
@@ -39,8 +42,18 @@ export default function JournalAudit() {
   );
 
   const filtered = useMemo(() => {
+    const debut = dateDebut ? new Date(dateDebut + "T00:00:00") : null;
+    const fin = dateFin ? new Date(dateFin + "T23:59:59") : null;
+
     return entries.filter((entry) => {
       if (moduleFilter !== "all" && entry.module !== moduleFilter) return false;
+
+      if (debut || fin) {
+        const ts = new Date(entry.timestamp);
+        if (debut && ts < debut) return false;
+        if (fin && ts > fin) return false;
+      }
+
       if (searchText) {
         const q = searchText.toLowerCase();
         return (
@@ -52,12 +65,21 @@ export default function JournalAudit() {
       }
       return true;
     });
-  }, [entries, moduleFilter, searchText]);
+  }, [entries, moduleFilter, searchText, dateDebut, dateFin]);
 
   const uniqueUsers = useMemo(() => {
     const set = new Set(entries.map((e) => e.utilisateur));
     return Array.from(set).sort();
   }, [entries]);
+
+  const hasActiveFilters = moduleFilter !== "all" || searchText !== "" || dateDebut !== "" || dateFin !== "";
+
+  function resetFilters() {
+    setModuleFilter("all");
+    setSearchText("");
+    setDateDebut("");
+    setDateFin("");
+  }
 
   function exportCsv() {
     const headers = ["Date", "Heure", "Utilisateur", "Role", "Module", "Action", "Description", "Methode", "Chemin", "Statut"];
@@ -90,7 +112,7 @@ export default function JournalAudit() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <ScrollText size={22} className="text-primary" />
@@ -112,28 +134,72 @@ export default function JournalAudit() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher par utilisateur, action, description..."
-            className="pl-9"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-        </div>
-        <Select value={moduleFilter} onValueChange={setModuleFilter}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Tous les modules" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les modules</SelectItem>
-            {MODULES.map((m) => (
-              <SelectItem key={m} value={m}>{m}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Card className="border-border">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-wrap gap-4 items-end">
+            <div className="relative flex-1 min-w-[220px]">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Recherche</Label>
+              <div className="relative">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Utilisateur, action, description..."
+                  className="pl-9"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="min-w-[180px]">
+              <Label className="text-xs text-muted-foreground mb-1.5 block">Module</Label>
+              <Select value={moduleFilter} onValueChange={setModuleFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tous les modules" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les modules</SelectItem>
+                  {MODULES.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
+                  <CalendarRange size={12} />
+                  Du
+                </Label>
+                <Input
+                  type="date"
+                  className="w-[155px]"
+                  value={dateDebut}
+                  max={dateFin || undefined}
+                  onChange={(e) => setDateDebut(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground mb-1.5 block">Au</Label>
+                <Input
+                  type="date"
+                  className="w-[155px]"
+                  value={dateFin}
+                  min={dateDebut || undefined}
+                  onChange={(e) => setDateFin(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground hover:text-foreground self-end">
+                <X size={14} className="mr-1.5" />
+                Réinitialiser
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-3 gap-4">
         <Card>
@@ -145,7 +211,12 @@ export default function JournalAudit() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide">Entrées filtrées</p>
-            <p className="text-2xl font-bold mt-1">{filtered.length}</p>
+            <p className="text-2xl font-bold mt-1">
+              {filtered.length}
+              {hasActiveFilters && filtered.length !== entries.length && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">/ {entries.length}</span>
+              )}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -158,8 +229,15 @@ export default function JournalAudit() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">
-            Historique des actions ({filtered.length})
+          <CardTitle className="text-base font-semibold flex items-center justify-between">
+            <span>Historique des actions ({filtered.length})</span>
+            {(dateDebut || dateFin) && (
+              <span className="text-xs font-normal text-muted-foreground flex items-center gap-1">
+                <CalendarRange size={13} />
+                {dateDebut && <span>Du {new Date(dateDebut).toLocaleDateString("fr-FR")}</span>}
+                {dateFin && <span>au {new Date(dateFin).toLocaleDateString("fr-FR")}</span>}
+              </span>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
@@ -167,7 +245,12 @@ export default function JournalAudit() {
             <div className="text-center py-16 text-muted-foreground">Chargement...</div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
-              Aucune entrée trouvée
+              <p>Aucune entrée trouvée</p>
+              {hasActiveFilters && (
+                <Button variant="link" size="sm" onClick={resetFilters} className="mt-2 text-primary">
+                  Réinitialiser les filtres
+                </Button>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
