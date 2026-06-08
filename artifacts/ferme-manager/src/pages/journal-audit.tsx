@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, ScrollText, Search } from "lucide-react";
+import { RefreshCw, ScrollText, Search, Download } from "lucide-react";
 
 const METHOD_COLORS: Record<string, string> = {
   POST: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
@@ -59,6 +59,35 @@ export default function JournalAudit() {
     return Array.from(set).sort();
   }, [entries]);
 
+  function exportCsv() {
+    const headers = ["Date", "Heure", "Utilisateur", "Role", "Module", "Action", "Description", "Methode", "Chemin", "Statut"];
+    const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+    const rows = filtered.map((e) => {
+      const d = new Date(e.timestamp);
+      return [
+        escape(d.toLocaleDateString("fr-FR")),
+        escape(d.toLocaleTimeString("fr-FR")),
+        escape(e.utilisateur),
+        escape(e.role),
+        escape(e.module),
+        escape(e.action),
+        escape(e.description),
+        escape(e.methode),
+        escape(e.chemin),
+        escape(e.statut),
+      ].join(";");
+    });
+    const csv = "\uFEFF" + [headers.join(";"), ...rows].join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const date = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `journal-audit-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
@@ -71,10 +100,16 @@ export default function JournalAudit() {
             Toutes les actions enregistrées — visible uniquement par l'administrateur
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
-          <RefreshCw size={15} className={isFetching ? "animate-spin mr-2" : "mr-2"} />
-          Actualiser
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCsv} disabled={filtered.length === 0}>
+            <Download size={15} className="mr-2" />
+            Exporter CSV{filtered.length > 0 ? ` (${filtered.length})` : ""}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isFetching}>
+            <RefreshCw size={15} className={isFetching ? "animate-spin mr-2" : "mr-2"} />
+            Actualiser
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-3">
