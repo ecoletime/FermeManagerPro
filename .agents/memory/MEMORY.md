@@ -1,0 +1,1 @@
+- [Workflow env vars](workflow-env-vars.md) — api/web artifacts run as plain workflows; must inject PORT (api 8080) and PORT+BASE_PATH (web 21491) or startup crashes.
