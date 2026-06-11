@@ -14,10 +14,10 @@ import {
 const router: IRouter = Router();
 
 function mapBatiment(r: typeof batimentsTable.$inferSelect) {
-  return { ...r, superficie: r.superficie ? Number(r.superficie) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, superficie: r.superficie, createdAt: r.createdAt.toISOString() };
 }
 function mapLoge(r: typeof logesTable.$inferSelect, batimentNom?: string | null) {
-  return { ...r, superficie: r.superficie ? Number(r.superficie) : null, batimentNom: batimentNom ?? null, createdAt: r.createdAt.toISOString() };
+  return { ...r, superficie: r.superficie, batimentNom: batimentNom ?? null, createdAt: r.createdAt.toISOString() };
 }
 function mapAllocation(r: typeof allocationsTable.$inferSelect, logeNom?: string | null, batimentNom?: string | null) {
   return { ...r, date: String(r.date), logeNom: logeNom ?? null, batimentNom: batimentNom ?? null, createdAt: r.createdAt.toISOString() };

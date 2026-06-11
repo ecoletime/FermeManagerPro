@@ -16,10 +16,10 @@ function mapAcc(r: typeof accouplementsTable.$inferSelect) {
   return { ...r, date: String(r.date), dateMiseBasPrevue: r.dateMiseBasPrevue ? String(r.dateMiseBasPrevue) : null, createdAt: r.createdAt.toISOString() };
 }
 function mapNaissance(r: typeof naissancesTable.$inferSelect) {
-  return { ...r, date: String(r.date), poidsMovyen: r.poidsMovyen ? Number(r.poidsMovyen) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, date: String(r.date), poidsMovyen: r.poidsMovyen, createdAt: r.createdAt.toISOString() };
 }
 function mapSevrage(r: typeof sevragesTable.$inferSelect) {
-  return { ...r, date: String(r.date), poidsMoyen: r.poidsMoyen ? Number(r.poidsMoyen) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, date: String(r.date), poidsMoyen: r.poidsMoyen, createdAt: r.createdAt.toISOString() };
 }
 
 router.get("/reproduction/stats", async (_req, res): Promise<void> => {

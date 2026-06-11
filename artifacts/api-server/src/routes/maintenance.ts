@@ -19,8 +19,8 @@ function mapTask(r: typeof maintenanceTable.$inferSelect) {
     ...r,
     dateSignalement: r.dateSignalement ? String(r.dateSignalement) : null,
     dateResolution: r.dateResolution ? String(r.dateResolution) : null,
-    coutEstime: r.coutEstime ? Number(r.coutEstime) : null,
-    coutReel: r.coutReel ? Number(r.coutReel) : null,
+    coutEstime: r.coutEstime,
+    coutReel: r.coutReel,
     createdAt: r.createdAt.toISOString(),
   };
 }
@@ -30,7 +30,7 @@ router.get("/maintenance/stats", async (_req, res): Promise<void> => {
   const urgentesActives = all.filter(t => t.priorite === "urgente" && t.statut !== "termine" && t.statut !== "annule").length;
   const enCours = all.filter(t => t.statut === "en_cours").length;
   const terminees = all.filter(t => t.statut === "termine").length;
-  const coutTotal = all.reduce((s, t) => s + (t.coutReel ? Number(t.coutReel) : 0), 0);
+  const coutTotal = all.reduce((s, t) => s + (t.coutReel ?? 0), 0);
   res.json(GetMaintenanceStatsResponse.parse({ urgentesActives, enCours, terminees, coutTotal }));
 });
 

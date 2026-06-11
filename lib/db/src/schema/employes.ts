@@ -10,7 +10,7 @@ export const employesTable = pgTable("employes", {
   email: text("email"),
   dateEmbauche: date("date_embauche"),
   statut: text("statut").notNull().default("Actif"),
-  salaire: numeric("salaire", { precision: 12, scale: 2 }),
+  salaire: numeric("salaire", { precision: 12, scale: 2, mode: "number" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

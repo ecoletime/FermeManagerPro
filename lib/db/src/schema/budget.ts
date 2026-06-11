@@ -5,8 +5,8 @@ import { z } from "zod/v4";
 export const budgetCategoriesTable = pgTable("budget_categories", {
   id: serial("id").primaryKey(),
   nom: text("nom").notNull(),
-  budget: numeric("budget", { precision: 14, scale: 2 }).notNull(),
-  depense: numeric("depense", { precision: 14, scale: 2 }).notNull().default("0"),
+  budget: numeric("budget", { precision: 14, scale: 2, mode: "number" }).notNull(),
+  depense: numeric("depense", { precision: 14, scale: 2, mode: "number" }).notNull().default(0),
   couleur: text("couleur"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -15,7 +15,7 @@ export const depensesTable = pgTable("depenses", {
   id: serial("id").primaryKey(),
   categorieId: integer("categorie_id").notNull(),
   description: text("description").notNull(),
-  montant: numeric("montant", { precision: 14, scale: 2 }).notNull(),
+  montant: numeric("montant", { precision: 14, scale: 2, mode: "number" }).notNull(),
   date: date("date").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

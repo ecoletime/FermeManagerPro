@@ -7,7 +7,7 @@ export const batimentsTable = pgTable("batiments", {
   nom: text("nom").notNull(),
   code: text("code").notNull().unique(),
   vocation: text("vocation"),
-  superficie: numeric("superficie", { precision: 8, scale: 2 }),
+  superficie: numeric("superficie", { precision: 8, scale: 2, mode: "number" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -18,7 +18,7 @@ export const logesTable = pgTable("loges", {
   batimentId: integer("batiment_id").notNull(),
   capacite: integer("capacite"),
   occupe: integer("occupe").notNull().default(0),
-  superficie: numeric("superficie", { precision: 8, scale: 2 }),
+  superficie: numeric("superficie", { precision: 8, scale: 2, mode: "number" }),
   statut: text("statut").notNull().default("Active"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

@@ -8,7 +8,7 @@ export const animauxTable = pgTable("animaux", {
   type: text("type").notNull(),
   sexe: text("sexe").notNull(),
   dateNaissance: date("date_naissance"),
-  poids: numeric("poids", { precision: 8, scale: 2 }),
+  poids: numeric("poids", { precision: 8, scale: 2, mode: "number" }),
   mere: text("mere"),
   pere: text("pere"),
   batiment: text("batiment"),

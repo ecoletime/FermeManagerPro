@@ -10,7 +10,7 @@ export const visitesVeterinaireTable = pgTable("visites_veterinaire", {
   animauxConcernes: text("animaux_concernes"),
   diagnostic: text("diagnostic"),
   traitement: text("traitement"),
-  cout: numeric("cout", { precision: 12, scale: 2 }),
+  cout: numeric("cout", { precision: 12, scale: 2, mode: "number" }),
   statut: text("statut").notNull().default("Planifiee"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

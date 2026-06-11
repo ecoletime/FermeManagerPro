@@ -13,7 +13,7 @@ import {
 const router: IRouter = Router();
 
 function mapEmploye(r: typeof employesTable.$inferSelect) {
-  return { ...r, dateEmbauche: r.dateEmbauche ? String(r.dateEmbauche) : null, salaire: r.salaire ? Number(r.salaire) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, dateEmbauche: r.dateEmbauche ? String(r.dateEmbauche) : null, salaire: r.salaire, createdAt: r.createdAt.toISOString() };
 }
 
 router.get("/employes", async (_req, res): Promise<void> => {

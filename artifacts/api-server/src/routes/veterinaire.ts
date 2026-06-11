@@ -13,7 +13,7 @@ import {
 const router: IRouter = Router();
 
 function mapVisite(r: typeof visitesVeterinaireTable.$inferSelect) {
-  return { ...r, date: String(r.date), cout: r.cout ? Number(r.cout) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, date: String(r.date), cout: r.cout, createdAt: r.createdAt.toISOString() };
 }
 
 router.get("/veterinaire", async (_req, res): Promise<void> => {

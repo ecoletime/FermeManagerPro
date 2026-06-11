@@ -67,7 +67,7 @@ router.post("/budget/depenses", async (req, res): Promise<void> => {
   const [cat] = await db.select().from(budgetCategoriesTable).where(eq(budgetCategoriesTable.id, row.categorieId));
   if (cat) {
     await db.update(budgetCategoriesTable)
-      .set({ depense: String(Number(cat.depense) + Number(row.montant)) })
+      .set({ depense: cat.depense + row.montant })
       .where(eq(budgetCategoriesTable.id, cat.id));
   }
   res.status(201).json(mapDepense(row, cat?.nom));

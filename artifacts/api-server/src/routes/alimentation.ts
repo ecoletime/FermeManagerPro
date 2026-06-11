@@ -22,7 +22,7 @@ function mapStock(r: typeof stocksTable.$inferSelect) {
   return { ...r, quantite: Number(r.quantite), capaciteMax: Number(r.capaciteMax), updatedAt: r.updatedAt.toISOString() };
 }
 function mapLivraison(r: typeof livraisonsTable.$inferSelect) {
-  return { ...r, date: String(r.date), quantite: Number(r.quantite), prixTotal: r.prixTotal ? Number(r.prixTotal) : null, createdAt: r.createdAt.toISOString() };
+  return { ...r, date: String(r.date), quantite: Number(r.quantite), prixTotal: r.prixTotal, createdAt: r.createdAt.toISOString() };
 }
 
 router.get("/alimentation/stats", async (_req, res): Promise<void> => {

@@ -1,1 +1,2 @@
 - [Workflow env vars](workflow-env-vars.md) — api/web artifacts run as plain workflows; must inject PORT (api 8080) and PORT+BASE_PATH (web 21491) or startup crashes.
+- [Numeric columns](numeric-columns.md) — all Drizzle numeric/decimal cols use mode:"number"; type-only (no migration); read as `r.x` not `x ? Number(x) : null` (zero→null bug).

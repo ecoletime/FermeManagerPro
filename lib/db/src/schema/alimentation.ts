@@ -8,8 +8,8 @@ export const repasTable = pgTable("repas", {
   heure: text("heure").notNull(),
   batiment: text("batiment").notNull(),
   aliment: text("aliment").notNull(),
-  quantiteDistribuee: numeric("quantite_distribuee", { precision: 10, scale: 2 }).notNull(),
-  quantiteRefusee: numeric("quantite_refusee", { precision: 10, scale: 2 }).notNull().default("0"),
+  quantiteDistribuee: numeric("quantite_distribuee", { precision: 10, scale: 2, mode: "number" }).notNull(),
+  quantiteRefusee: numeric("quantite_refusee", { precision: 10, scale: 2, mode: "number" }).notNull().default(0),
   distribue_par: text("distribue_par"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -17,8 +17,8 @@ export const repasTable = pgTable("repas", {
 export const stocksTable = pgTable("stocks", {
   id: serial("id").primaryKey(),
   aliment: text("aliment").notNull().unique(),
-  quantite: numeric("quantite", { precision: 10, scale: 2 }).notNull(),
-  capaciteMax: numeric("capacite_max", { precision: 10, scale: 2 }).notNull(),
+  quantite: numeric("quantite", { precision: 10, scale: 2, mode: "number" }).notNull(),
+  capaciteMax: numeric("capacite_max", { precision: 10, scale: 2, mode: "number" }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
@@ -27,8 +27,8 @@ export const livraisonsTable = pgTable("livraisons", {
   fournisseur: text("fournisseur").notNull(),
   date: date("date").notNull(),
   aliment: text("aliment").notNull(),
-  quantite: numeric("quantite", { precision: 10, scale: 2 }).notNull(),
-  prixTotal: numeric("prix_total", { precision: 12, scale: 2 }),
+  quantite: numeric("quantite", { precision: 10, scale: 2, mode: "number" }).notNull(),
+  prixTotal: numeric("prix_total", { precision: 12, scale: 2, mode: "number" }),
   qualite: text("qualite"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

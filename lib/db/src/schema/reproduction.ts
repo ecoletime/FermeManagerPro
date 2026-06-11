@@ -21,7 +21,7 @@ export const naissancesTable = pgTable("naissances", {
   totalNes: integer("total_nes").notNull(),
   vivants: integer("vivants").notNull(),
   mortNes: integer("mort_nes").notNull().default(0),
-  poidsMovyen: numeric("poids_moyen", { precision: 6, scale: 2 }),
+  poidsMovyen: numeric("poids_moyen", { precision: 6, scale: 2, mode: "number" }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -31,7 +31,7 @@ export const sevragesTable = pgTable("sevrages", {
   date: date("date").notNull(),
   nbSevres: integer("nb_sevres").notNull(),
   ageJours: integer("age_jours"),
-  poidsMoyen: numeric("poids_moyen", { precision: 6, scale: 2 }),
+  poidsMoyen: numeric("poids_moyen", { precision: 6, scale: 2, mode: "number" }),
   destination: text("destination"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

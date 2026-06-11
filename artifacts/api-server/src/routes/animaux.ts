@@ -44,7 +44,7 @@ router.get("/animaux", async (req, res): Promise<void> => {
 
   res.json(GetAnimauxResponse.parse(rows.map(r => ({
     ...r,
-    poids: r.poids ? Number(r.poids) : null,
+    poids: r.poids,
     createdAt: r.createdAt.toISOString(),
   }))));
 });
@@ -56,7 +56,7 @@ router.post("/animaux", async (req, res): Promise<void> => {
     return;
   }
   const [row] = await db.insert(animauxTable).values(parsed.data).returning();
-  res.status(201).json(GetAnimalResponse.parse({ ...row, poids: row.poids ? Number(row.poids) : null, createdAt: row.createdAt.toISOString() }));
+  res.status(201).json(GetAnimalResponse.parse({ ...row, poids: row.poids, createdAt: row.createdAt.toISOString() }));
 });
 
 router.get("/animaux/:id", async (req, res): Promise<void> => {
@@ -64,7 +64,7 @@ router.get("/animaux/:id", async (req, res): Promise<void> => {
   if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
   const [row] = await db.select().from(animauxTable).where(eq(animauxTable.id, params.data.id));
   if (!row) { res.status(404).json({ error: "Animal non trouvé" }); return; }
-  res.json(GetAnimalResponse.parse({ ...row, poids: row.poids ? Number(row.poids) : null, createdAt: row.createdAt.toISOString() }));
+  res.json(GetAnimalResponse.parse({ ...row, poids: row.poids, createdAt: row.createdAt.toISOString() }));
 });
 
 router.put("/animaux/:id", async (req, res): Promise<void> => {
@@ -74,7 +74,7 @@ router.put("/animaux/:id", async (req, res): Promise<void> => {
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const [row] = await db.update(animauxTable).set(parsed.data).where(eq(animauxTable.id, params.data.id)).returning();
   if (!row) { res.status(404).json({ error: "Animal non trouvé" }); return; }
-  res.json(UpdateAnimalResponse.parse({ ...row, poids: row.poids ? Number(row.poids) : null, createdAt: row.createdAt.toISOString() }));
+  res.json(UpdateAnimalResponse.parse({ ...row, poids: row.poids, createdAt: row.createdAt.toISOString() }));
 });
 
 router.delete("/animaux/:id", async (req, res): Promise<void> => {
