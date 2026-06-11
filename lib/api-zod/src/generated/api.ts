@@ -1282,6 +1282,7 @@ export const LoginResponse = zod.object({
   modules: zod.array(zod.string()),
   actif: zod.boolean(),
   createdAt: zod.string(),
+  token: zod.string(),
 });
 
 /**

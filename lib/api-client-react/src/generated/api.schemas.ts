@@ -565,6 +565,19 @@ export interface Utilisateur {
   createdAt: string;
 }
 
+export interface LoginResult {
+  id: number;
+  username: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: string;
+  modules: string[];
+  actif: boolean;
+  createdAt: string;
+  token: string;
+}
+
 export interface CreateUtilisateurBody {
   username: string;
   nom: string;

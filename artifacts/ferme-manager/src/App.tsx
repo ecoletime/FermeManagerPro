@@ -5,7 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ConfirmProvider } from "@/hooks/use-confirm";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { setExtraHeadersGetter } from "@workspace/api-client-react";
+import { setExtraHeadersGetter, setAuthTokenGetter } from "@workspace/api-client-react";
+import { getAuthToken } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
@@ -24,14 +25,15 @@ import SystemSettings from "@/pages/system-settings";
 import Notifications from "@/pages/notifications";
 import JournalAudit from "@/pages/journal-audit";
 
+setAuthTokenGetter(() => getAuthToken());
+
 setExtraHeadersGetter((): Record<string, string> => {
   try {
     const raw = localStorage.getItem("ferme_auth");
     if (!raw) return {};
-    const auth = JSON.parse(raw) as { username?: string; role?: string };
+    const auth = JSON.parse(raw) as { username?: string };
     return {
       "x-utilisateur": auth.username || "inconnu",
-      "x-role": auth.role || "employee",
     };
   } catch {
     return {};

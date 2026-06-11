@@ -1612,7 +1612,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Utilisateur"
+                $ref: "#/components/schemas/LoginResult"
         "401":
           description: Invalid credentials
           content:
@@ -2793,6 +2793,33 @@ components:
         createdAt:
           type: string
       required: [id, username, nom, prenom, email, role, modules, actif, createdAt]
+
+    LoginResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        nom:
+          type: string
+        prenom:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        modules:
+          type: array
+          items:
+            type: string
+        actif:
+          type: boolean
+        createdAt:
+          type: string
+        token:
+          type: string
+      required: [id, username, nom, prenom, email, role, modules, actif, createdAt, token]
 
     CreateUtilisateurBody:
       type: object

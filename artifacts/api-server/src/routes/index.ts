@@ -16,31 +16,12 @@ import journalAuditRouter from "./journal-audit";
 import utilisateursRouter from "./utilisateurs";
 import systemSettingsRouter from "./system-settings";
 import authRouter from "./auth";
-import { requireAdmin } from "../middleware/requireRole";
+import { requireAdmin, requireAuth } from "../middleware/requireRole";
 
 const router: IRouter = Router();
 
-router.use("/budget", requireAdmin);
-router.use("/journal-audit", requireAdmin);
-router.use("/utilisateurs", requireAdmin);
-router.use("/system-settings", requireAdmin);
-
+// --- Public routes (no authentication required) ---
 router.use(healthRouter);
-router.use(notificationsRouter);
-router.use(journalAuditRouter);
-router.use(dashboardRouter);
-router.use(animauxRouter);
-router.use(santeRouter);
-router.use(reproductionRouter);
-router.use(alimentationRouter);
-router.use(logesRouter);
-router.use(maintenanceRouter);
-router.use(employesRouter);
-router.use(veterinaireRouter);
-router.use(fournisseursRouter);
-router.use(budgetRouter);
-router.use(utilisateursRouter);
-router.use(systemSettingsRouter);
 router.use(authRouter);
 
 router.post("/auth/reset-email", async (req, res) => {
@@ -79,5 +60,29 @@ router.post("/auth/reset-email", async (req, res) => {
 
   res.json({ ok: true });
 });
+
+// --- Authenticated routes (valid token required below this line) ---
+router.use(requireAuth);
+
+router.use("/budget", requireAdmin);
+router.use("/journal-audit", requireAdmin);
+router.use("/utilisateurs", requireAdmin);
+router.use("/system-settings", requireAdmin);
+
+router.use(notificationsRouter);
+router.use(journalAuditRouter);
+router.use(dashboardRouter);
+router.use(animauxRouter);
+router.use(santeRouter);
+router.use(reproductionRouter);
+router.use(alimentationRouter);
+router.use(logesRouter);
+router.use(maintenanceRouter);
+router.use(employesRouter);
+router.use(veterinaireRouter);
+router.use(fournisseursRouter);
+router.use(budgetRouter);
+router.use(utilisateursRouter);
+router.use(systemSettingsRouter);
 
 export default router;

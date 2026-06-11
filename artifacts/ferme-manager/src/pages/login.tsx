@@ -45,7 +45,7 @@ export default function Login() {
         onSuccess: (user) => {
           const role = user.role === "admin" ? "admin" : "employee";
           const permissions = role === "admin" ? ["all"] : user.modules ?? [];
-          setAuthStateWithUsername(role, permissions, user.username);
+          setAuthStateWithUsername(role, permissions, user.username, user.token);
           window.dispatchEvent(new Event("storage"));
           goHome();
           setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${user.prenom} ${user.nom}` }), 0);

@@ -1,21 +1,28 @@
 ---
-name: RBAC via x-role header
-description: How server-side RBAC is enforced in the API server and why it is not a real security boundary
+name: Auth & RBAC (signed token)
+description: How authentication and admin RBAC are enforced in the API server
 ---
 
-# RBAC is enforced via a client-supplied `x-role` header
+# Auth is a server-signed HMAC token; RBAC derives role from it
 
-The Express API (`artifacts/api-server`) enforces admin-only access with a `requireAdmin`
-middleware that reads the role from the request `x-role` header. The frontend sets this
-header from `localStorage` (`ferme_auth` role) in `App.tsx`. Admin-mounted routers:
+Login (`/api/auth/login`) issues a compact HMAC-SHA256 token (`base64url(payload).sig`,
+12h expiry) signed with `JWT_SECRET`. The client stores it in `localStorage` (`ferme_auth`)
+and sends it as `Authorization: Bearer <token>` via the api-client's `setAuthTokenGetter`.
+Server: `authenticate` middleware (registered in `app.ts` before `auditMiddleware`) verifies
+the token and sets `req.user`; `requireAuth` gates all data routers (401 if no/invalid token);
+`requireAdmin` reads `req.user.role` (401 unauth, 403 non-admin). Admin-gated bases:
 budget, journal-audit, utilisateurs, system-settings.
 
-**Why:** This matched the incremental "server-side RBAC" finding and the session plan,
-which explicitly specified `x-role` as the mechanism. There is no token/session auth in
-this app — login just returns the user row; passwords are stored plaintext.
+**Why:** The previous RBAC trusted a client-supplied `x-role` header, which any client could
+forge. Role is now derived only from the verified token payload. `x-role` was removed from the
+client; `x-utilisateur` is kept for audit attribution only (not security).
 
-**How to apply:** This is NOT a true security boundary — any client can send
-`x-role: admin` to bypass it. If a future task needs real access control, replace the
-header trust with a verifiable identity (signed JWT or server session) and derive the
-role from the verified identity, not the header. Until then, treat admin gating as a
-UX/role convenience, not a security guarantee.
+**How to apply:**
+- `JWT_SECRET` is a required env var; the server fails fast at startup if it is missing.
+- Never reintroduce header-based role trust. Any new protected router must sit below the
+  `requireAuth` gate in `routes/index.ts`; public routes (health, auth login/reset) go above it.
+- KNOWN REMAINING HOLE: `/auth/reset-password` is unauthenticated and resets by username alone
+  (the OTP/code check is client-side only, so bypassable via direct API call). This permits
+  account takeover (incl. admin) and undermines the auth boundary. Fix needs server-side
+  code/OTP storage + validation + rate limiting before relying on auth for real security.
+- Passwords are still stored plaintext (out of scope so far).

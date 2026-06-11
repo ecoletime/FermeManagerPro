@@ -68,8 +68,19 @@ export function setAuthState(role: Role, permissions: Permissions = []) {
   localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions }));
 }
 
-export function setAuthStateWithUsername(role: Role, permissions: Permissions = [], username?: string) {
-  localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions, username }));
+export function setAuthStateWithUsername(role: Role, permissions: Permissions = [], username?: string, token?: string) {
+  localStorage.setItem(AUTH_KEY, JSON.stringify({ isLoggedIn: Boolean(role), role, permissions, username, token }));
+}
+
+export function getAuthToken(): string | null {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return typeof parsed.token === "string" ? parsed.token : null;
+  } catch {
+    return null;
+  }
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);

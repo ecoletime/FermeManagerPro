@@ -78,8 +78,8 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
     return;
   }
 
-  const utilisateur = (req.headers["x-utilisateur"] as string | undefined) || "inconnu";
-  const role = (req.headers["x-role"] as string | undefined) || "employee";
+  const utilisateur = req.user?.username || (req.headers["x-utilisateur"] as string | undefined) || "inconnu";
+  const role = req.user?.role || "employee";
 
   res.on("finish", () => {
     if (res.statusCode < 200 || res.statusCode >= 300) return;

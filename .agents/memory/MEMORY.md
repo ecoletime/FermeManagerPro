@@ -1,1 +1,1 @@
-- [RBAC via x-role header](rbac-x-role-header.md) — admin gating trusts a client-supplied header; not a real security boundary (no token/session auth).
+- [Auth & RBAC (signed token)](rbac-x-role-header.md) — login issues HMAC bearer token; role derived from verified token, not headers; reset-password still an open hole.

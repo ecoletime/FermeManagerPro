@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, sql } from "drizzle-orm";
 import { db, usersTable } from "@workspace/db";
 import { LoginBody, LoginResponse, ResetPasswordBody, ResetPasswordResponse } from "@workspace/api-zod";
+import { signToken } from "../lib/token";
 
 const router: IRouter = Router();
 
@@ -23,7 +24,8 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     res.status(401).json({ error: "Identifiants invalides" });
     return;
   }
-  res.json(LoginResponse.parse(mapUser(row)));
+  const token = signToken({ sub: row.id, username: row.username, role: row.role });
+  res.json(LoginResponse.parse({ ...mapUser(row), token }));
 });
 
 router.post("/auth/reset-password", async (req, res): Promise<void> => {

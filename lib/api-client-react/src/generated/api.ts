@@ -66,6 +66,7 @@ import type {
   Loge,
   LogesStats,
   LoginBody,
+  LoginResult,
   MaintenanceStats,
   MaintenanceTask,
   MarkAllNotificationsLues200,
@@ -7546,8 +7547,8 @@ export const getLoginUrl = () => {
 export const login = async (
   loginBody: LoginBody,
   options?: RequestInit,
-): Promise<Utilisateur> => {
-  return customFetch<Utilisateur>(getLoginUrl(), {
+): Promise<LoginResult> => {
+  return customFetch<LoginResult>(getLoginUrl(), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
