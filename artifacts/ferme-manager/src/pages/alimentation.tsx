@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  useGetRepas, getGetRepasQueryKey, useCreateRepas,
-  useGetStocks, getGetStocksQueryKey, useCreateStock,
-  useGetLivraisons, getGetLivraisonsQueryKey, useCreateLivraison,
+  useGetRepas, getGetRepasQueryKey, useCreateRepas, useDeleteRepas,
+  useGetStocks, getGetStocksQueryKey, useCreateStock, useDeleteStock,
+  useGetLivraisons, getGetLivraisonsQueryKey, useCreateLivraison, useDeleteLivraison,
   useGetAlimentationStats, getGetAlimentationStatsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/hooks/use-confirm";
-import { AlertTriangle, CheckCircle2, Plus, Truck, BarChart3 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Plus, Truck, BarChart3, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 function StatutBadge({ statut }: { statut: string }) {
@@ -54,7 +54,34 @@ export default function Alimentation() {
   const createRepas = useCreateRepas();
   const createStock = useCreateStock();
   const createLivraison = useCreateLivraison();
+  const deleteRepas = useDeleteRepas();
+  const deleteStock = useDeleteStock();
+  const deleteLivraison = useDeleteLivraison();
   const confirm = useConfirm();
+
+  const handleDeleteRepas = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteRepas.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetRepasQueryKey() }); qc.invalidateQueries({ queryKey: getGetAlimentationStatsQueryKey() }); },
+      onError: () => toast({ variant: "destructive", title: "Erreur" }),
+    });
+  };
+
+  const handleDeleteStock = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteStock.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetStocksQueryKey() }); qc.invalidateQueries({ queryKey: getGetAlimentationStatsQueryKey() }); },
+      onError: () => toast({ variant: "destructive", title: "Erreur" }),
+    });
+  };
+
+  const handleDeleteLivraison = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteLivraison.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetLivraisonsQueryKey() }); qc.invalidateQueries({ queryKey: getGetAlimentationStatsQueryKey() }); },
+      onError: () => toast({ variant: "destructive", title: "Erreur" }),
+    });
+  };
 
   const today = new Date().toISOString().slice(0, 10);
 
@@ -135,16 +162,16 @@ export default function Alimentation() {
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/30">
                 <tr>
-                  {["HEURE", "BÂTIMENT", "ANIMAUX", "ALIMENT", "RATION", "RESPONSABLE", "STATUT"].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                  {["HEURE", "BÂTIMENT", "ANIMAUX", "ALIMENT", "RATION", "RESPONSABLE", "STATUT", ""].map((h, i) => (
+                    <th key={h || `actions-${i}`} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {loadingR ? (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
                 ) : todayRepas.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun repas enregistré aujourd'hui</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun repas enregistré aujourd'hui</td></tr>
                 ) : todayRepas.map(r => (
                   <tr key={r.id} className="hover:bg-muted/20">
                     <td className="px-4 py-3 font-medium">{r.heure}</td>
@@ -154,6 +181,11 @@ export default function Alimentation() {
                     <td className="px-4 py-3">{Number(r.quantiteDistribuee).toFixed(0)} kg</td>
                     <td className="px-4 py-3">{r.distribue_par ?? "—"}</td>
                     <td className="px-4 py-3"><StatutBadge statut={getRepasStatut(r.date, r.heure)} /></td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteRepas(r.id)} data-testid={`button-delete-repas-${r.id}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -229,6 +261,9 @@ export default function Alimentation() {
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">{fmt(s.quantite)} / {fmt(s.capaciteMax)} kg</span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded ${color}`}>{label}</span>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteStock(s.id)} data-testid={`button-delete-stock-${s.id}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                     <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
@@ -300,15 +335,15 @@ export default function Alimentation() {
           <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/30">
-                <tr>{["FOURNISSEUR","DATE","ALIMENT","QTÉ (kg)","PRIX (FCFA)","QUALITÉ"].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                <tr>{["FOURNISSEUR","DATE","ALIMENT","QTÉ (kg)","PRIX (FCFA)","QUALITÉ",""].map((h, i) => (
+                  <th key={h || `actions-${i}`} className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
                 {loadingL ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
                 ) : livraisons?.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune livraison enregistrée</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune livraison enregistrée</td></tr>
                 ) : livraisons?.map(l => (
                   <tr key={l.id} className="hover:bg-muted/20">
                     <td className="px-4 py-3 font-medium">{l.fournisseur}</td>
@@ -317,6 +352,11 @@ export default function Alimentation() {
                     <td className="px-4 py-3">{fmt(Number(l.quantite))}</td>
                     <td className="px-4 py-3">{l.prixTotal != null ? fmt(Number(l.prixTotal)) : "—"}</td>
                     <td className="px-4 py-3">{l.qualite ?? "—"}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="destructive" size="sm" onClick={() => handleDeleteLivraison(l.id)} data-testid={`button-delete-livraison-${l.id}`}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -342,7 +382,7 @@ export default function Alimentation() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-sm">Livraisons fictives</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">Dernières livraisons</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {livraisons?.slice(0, 4).map((l) => (
                 <div key={l.id} className="rounded-lg border px-3 py-2 text-sm flex justify-between">

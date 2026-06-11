@@ -1,9 +1,10 @@
 import { useState } from "react";
 import {
-  useGetAccouplements, getGetAccouplementsQueryKey, useCreateAccouplement,
-  useGetNaissances, getGetNaissancesQueryKey, useCreateNaissance,
-  useGetSevrages, getGetSevragesQueryKey, useCreateSevrage,
+  useGetAccouplements, getGetAccouplementsQueryKey, useCreateAccouplement, useDeleteAccouplement,
+  useGetNaissances, getGetNaissancesQueryKey, useCreateNaissance, useDeleteNaissance,
+  useGetSevrages, getGetSevragesQueryKey, useCreateSevrage, useDeleteSevrage,
   useGetReproductionStats, getGetReproductionStatsQueryKey,
+  useGetLoges, getGetLogesQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,17 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/hooks/use-confirm";
-import { CheckCircle2, AlertTriangle, Bell, Plus } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Bell, Plus, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 
 type Accouplement = {
   id: number; truie: string; verrat: string; date: string;
   dateMiseBasPrevue: string | null; statut: string; notes: string | null; createdAt: string;
-};
-
-type LogeOption = {
-  id: number;
-  nom: string;
 };
 
 type PlanningItem = {
@@ -82,6 +78,9 @@ export default function Reproduction() {
   const createAcc = useCreateAccouplement();
   const createNaissance = useCreateNaissance();
   const createSevrage = useCreateSevrage();
+  const deleteAcc = useDeleteAccouplement();
+  const deleteNaissance = useDeleteNaissance();
+  const deleteSevrage = useDeleteSevrage();
   const confirm = useConfirm();
 
   const [accForm, setAccForm] = useState({ truie: "", verrat: "", date: today, dateMiseBasPrevue: "", statut: "Gestante", notes: "" });
@@ -100,14 +99,7 @@ export default function Reproduction() {
     notes: "",
   });
   const [planningFilter, setPlanningFilter] = useState("all");
-  const [loges] = useState<LogeOption[]>([
-    { id: 1, nom: "Loge A1" },
-    { id: 2, nom: "Loge A2" },
-    { id: 3, nom: "Loge B1" },
-    { id: 4, nom: "Loge B2" },
-    { id: 5, nom: "Maternité 1" },
-    { id: 6, nom: "Maternité 2" },
-  ]);
+  const { data: loges } = useGetLoges({ query: { queryKey: getGetLogesQueryKey() } });
 
   // Derived alerts
   const withDates = (accouplements ?? []).filter(a => a.dateMiseBasPrevue);
@@ -346,7 +338,7 @@ export default function Reproduction() {
                   <Select value={planningForm.loge} onValueChange={(v) => setPlanningForm((f) => ({ ...f, loge: v }))}>
                     <SelectTrigger><SelectValue placeholder="Choisir une loge" /></SelectTrigger>
                     <SelectContent>
-                      {loges.map((loge) => <SelectItem key={loge.id} value={loge.nom}>{loge.nom}</SelectItem>)}
+                      {(loges ?? []).map((loge) => <SelectItem key={loge.id} value={loge.nom}>{loge.nom}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -470,13 +462,13 @@ export default function Reproduction() {
           <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
-                <tr>{["TRUIE", "VERRAT", "ACCOUPLEMENT", "MISE BAS PRÉVUE", "RESTANT", "STATUT", "NOTES"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                <tr>{["TRUIE", "VERRAT", "ACCOUPLEMENT", "MISE BAS PRÉVUE", "RESTANT", "STATUT", "NOTES", ""].map((h, i) => (
+                  <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingA ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
-                  : (accouplements ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucun accouplement enregistré</td></tr>
+                {loadingA ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (accouplements ?? []).length === 0 ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Aucun accouplement enregistré</td></tr>
                   : (accouplements ?? []).map(a => {
                     const j = a.dateMiseBasPrevue ? joursRestants(a.dateMiseBasPrevue) : null;
                     return (
@@ -488,6 +480,17 @@ export default function Reproduction() {
                         <td className="px-4 py-2.5">{j !== null ? <RestantCell jours={j} /> : "—"}</td>
                         <td className="px-4 py-2.5"><StatutBadge jours={j} statut={a.statut} /></td>
                         <td className="px-4 py-2.5 text-muted-foreground">{a.notes ?? "—"}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <Button variant="destructive" size="sm" onClick={async () => {
+                            if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+                            deleteAcc.mutate({ id: a.id }, {
+                              onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetAccouplementsQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); },
+                              onError: () => toast({ variant: "destructive", title: "Erreur" }),
+                            });
+                          }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -517,13 +520,13 @@ export default function Reproduction() {
           <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
-                <tr>{["TAG MÈRE", "PÈRE", "DATE", "TOTAL NÉS", "VIVANTS", "MORT-NÉS", "POIDS MOY.", "TAUX SURVIE"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                <tr>{["TAG MÈRE", "PÈRE", "DATE", "TOTAL NÉS", "VIVANTS", "MORT-NÉS", "POIDS MOY.", "TAUX SURVIE", ""].map((h, i) => (
+                  <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingN ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
-                  : (naissances ?? []).length === 0 ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Aucune naissance enregistrée</td></tr>
+                {loadingN ? <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (naissances ?? []).length === 0 ? <tr><td colSpan={9} className="px-4 py-6 text-center text-muted-foreground">Aucune naissance enregistrée</td></tr>
                   : (naissances ?? []).map(n => {
                     const taux = n.totalNes > 0 ? ((n.vivants / n.totalNes) * 100).toFixed(1) + "%" : "—";
                     return (
@@ -536,6 +539,17 @@ export default function Reproduction() {
                         <td className="px-4 py-2.5 text-red-600">{n.mortNes}</td>
                         <td className="px-4 py-2.5">{n.poidsMovyen != null ? `${Number(n.poidsMovyen).toFixed(2)} kg` : "—"}</td>
                         <td className="px-4 py-2.5">{taux}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <Button variant="destructive" size="sm" onClick={async () => {
+                            if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+                            deleteNaissance.mutate({ id: n.id }, {
+                              onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetNaissancesQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); },
+                              onError: () => toast({ variant: "destructive", title: "Erreur" }),
+                            });
+                          }}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -624,13 +638,13 @@ export default function Reproduction() {
           <Card><CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="border-b bg-muted/20">
-                <tr>{["MÈRE", "DATE", "NB SEVRÉS", "ÂGE (j)", "POIDS MOY.", "DESTINATION"].map(h => (
-                  <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
+                <tr>{["MÈRE", "DATE", "NB SEVRÉS", "ÂGE (j)", "POIDS MOY.", "DESTINATION", ""].map((h, i) => (
+                  <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>
                 ))}</tr>
               </thead>
               <tbody className="divide-y">
-                {loadingS ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
-                  : (sevrages ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Aucun sevrage enregistré</td></tr>
+                {loadingS ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                  : (sevrages ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucun sevrage enregistré</td></tr>
                   : (sevrages ?? []).map(s => (
                     <tr key={s.id} className="hover:bg-muted/10">
                       <td className="px-4 py-2.5 font-mono font-medium">{s.mere}</td>
@@ -639,6 +653,17 @@ export default function Reproduction() {
                       <td className="px-4 py-2.5">{s.ageJours ?? "—"}</td>
                       <td className="px-4 py-2.5">{s.poidsMoyen != null ? `${Number(s.poidsMoyen).toFixed(2)} kg` : "—"}</td>
                       <td className="px-4 py-2.5">{s.destination ?? "—"}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        <Button variant="destructive" size="sm" onClick={async () => {
+                          if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+                          deleteSevrage.mutate({ id: s.id }, {
+                            onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetSevragesQueryKey() }); qc.invalidateQueries({ queryKey: getGetReproductionStatsQueryKey() }); },
+                            onError: () => toast({ variant: "destructive", title: "Erreur" }),
+                          });
+                        }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
               </tbody>

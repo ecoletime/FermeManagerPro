@@ -549,6 +549,74 @@ export interface BudgetStats {
   depensesMensuelles: BudgetStatsDepensesMensuellesItem[];
 }
 
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface Utilisateur {
+  id: number;
+  username: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: string;
+  modules: string[];
+  actif: boolean;
+  createdAt: string;
+}
+
+export interface CreateUtilisateurBody {
+  username: string;
+  nom: string;
+  prenom: string;
+  email: string;
+  role: string;
+  modules?: string[];
+  actif?: boolean;
+  password: string;
+}
+
+export interface UpdateUtilisateurBody {
+  username?: string;
+  nom?: string;
+  prenom?: string;
+  email?: string;
+  role?: string;
+  modules?: string[];
+  actif?: boolean;
+  password?: string | null;
+}
+
+export interface SystemSettings {
+  id: number;
+  farmName: string;
+  language: string;
+  currency: string;
+  darkMode: boolean;
+  autoBackup: boolean;
+  notifications: boolean;
+  updatedAt: string;
+}
+
+export interface UpdateSystemSettingsBody {
+  farmName?: string;
+  language?: string;
+  currency?: string;
+  darkMode?: boolean;
+  autoBackup?: boolean;
+  notifications?: boolean;
+}
+
+export interface LoginBody {
+  username: string;
+  password: string;
+}
+
+export interface ResetPasswordBody {
+  username: string;
+  password: string;
+}
+
 export type GetJournalAuditParams = {
   module?: string;
   utilisateur?: string;

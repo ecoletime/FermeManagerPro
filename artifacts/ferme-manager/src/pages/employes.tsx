@@ -673,7 +673,7 @@ export default function Employes() {
           </div>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Pointages fictifs</CardTitle>
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Derniers pointages</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {pointages.slice(0, 5).map((p) => {

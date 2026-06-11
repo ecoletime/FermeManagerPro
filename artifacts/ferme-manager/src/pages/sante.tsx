@@ -1,9 +1,9 @@
 import { useState } from "react";
 import {
   useGetVaccins, getGetVaccinsQueryKey, useCreateVaccin, useDeleteVaccin,
-  useGetTraitements, getGetTraitementsQueryKey, useCreateTraitement,
-  useGetQuarantaine, getGetQuarantaineQueryKey, useCreateQuarantaine,
-  useGetMortalite, getGetMortaliteQueryKey, useCreateMort,
+  useGetTraitements, getGetTraitementsQueryKey, useCreateTraitement, useDeleteTraitement,
+  useGetQuarantaine, getGetQuarantaineQueryKey, useCreateQuarantaine, useDeleteQuarantaine,
+  useGetMortalite, getGetMortaliteQueryKey, useCreateMort, useDeleteMort,
   useGetSanteStats, getGetSanteStatsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -57,9 +57,14 @@ export default function Sante() {
   const createVaccin = useCreateVaccin();
   const deleteVaccin = useDeleteVaccin();
   const createTraitement = useCreateTraitement();
+  const deleteTraitement = useDeleteTraitement();
   const createQuarantaine = useCreateQuarantaine();
+  const deleteQuarantaine = useDeleteQuarantaine();
   const createMort = useCreateMort();
+  const deleteMort = useDeleteMort();
   const confirm = useConfirm();
+
+  const confirmDelete = () => confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true });
 
   const [vaccinForm, setVaccinForm] = useState({ tag: "", vaccin: "", date: today, dose: "", rappel: "", administrePar: "" });
   const [traitForm, setTraitForm] = useState({ tag: "", typeTraitement: "", produit: "", dose: "", dateDebut: today, dateFin: "", statut: "En cours" });
@@ -126,14 +131,14 @@ export default function Sante() {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/20">
-                  <tr>{["TAG", "VACCIN", "DATE", "RAPPEL", "ADMINISTRÉ PAR", "STATUT"].map(h => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                  <tr>{["TAG", "VACCIN", "DATE", "RAPPEL", "ADMINISTRÉ PAR", "STATUT", ""].map((h, i) => <th key={h || i} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {loadingV ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                    : (vaccins ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune vaccination enregistrée</td></tr>
+                  {loadingV ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                    : (vaccins ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune vaccination enregistrée</td></tr>
                     : (vaccins ?? []).map(v => {
                       const stat = v.rappel && v.rappel <= today ? "À faire" : "Planifié";
-                      return <tr key={v.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{v.tag}</td><td className="px-4 py-2.5">{v.vaccin}</td><td className="px-4 py-2.5">{v.date}</td><td className="px-4 py-2.5">{v.rappel ?? "—"}</td><td className="px-4 py-2.5">{v.administrePar ?? "—"}</td><td className="px-4 py-2.5"><Badge className={stat === "À faire" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}>{stat}</Badge></td></tr>;
+                      return <tr key={v.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{v.tag}</td><td className="px-4 py-2.5">{v.vaccin}</td><td className="px-4 py-2.5">{v.date}</td><td className="px-4 py-2.5">{v.rappel ?? "—"}</td><td className="px-4 py-2.5">{v.administrePar ?? "—"}</td><td className="px-4 py-2.5"><Badge className={stat === "À faire" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}>{stat}</Badge></td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirmDelete())) return; deleteVaccin.mutate({ id: v.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetVaccinsQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>;
                     })}
                 </tbody>
               </table>
@@ -160,11 +165,11 @@ export default function Sante() {
           <Card><CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><FlaskConical className="h-4 w-4" />Traitements en cours</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="border-b bg-muted/20"><tr>{["TAG", "TYPE", "PRODUIT", "DOSE", "DÉBUT", "FIN", "STATUT"].map(h => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
+                <thead className="border-b bg-muted/20"><tr>{["TAG", "TYPE", "PRODUIT", "DOSE", "DÉBUT", "FIN", "STATUT", ""].map((h, i) => <th key={h || i} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
-                  {loadingT ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                    : (traitements ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun traitement enregistré</td></tr>
-                    : (traitements ?? []).map(t => <tr key={t.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{t.tag}</td><td className="px-4 py-2.5">{t.typeTraitement}</td><td className="px-4 py-2.5">{t.produit}</td><td className="px-4 py-2.5">{t.dose ?? "—"}</td><td className="px-4 py-2.5">{t.dateDebut}</td><td className="px-4 py-2.5">{t.dateFin ?? "—"}</td><td className="px-4 py-2.5"><Badge className={statusClass(t.statut)}>{t.statut}</Badge></td></tr>)}
+                  {loadingT ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                    : (traitements ?? []).length === 0 ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun traitement enregistré</td></tr>
+                    : (traitements ?? []).map(t => <tr key={t.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{t.tag}</td><td className="px-4 py-2.5">{t.typeTraitement}</td><td className="px-4 py-2.5">{t.produit}</td><td className="px-4 py-2.5">{t.dose ?? "—"}</td><td className="px-4 py-2.5">{t.dateDebut}</td><td className="px-4 py-2.5">{t.dateFin ?? "—"}</td><td className="px-4 py-2.5"><Badge className={statusClass(t.statut)}>{t.statut}</Badge></td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirmDelete())) return; deleteTraitement.mutate({ id: t.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetTraitementsQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent></Card>
@@ -189,11 +194,11 @@ export default function Sante() {
           <Card><CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Clock className="h-4 w-4" />Suivi quarantaine</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="border-b bg-muted/20"><tr>{["TAG", "MOTIF", "DÉBUT", "DURÉE", "STATUT"].map(h => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
+                <thead className="border-b bg-muted/20"><tr>{["TAG", "MOTIF", "DÉBUT", "DURÉE", "STATUT", ""].map((h, i) => <th key={h || i} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
-                  {loadingQ ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                    : (quarantaine ?? []).length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune mise en quarantaine</td></tr>
-                    : (quarantaine ?? []).map(q => <tr key={q.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{q.tag}</td><td className="px-4 py-2.5">{q.motif}</td><td className="px-4 py-2.5">{q.dateDebut}</td><td className="px-4 py-2.5">{q.dureeJours}j</td><td className="px-4 py-2.5"><Badge className={statusClass(q.statut)}>{q.statut}</Badge></td></tr>)}
+                  {loadingQ ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                    : (quarantaine ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucune mise en quarantaine</td></tr>
+                    : (quarantaine ?? []).map(q => <tr key={q.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{q.tag}</td><td className="px-4 py-2.5">{q.motif}</td><td className="px-4 py-2.5">{q.dateDebut}</td><td className="px-4 py-2.5">{q.dureeJours}j</td><td className="px-4 py-2.5"><Badge className={statusClass(q.statut)}>{q.statut}</Badge></td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirmDelete())) return; deleteQuarantaine.mutate({ id: q.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetQuarantaineQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent></Card>
@@ -216,11 +221,11 @@ export default function Sante() {
           <Card><CardHeader className="pb-3"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2"><Skull className="h-4 w-4" />Déclarations de décès</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="border-b bg-muted/20"><tr>{["TAG", "DATE", "CAUSE", "CONFIRMÉ PAR", "OBSERVATIONS"].map(h => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
+                <thead className="border-b bg-muted/20"><tr>{["TAG", "DATE", "CAUSE", "CONFIRMÉ PAR", "OBSERVATIONS", ""].map((h, i) => <th key={h || i} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
-                  {loadingM ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
-                    : (mortalite ?? []).length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun décès enregistré</td></tr>
-                    : (mortalite ?? []).map(m => <tr key={m.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{m.tag}</td><td className="px-4 py-2.5">{m.date}</td><td className="px-4 py-2.5">{m.cause}</td><td className="px-4 py-2.5">{m.confirme_par ?? "—"}</td><td className="px-4 py-2.5">{m.observations ?? "—"}</td></tr>)}
+                  {loadingM ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Chargement…</td></tr>
+                    : (mortalite ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground text-sm">Aucun décès enregistré</td></tr>
+                    : (mortalite ?? []).map(m => <tr key={m.id} className="hover:bg-muted/10"><td className="px-4 py-2.5 font-mono font-medium">{m.tag}</td><td className="px-4 py-2.5">{m.date}</td><td className="px-4 py-2.5">{m.cause}</td><td className="px-4 py-2.5">{m.confirme_par ?? "—"}</td><td className="px-4 py-2.5">{m.observations ?? "—"}</td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirmDelete())) return; deleteMort.mutate({ id: m.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetMortaliteQueryKey() }); qc.invalidateQueries({ queryKey: getGetSanteStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent></Card>

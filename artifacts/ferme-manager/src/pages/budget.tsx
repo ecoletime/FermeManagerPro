@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
-  useGetBudgetCategories, getGetBudgetCategoriesQueryKey, useCreateBudgetCategorie,
-  useGetDepenses, getGetDepensesQueryKey, useCreateDepense,
+  useGetBudgetCategories, getGetBudgetCategoriesQueryKey, useCreateBudgetCategorie, useDeleteBudgetCategorie,
+  useGetDepenses, getGetDepensesQueryKey, useCreateDepense, useDeleteDepense,
   useGetBudgetStats, getGetBudgetStatsQueryKey,
   useGetFournisseurs, getGetFournisseursQueryKey,
 } from "@workspace/api-client-react";
@@ -30,49 +30,45 @@ export default function Budget() {
 
   const createCategorie = useCreateBudgetCategorie();
   const createDepense = useCreateDepense();
+  const deleteCategorie = useDeleteBudgetCategorie();
+  const deleteDepense = useDeleteDepense();
 
   const [catForm, setCatForm] = useState({ nom: "", budget: "", depense: "0", couleur: "#1A9E6F" });
   const [recetteForm, setRecetteForm] = useState({ source: "", montant: "", date: new Date().toISOString().slice(0, 10), reference: "" });
   const [depForm, setDepForm] = useState({ categorieId: "", description: "", montant: "", date: new Date().toISOString().slice(0, 10) });
   const [planForm, setPlanForm] = useState({ poste: "", budget: "", periode: "mensuel", mois: "Mai 2025", avancement: "0" });
   const [expensePlanForm, setExpensePlanForm] = useState({ categorie: "", montant: "", date: new Date().toISOString().slice(0, 10), fournisseurId: "", fournisseur: "", paiement: "paye" });
-  const [plans, setPlans] = useState([
-    { id: 1, poste: "Alimentation", budget: 2000000, periode: "Mensuel", mois: "Mai 2025", avancement: 72 },
-    { id: 2, poste: "Maintenance", budget: 750000, periode: "Semestriel", mois: "Juin 2025", avancement: 45 },
-    { id: 3, poste: "Santé", budget: 500000, periode: "Mensuel", mois: "Mai 2025", avancement: 28 },
-  ]);
-  const [plannedExpenses, setPlannedExpenses] = useState([
-    { id: 1, categorie: "Alimentation", montant: 750000, date: "05/05/2026", fournisseur: "Agrinutrition Sa", paiement: "Payé" },
-    { id: 2, categorie: "Maintenance", montant: 180000, date: "06/05/2026", fournisseur: "Tech Ferme", paiement: "En attente" },
-  ]);
+  const [plans, setPlans] = useState<Array<{ id: number; poste: string; budget: number; periode: string; mois: string; avancement: number }>>([]);
+  const [plannedExpenses, setPlannedExpenses] = useState<Array<{ id: number; categorie: string; montant: number; date: string; fournisseur: string; paiement: string }>>([]);
   const [editingPlanId, setEditingPlanId] = useState<number | null>(null);
   const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
   const [editingBudgetPrevId, setEditingBudgetPrevId] = useState<number | null>(null);
   const [budgetPrevForm, setBudgetPrevForm] = useState({ recettes: "", depenses: "" });
   const [openCat, setOpenCat] = useState(false);
   const [openDep, setOpenDep] = useState(false);
-  const [recettesList, setRecettesList] = useState([
-    { id: 1, source: "Vente animaux", montant: 1200000, date: "05/03/2026", reference: "M. Dupont" },
-    { id: 2, source: "Subvention", montant: 500000, date: "07/03/2026", reference: "État" },
-  ]);
+  const [recettesList, setRecettesList] = useState<Array<{ id: number; source: string; montant: number; date: string; reference: string }>>([]);
 
   const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(Math.round(n));
   const depensesList = depenses ?? [];
-  const recettes = useMemo(() => ([
-    { id: 1, date: "2026-05-01", source: "Vente porcelets", description: "Portée T-009", montant: 1200000 },
-    { id: 2, date: "2026-05-02", source: "Vente aliment", description: "Réassort externe", montant: 850000 },
-    { id: 3, date: "2026-05-03", source: "Subvention", description: "Aide mensuelle", montant: 1500000 },
-  ]), []);
-  const [budgetPrevisionnel, setBudgetPrevisionnel] = useState([
-    { id: 1, mois: "Jan", recettes: 2450000, depenses: 1980000 },
-    { id: 2, mois: "Fév", recettes: 2320000, depenses: 2140000 },
-    { id: 3, mois: "Mar", recettes: 2780000, depenses: 2190000 },
-    { id: 4, mois: "Avr", recettes: 2600000, depenses: 2300000 },
-    { id: 5, mois: "Mai", recettes: 2900000, depenses: 2450000 },
-    { id: 6, mois: "Juin", recettes: 2750000, depenses: 2380000 },
-  ]);
+  const [budgetPrevisionnel, setBudgetPrevisionnel] = useState<Array<{ id: number; mois: string; recettes: number; depenses: number }>>([]);
 
   const confirm = useConfirm();
+
+  const handleDeleteCategorie = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteCategorie.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); qc.invalidateQueries({ queryKey: getGetDepensesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); },
+      onError: () => toast({ variant: "destructive", title: "Erreur" }),
+    });
+  };
+
+  const handleDeleteDepense = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteDepense.mutate({ id }, {
+      onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetDepensesQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetStatsQueryKey() }); qc.invalidateQueries({ queryKey: getGetBudgetCategoriesQueryKey() }); },
+      onError: () => toast({ variant: "destructive", title: "Erreur" }),
+    });
+  };
 
   const addPlan = async () => {
     if (!planForm.poste || !planForm.budget) return;
@@ -249,7 +245,15 @@ export default function Budget() {
                   const pct = cat.budget > 0 ? Math.min((cat.depense / cat.budget) * 100, 100) : 0;
                   return (
                     <div key={cat.id} className="space-y-1">
-                      <div className="flex justify-between text-sm"><span className="font-medium">{cat.nom}</span><span className="text-muted-foreground">{fmt(cat.depense)} / {fmt(cat.budget)} FCFA</span></div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-medium">{cat.nom}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{fmt(cat.depense)} / {fmt(cat.budget)} FCFA</span>
+                          <Button variant="destructive" size="sm" onClick={() => handleDeleteCategorie(cat.id)} data-testid={`button-delete-categorie-${cat.id}`}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                       <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: cat.couleur ?? "#1A9E6F" }} />
                       </div>
@@ -391,10 +395,10 @@ export default function Budget() {
             <CardHeader><CardTitle className="text-base">Dernières dépenses</CardTitle></CardHeader>
             <CardContent className="p-0">
               <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
+                <thead className="border-b bg-muted/30"><tr>{["Date","Catégorie","Description","Montant (FCFA)",""].map((h, i) => <th key={h || `actions-${i}`} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr></thead>
                 <tbody className="divide-y">
-                  {loadingD ? <tr><td colSpan={4} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
-                    : depensesList.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td></tr>)}
+                  {loadingD ? <tr><td colSpan={5} className="px-4 py-4"><Skeleton className="h-4 w-full" /></td></tr>
+                    : depensesList.slice(0, 20).map(d => <tr key={d.id} className="hover:bg-muted/20"><td className="px-4 py-3">{d.date}</td><td className="px-4 py-3"><span className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary">{d.categorieNom ?? "—"}</span></td><td className="px-4 py-3">{d.description}</td><td className="px-4 py-3 font-medium">{fmt(Number(d.montant))}</td><td className="px-4 py-3 text-right"><Button variant="destructive" size="sm" onClick={() => handleDeleteDepense(d.id)} data-testid={`button-delete-depense-${d.id}`}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent>

@@ -10,3 +10,5 @@ export * from "./fournisseurs";
 export * from "./budget";
 export * from "./notifications";
 export * from "./journal-audit";
+export * from "./users";
+export * from "./system-settings";

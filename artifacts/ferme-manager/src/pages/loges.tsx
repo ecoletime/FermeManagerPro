@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  useGetBatiments, getGetBatimentsQueryKey, useCreateBatiment,
-  useGetLoges, getGetLogesQueryKey, useCreateLoge,
-  useGetAllocations, getGetAllocationsQueryKey, useCreateAllocation,
+  useGetBatiments, getGetBatimentsQueryKey, useCreateBatiment, useDeleteBatiment,
+  useGetLoges, getGetLogesQueryKey, useCreateLoge, useDeleteLoge,
+  useGetAllocations, getGetAllocationsQueryKey, useCreateAllocation, useDeleteAllocation,
   useGetLogesStats, getGetLogesStatsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/hooks/use-confirm";
-import { Building2, Home, Plus, Bell, Activity } from "lucide-react";
+import { Building2, Home, Plus, Bell, Activity, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 function StatCard({ value, label, color }: { value: number | string; label: string; color: string }) {
@@ -41,6 +41,9 @@ export default function Loges() {
   const createBatiment = useCreateBatiment();
   const createLoge = useCreateLoge();
   const createAllocation = useCreateAllocation();
+  const deleteBatiment = useDeleteBatiment();
+  const deleteLoge = useDeleteLoge();
+  const deleteAllocation = useDeleteAllocation();
   const confirm = useConfirm();
 
   const [batForm, setBatForm] = useState({ nom: "", code: "", vocation: "", superficie: "" });
@@ -73,6 +76,7 @@ export default function Loges() {
           <TabsTrigger value="dashboard">Tableau de bord</TabsTrigger>
           <TabsTrigger value="batiments">Bâtiments</TabsTrigger>
           <TabsTrigger value="loges">Loges</TabsTrigger>
+          <TabsTrigger value="allocations">Allocations</TabsTrigger>
           <TabsTrigger value="nouveau">+ Nouvelle</TabsTrigger>
           <TabsTrigger value="graphiques">Graphiques</TabsTrigger>
         </TabsList>
@@ -126,12 +130,12 @@ export default function Loges() {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/20">
-                  <tr>{["Nom", "Code", "Vocation", "Superficie"].map((h) => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                  <tr>{["Nom", "Code", "Vocation", "Superficie", ""].map((h, i) => <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {loadingB ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
-                    : (batiments ?? []).length === 0 ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground">Aucun bâtiment</td></tr>
-                    : (batiments ?? []).map((b) => <tr key={b.id}><td className="px-4 py-2.5 font-medium">{b.nom}</td><td className="px-4 py-2.5">{b.code}</td><td className="px-4 py-2.5">{b.vocation ?? "—"}</td><td className="px-4 py-2.5">{b.superficie ?? "—"}</td></tr>)}
+                  {loadingB ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    : (batiments ?? []).length === 0 ? <tr><td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">Aucun bâtiment</td></tr>
+                    : (batiments ?? []).map((b) => <tr key={b.id}><td className="px-4 py-2.5 font-medium">{b.nom}</td><td className="px-4 py-2.5">{b.code}</td><td className="px-4 py-2.5">{b.vocation ?? "—"}</td><td className="px-4 py-2.5">{b.superficie ?? "—"}</td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return; deleteBatiment.mutate({ id: b.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetBatimentsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent>
@@ -143,15 +147,32 @@ export default function Loges() {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/20">
-                  <tr>{["Nom", "Type", "Bâtiment", "Capacité", "Occupé", "Taux", "Statut"].map((h) => <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                  <tr>{["Nom", "Type", "Bâtiment", "Capacité", "Occupé", "Taux", "Statut", ""].map((h, i) => <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {loadingL ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
-                    : (loges ?? []).length === 0 ? <tr><td colSpan={7} className="px-4 py-6 text-center text-muted-foreground">Aucune loge</td></tr>
+                  {loadingL ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    : (loges ?? []).length === 0 ? <tr><td colSpan={8} className="px-4 py-6 text-center text-muted-foreground">Aucune loge</td></tr>
                     : (loges ?? []).map((l) => {
                       const pct = l.capacite && l.capacite > 0 ? (l.occupe / l.capacite) * 100 : 0;
-                      return <tr key={l.id}><td className="px-4 py-2.5 font-medium">{l.nom}</td><td className="px-4 py-2.5">{l.type}</td><td className="px-4 py-2.5">{l.batimentNom ?? "—"}</td><td className="px-4 py-2.5">{l.capacite ?? "—"}</td><td className="px-4 py-2.5">{l.occupe}</td><td className="px-4 py-2.5">{pct.toFixed(0)}%</td><td className="px-4 py-2.5"><span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">{l.statut}</span></td></tr>;
+                      return <tr key={l.id}><td className="px-4 py-2.5 font-medium">{l.nom}</td><td className="px-4 py-2.5">{l.type}</td><td className="px-4 py-2.5">{l.batimentNom ?? "—"}</td><td className="px-4 py-2.5">{l.capacite ?? "—"}</td><td className="px-4 py-2.5">{l.occupe}</td><td className="px-4 py-2.5">{pct.toFixed(0)}%</td><td className="px-4 py-2.5"><span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">{l.statut}</span></td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return; deleteLoge.mutate({ id: l.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetLogesQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>;
                     })}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="allocations" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <table className="w-full text-sm">
+                <thead className="border-b bg-muted/20">
+                  <tr>{["Date", "Animal", "Loge", "Bâtiment", "Raison", ""].map((h, i) => <th key={h || `col-${i}`} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground tracking-wide">{h}</th>)}</tr>
+                </thead>
+                <tbody className="divide-y">
+                  {loadingA ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Chargement…</td></tr>
+                    : (allocations ?? []).length === 0 ? <tr><td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">Aucune allocation</td></tr>
+                    : (allocations ?? []).map((a) => <tr key={a.id}><td className="px-4 py-2.5">{a.date}</td><td className="px-4 py-2.5 font-medium">{a.animalTag}</td><td className="px-4 py-2.5">{a.logeNom ?? "—"}</td><td className="px-4 py-2.5">{a.batimentNom ?? "—"}</td><td className="px-4 py-2.5">{a.raison ?? "—"}</td><td className="px-4 py-2.5 text-right"><Button variant="destructive" size="sm" onClick={async () => { if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return; deleteAllocation.mutate({ id: a.id }, { onSuccess: () => { toast({ title: "Supprimé" }); qc.invalidateQueries({ queryKey: getGetAllocationsQueryKey() }); qc.invalidateQueries({ queryKey: getGetLogesStatsQueryKey() }); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) }); }}><Trash2 className="h-4 w-4" /></Button></td></tr>)}
                 </tbody>
               </table>
             </CardContent>

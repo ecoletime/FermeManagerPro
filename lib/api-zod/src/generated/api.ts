@@ -557,6 +557,13 @@ export const UpdateStockResponse = zod.object({
 });
 
 /**
+ * @summary Delete a stock entry
+ */
+export const DeleteStockParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
  * @summary List feed deliveries
  */
 export const GetLivraisonsResponseItem = zod.object({
@@ -1060,4 +1067,239 @@ export const GetBudgetStatsResponse = zod.object({
       montant: zod.number(),
     }),
   ),
+});
+
+/**
+ * @summary Delete a treatment record
+ */
+export const DeleteTraitementParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a quarantine record
+ */
+export const DeleteQuarantaineParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a mortality record
+ */
+export const DeleteMortParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a mating record
+ */
+export const DeleteAccouplementParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a birth record
+ */
+export const DeleteNaissanceParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a weaning record
+ */
+export const DeleteSevrageParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a meal record
+ */
+export const DeleteRepasParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a delivery record
+ */
+export const DeleteLivraisonParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a building
+ */
+export const DeleteBatimentParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a pen
+ */
+export const DeleteLogeParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete an allocation
+ */
+export const DeleteAllocationParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete a budget category and its expenses
+ */
+export const DeleteBudgetCategorieParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Delete an expense
+ */
+export const DeleteDepenseParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary List all users
+ */
+export const GetUtilisateursResponseItem = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  nom: zod.string(),
+  prenom: zod.string(),
+  email: zod.string(),
+  role: zod.string(),
+  modules: zod.array(zod.string()),
+  actif: zod.boolean(),
+  createdAt: zod.string(),
+});
+export const GetUtilisateursResponse = zod.array(GetUtilisateursResponseItem);
+
+/**
+ * @summary Create a user
+ */
+export const CreateUtilisateurBody = zod.object({
+  username: zod.string(),
+  nom: zod.string(),
+  prenom: zod.string(),
+  email: zod.string(),
+  role: zod.string(),
+  modules: zod.array(zod.string()).optional(),
+  actif: zod.boolean().optional(),
+  password: zod.string(),
+});
+
+/**
+ * @summary Update a user
+ */
+export const UpdateUtilisateurParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateUtilisateurBody = zod.object({
+  username: zod.string().optional(),
+  nom: zod.string().optional(),
+  prenom: zod.string().optional(),
+  email: zod.string().optional(),
+  role: zod.string().optional(),
+  modules: zod.array(zod.string()).optional(),
+  actif: zod.boolean().optional(),
+  password: zod.string().nullish(),
+});
+
+export const UpdateUtilisateurResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  nom: zod.string(),
+  prenom: zod.string(),
+  email: zod.string(),
+  role: zod.string(),
+  modules: zod.array(zod.string()),
+  actif: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Delete a user
+ */
+export const DeleteUtilisateurParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+/**
+ * @summary Get global system settings
+ */
+export const GetSystemSettingsResponse = zod.object({
+  id: zod.number(),
+  farmName: zod.string(),
+  language: zod.string(),
+  currency: zod.string(),
+  darkMode: zod.boolean(),
+  autoBackup: zod.boolean(),
+  notifications: zod.boolean(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Update global system settings (admin only)
+ */
+export const UpdateSystemSettingsBody = zod.object({
+  farmName: zod.string().optional(),
+  language: zod.string().optional(),
+  currency: zod.string().optional(),
+  darkMode: zod.boolean().optional(),
+  autoBackup: zod.boolean().optional(),
+  notifications: zod.boolean().optional(),
+});
+
+export const UpdateSystemSettingsResponse = zod.object({
+  id: zod.number(),
+  farmName: zod.string(),
+  language: zod.string(),
+  currency: zod.string(),
+  darkMode: zod.boolean(),
+  autoBackup: zod.boolean(),
+  notifications: zod.boolean(),
+  updatedAt: zod.string(),
+});
+
+/**
+ * @summary Validate credentials and return the matching user
+ */
+export const LoginBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const LoginResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  nom: zod.string(),
+  prenom: zod.string(),
+  email: zod.string(),
+  role: zod.string(),
+  modules: zod.array(zod.string()),
+  actif: zod.boolean(),
+  createdAt: zod.string(),
+});
+
+/**
+ * @summary Reset a user's password by username
+ */
+export const ResetPasswordBody = zod.object({
+  username: zod.string(),
+  password: zod.string(),
+});
+
+export const ResetPasswordResponse = zod.object({
+  id: zod.number(),
+  username: zod.string(),
+  nom: zod.string(),
+  prenom: zod.string(),
+  email: zod.string(),
+  role: zod.string(),
+  modules: zod.array(zod.string()),
+  actif: zod.boolean(),
+  createdAt: zod.string(),
 });

@@ -79,6 +79,27 @@ export default function Veterinaire() {
     setEditId(null);
   };
 
+  const handleEdit = (v: NonNullable<typeof visites>[number]) => {
+    setForm({
+      veterinaire: v.veterinaire,
+      date: v.date,
+      type: v.type,
+      animauxConcernes: v.animauxConcernes ?? "",
+      diagnostic: v.diagnostic ?? "",
+      traitement: v.traitement ?? "",
+      cout: v.cout != null ? String(v.cout) : "",
+      statut: v.statut,
+      notes: v.notes ?? "",
+    });
+    setEditId(v.id);
+    setOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+    deleteVisite.mutate({ id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!(await confirm({ title: editId ? "Modifier la visite" : "Enregistrer la visite", description: editId ? "Confirmer les modifications de cette visite vétérinaire ?" : "Voulez-vous enregistrer cette visite vétérinaire ?" }))) return;
@@ -273,10 +294,10 @@ export default function Veterinaire() {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
-                  <tr>{["Date", "Vétérinaire", "Type", "Animaux", "Coût", "Statut"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                  <tr>{["Date", "Vétérinaire", "Type", "Animaux", "Coût", "Statut", ""].map((h, i) => <th key={h || i} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : visites?.map(v => (
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={7} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : visites?.map(v => (
                     <tr key={v.id} className="hover:bg-muted/20">
                       <td className="px-4 py-3">{v.date}</td>
                       <td className="px-4 py-3">{v.veterinaire}</td>
@@ -284,6 +305,12 @@ export default function Veterinaire() {
                       <td className="px-4 py-3">{v.animauxConcernes ?? "—"}</td>
                       <td className="px-4 py-3">{v.cout != null ? `${fmt(Number(v.cout))} FCFA` : "—"}</td>
                       <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${statutBadge[v.statut] ?? "bg-gray-100 text-gray-800"}`}>{v.statut}</span></td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="outline" size="sm" onClick={() => handleEdit(v)}><Edit3 className="h-4 w-4" /></Button>
+                          <Button variant="destructive" size="sm" onClick={() => handleDelete(v.id)}><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

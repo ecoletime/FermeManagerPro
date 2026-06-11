@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { eq } from "drizzle-orm";
 import { db, accouplementsTable, naissancesTable, sevragesTable } from "@workspace/db";
 import {
   CreateAccouplementBody,
@@ -76,6 +77,27 @@ router.post("/reproduction/sevrages", async (req, res): Promise<void> => {
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const [row] = await db.insert(sevragesTable).values(parsed.data).returning();
   res.status(201).json(mapSevrage(row));
+});
+
+router.delete("/reproduction/accouplements/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(accouplementsTable).where(eq(accouplementsTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/reproduction/naissances/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(naissancesTable).where(eq(naissancesTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/reproduction/sevrages/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(sevragesTable).where(eq(sevragesTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
 });
 
 export default router;

@@ -84,4 +84,25 @@ router.post("/alimentation/livraisons", async (req, res): Promise<void> => {
   res.status(201).json(mapLivraison(row));
 });
 
+router.delete("/alimentation/repas/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(repasTable).where(eq(repasTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/alimentation/stocks/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(stocksTable).where(eq(stocksTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/alimentation/livraisons/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(livraisonsTable).where(eq(livraisonsTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
 export default router;

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { getAdminCredentials, setAuthState, updateAdminCredentials } from "@/lib/auth";
+import { setAuthStateWithUsername } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,22 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PiggyBank } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLogin, useResetPassword } from "@workspace/api-client-react";
 
-const USER_STORAGE_KEY = "ferme_utilisateurs";
 const RESET_CODE_KEY = "ferme_admin_reset_code";
-
 const API_BASE = `${import.meta.env.BASE_URL}api`;
 
 type ResetStep = "request" | "verify" | "password";
-
-function loadUsers() {
-  try {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {
-  }
-  return [];
-}
 
 function generateCode() {
   return String(Math.floor(10000 + Math.random() * 90000));
@@ -33,6 +23,8 @@ function generateCode() {
 export default function Login() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
+  const loginMutation = useLogin();
+  const resetMutation = useResetPassword();
   const [forgotOpen, setForgotOpen] = useState(false);
   const [resetStep, setResetStep] = useState<ResetStep>("request");
   const [forgotUsername, setForgotUsername] = useState("");
@@ -41,39 +33,36 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
-  const [adminPassport, setAdminPassport] = useState("");
   const [empUsername, setEmpUsername] = useState("");
   const [empPassword, setEmpPassword] = useState("");
 
   const goHome = () => setLocation("/");
 
+  const doLogin = (username: string, password: string) => {
+    loginMutation.mutate(
+      { data: { username: username.trim(), password } },
+      {
+        onSuccess: (user) => {
+          const role = user.role === "admin" ? "admin" : "employee";
+          const permissions = role === "admin" ? ["all"] : user.modules ?? [];
+          setAuthStateWithUsername(role, permissions, user.username);
+          window.dispatchEvent(new Event("storage"));
+          goHome();
+          setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${user.prenom} ${user.nom}` }), 0);
+        },
+        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" }),
+      },
+    );
+  };
+
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const creds = getAdminCredentials();
-    if (adminUsername.trim().toLowerCase() === creds.username.toLowerCase() && adminPassword === creds.password) {
-      setAuthState("admin", ["all"]);
-      goHome();
-      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${creds.username}` }), 0);
-    } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Nom d'utilisateur ou mot de passe invalide" });
-    }
+    doLogin(adminUsername, adminPassword);
   };
 
   const handleEmployeeLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const users = loadUsers();
-    const matched = users.find((user: any) => (user.username?.toLowerCase?.() === empUsername.toLowerCase() || user.email?.toLowerCase?.() === empUsername.toLowerCase()) && user.actif !== false);
-    if (matched && matched.password === empPassword) {
-      setAuthState(matched.role, matched.modules ?? []);
-      goHome();
-      setTimeout(() => toast({ title: "Connexion réussie", description: `Bienvenue, ${matched.prenom} ${matched.nom} (${matched.username})` }), 0);
-    } else if (empUsername === "employe" && empPassword === "emp123") {
-      setAuthState("employee", ["animaux", "alimentation", "sante"]);
-      goHome();
-      setTimeout(() => toast({ title: "Connexion réussie", description: "Bienvenue, Employé" }), 0);
-    } else {
-      toast({ variant: "destructive", title: "Erreur", description: "Identifiants invalides" });
-    }
+    doLogin(empUsername, empPassword);
   };
 
   const openForgot = () => {
@@ -88,18 +77,13 @@ export default function Login() {
   const handleForgot = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!forgotUsername.trim()) {
-      toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur admin" });
-      return;
-    }
-    const creds = getAdminCredentials();
-    if (forgotUsername.trim().toLowerCase() !== creds.username.toLowerCase()) {
-      toast({ variant: "destructive", title: "Erreur", description: "Compte administrateur introuvable" });
+      toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur" });
       return;
     }
     const code = generateCode();
-    localStorage.setItem(RESET_CODE_KEY, JSON.stringify({ username: creds.username, code, expiresAt: Date.now() + 10 * 60 * 1000 }));
+    localStorage.setItem(RESET_CODE_KEY, JSON.stringify({ username: forgotUsername.trim(), code, expiresAt: Date.now() + 10 * 60 * 1000 }));
     try {
-      const targetEmail = `${creds.username}@example.com`;
+      const targetEmail = `${forgotUsername.trim()}@example.com`;
       const response = await fetch(`${API_BASE}/auth/reset-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -147,25 +131,27 @@ export default function Login() {
       toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas" });
       return;
     }
-    const creds = getAdminCredentials();
-    updateAdminCredentials(creds.username, newPassword);
-    localStorage.removeItem(RESET_CODE_KEY);
-    setForgotOpen(false);
-    setResetStep("request");
-    setNewPassword("");
-    setConfirmPassword("");
-    setForgotUsername("");
-    setResetCode("");
-    toast({ title: "Mot de passe mis à jour" });
-  };
-
-  const rememberDetails = () => {
-    if (adminUsername.trim()) {
-      const creds = getAdminCredentials();
-      if (adminUsername.trim().toLowerCase() === creds.username.toLowerCase()) {
-        toast({ title: "Détails de connexion", description: `Nom d'utilisateur: ${creds.username} • Mot de passe: déjà enregistré` });
-      }
-    }
+    let username = forgotUsername.trim();
+    try {
+      const raw = localStorage.getItem(RESET_CODE_KEY);
+      if (raw) username = JSON.parse(raw).username ?? username;
+    } catch {}
+    resetMutation.mutate(
+      { data: { username, password: newPassword } },
+      {
+        onSuccess: () => {
+          localStorage.removeItem(RESET_CODE_KEY);
+          setForgotOpen(false);
+          setResetStep("request");
+          setNewPassword("");
+          setConfirmPassword("");
+          setForgotUsername("");
+          setResetCode("");
+          toast({ title: "Mot de passe mis à jour" });
+        },
+        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Utilisateur introuvable" }),
+      },
+    );
   };
 
   return (
@@ -206,7 +192,7 @@ export default function Login() {
                       Mot de passe oublié ?
                     </button>
                   </div>
-                  <Button type="submit" className="w-full font-medium">Se connecter</Button>
+                  <Button type="submit" className="w-full font-medium" disabled={loginMutation.isPending}>Se connecter</Button>
                 </form>
               </TabsContent>
 
@@ -225,7 +211,7 @@ export default function Login() {
                       Mot de passe oublié ?
                     </button>
                   </div>
-                  <Button type="submit" className="w-full font-medium">Se connecter</Button>
+                  <Button type="submit" className="w-full font-medium" disabled={loginMutation.isPending}>Se connecter</Button>
                 </form>
               </TabsContent>
             </Tabs>
@@ -236,13 +222,13 @@ export default function Login() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Mot de passe oublié</DialogTitle>
-              <DialogDescription>Entrez votre nom d'utilisateur administrateur pour réinitialiser le mot de passe.</DialogDescription>
+              <DialogDescription>Entrez votre nom d'utilisateur pour réinitialiser le mot de passe.</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 pt-2">
               {resetStep === "request" && (
                 <form className="space-y-4" onSubmit={handleForgot}>
                   <div className="space-y-2">
-                    <Label>Nom d'utilisateur admin</Label>
+                    <Label>Nom d'utilisateur</Label>
                     <Input value={forgotUsername} onChange={(e) => setForgotUsername(e.target.value)} placeholder="admin" />
                   </div>
                   <div className="flex justify-end">
@@ -274,7 +260,7 @@ export default function Login() {
                   </div>
                   <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => setResetStep("verify")}>Retour</Button>
-                    <Button type="submit">Mettre à jour</Button>
+                    <Button type="submit" disabled={resetMutation.isPending}>Mettre à jour</Button>
                   </div>
                 </form>
               )}

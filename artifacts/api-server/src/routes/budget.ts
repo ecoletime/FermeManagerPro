@@ -73,4 +73,25 @@ router.post("/budget/depenses", async (req, res): Promise<void> => {
   res.status(201).json(mapDepense(row, cat?.nom));
 });
 
+router.delete("/budget/depenses/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(depensesTable).where(eq(depensesTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  const [cat] = await db.select().from(budgetCategoriesTable).where(eq(budgetCategoriesTable.id, row.categorieId));
+  if (cat) {
+    await db.update(budgetCategoriesTable)
+      .set({ depense: Math.max(0, cat.depense - row.montant) })
+      .where(eq(budgetCategoriesTable.id, cat.id));
+  }
+  res.sendStatus(204);
+});
+
+router.delete("/budget/categories/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  await db.delete(depensesTable).where(eq(depensesTable.categorieId, id));
+  const [row] = await db.delete(budgetCategoriesTable).where(eq(budgetCategoriesTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
 export default router;

@@ -96,4 +96,25 @@ router.post("/sante/mortalite", async (req, res): Promise<void> => {
   res.status(201).json(mapMort(row));
 });
 
+router.delete("/sante/traitements/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(traitementsTable).where(eq(traitementsTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/sante/quarantaine/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(quarantaineTable).where(eq(quarantaineTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
+router.delete("/sante/mortalite/:id", async (req, res): Promise<void> => {
+  const id = parseInt(Array.isArray(req.params.id) ? req.params.id[0] : req.params.id, 10);
+  const [row] = await db.delete(mortaliteTable).where(eq(mortaliteTable.id, id)).returning();
+  if (!row) { res.status(404).json({ error: "Non trouvé" }); return; }
+  res.sendStatus(204);
+});
+
 export default router;

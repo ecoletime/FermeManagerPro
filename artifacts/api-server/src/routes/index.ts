@@ -13,8 +13,17 @@ import fournisseursRouter from "./fournisseurs";
 import budgetRouter from "./budget";
 import notificationsRouter from "./notifications";
 import journalAuditRouter from "./journal-audit";
+import utilisateursRouter from "./utilisateurs";
+import systemSettingsRouter from "./system-settings";
+import authRouter from "./auth";
+import { requireAdmin } from "../middleware/requireRole";
 
 const router: IRouter = Router();
+
+router.use("/budget", requireAdmin);
+router.use("/journal-audit", requireAdmin);
+router.use("/utilisateurs", requireAdmin);
+router.use("/system-settings", requireAdmin);
 
 router.use(healthRouter);
 router.use(notificationsRouter);
@@ -30,6 +39,9 @@ router.use(employesRouter);
 router.use(veterinaireRouter);
 router.use(fournisseursRouter);
 router.use(budgetRouter);
+router.use(utilisateursRouter);
+router.use(systemSettingsRouter);
+router.use(authRouter);
 
 router.post("/auth/reset-email", async (req, res) => {
   const apiKey = process.env.RESEND_API_KEY;

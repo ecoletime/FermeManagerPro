@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,10 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Plus, Pencil, Trash2, UserCircle2 } from "lucide-react";
-import { updateAdminCredentials } from "@/lib/auth";
+import {
+  useGetUtilisateurs,
+  getGetUtilisateursQueryKey,
+  useCreateUtilisateur,
+  useUpdateUtilisateur,
+  useDeleteUtilisateur,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ALL_MODULES = [
   { id: "animaux", label: "Animaux" },
@@ -34,28 +42,10 @@ interface UserRecord {
   nom: string;
   prenom: string;
   email: string;
-  role: "admin" | "employee";
+  role: string;
   modules: string[];
   actif: boolean;
   createdAt: string;
-  password?: string;
-}
-
-const STORAGE_KEY = "ferme_utilisateurs";
-
-function loadUsers(): UserRecord[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [
-    { id: 1, username: "admin", nom: "Diallo", prenom: "Amadou", email: "amadou@ferme.com", role: "admin", modules: ALL_MODULES.map((m) => m.id), actif: true, createdAt: "2026-01-01", password: "admin123" },
-    { id: 2, username: "marie.kone", nom: "Koné", prenom: "Marie", email: "marie@ferme.com", role: "employee", modules: ["animaux", "alimentation", "sante", "notifications"], actif: true, createdAt: "2026-02-15", password: "emp123" },
-  ];
-}
-
-function saveUsers(users: UserRecord[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 }
 
 const EMPTY_FORM = { username: "", nom: "", prenom: "", email: "", role: "employee" as "admin" | "employee", modules: [] as string[], actif: true, password: "" };
@@ -63,15 +53,18 @@ const EMPTY_FORM = { username: "", nom: "", prenom: "", email: "", role: "employ
 export default function Utilisateurs() {
   const { toast } = useToast();
   const confirm = useConfirm();
-  const [users, setUsers] = useState<UserRecord[]>(loadUsers);
+  const qc = useQueryClient();
+  const { data: users = [], isLoading } = useGetUtilisateurs();
+  const createUser = useCreateUtilisateur();
+  const updateUser = useUpdateUtilisateur();
+  const deleteUser = useDeleteUtilisateur();
+
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  useEffect(() => {
-    saveUsers(users);
-  }, [users]);
+  const invalidate = () => qc.invalidateQueries({ queryKey: getGetUtilisateursQueryKey() });
 
   const toggleModule = (id: string) => {
     setForm((f) => ({ ...f, modules: f.modules.includes(id) ? f.modules.filter((m) => m !== id) : [...f.modules, id] }));
@@ -91,7 +84,7 @@ export default function Utilisateurs() {
   };
 
   const openEdit = (user: UserRecord) => {
-    setForm({ username: user.username, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, modules: [...user.modules], actif: user.actif, password: user.password ?? "" });
+    setForm({ username: user.username, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role === "admin" ? "admin" : "employee", modules: [...user.modules], actif: user.actif, password: "" });
     setEditingId(user.id);
     setOpen(true);
   };
@@ -99,36 +92,66 @@ export default function Utilisateurs() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.username || !form.nom || !form.prenom || !form.email) return;
+    if (!editingId && !form.password) {
+      toast({ variant: "destructive", title: "Erreur", description: "Le mot de passe est requis" });
+      return;
+    }
     if (!(await confirm({ title: editingId ? "Modifier l'utilisateur" : "Créer l'utilisateur", description: editingId ? "Confirmer les modifications de cet utilisateur ?" : "Voulez-vous créer cet utilisateur ?" }))) return;
 
     if (editingId) {
-      setUsers((current) => current.map((u) => u.id === editingId ? { ...u, username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password || u.password } : u));
-      if (form.role === "admin" && form.password) {
-        updateAdminCredentials(form.username, form.password);
-      }
-      toast({ title: "Utilisateur modifié avec succès" });
+      updateUser.mutate(
+        { id: editingId, data: { username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password || null } },
+        {
+          onSuccess: () => {
+            toast({ title: "Utilisateur modifié avec succès" });
+            invalidate();
+            setOpen(false);
+            setForm({ ...EMPTY_FORM });
+            setEditingId(null);
+          },
+          onError: () => toast({ variant: "destructive", title: "Erreur", description: "Modification impossible" }),
+        },
+      );
     } else {
-      const newUser: UserRecord = { id: Date.now(), username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, createdAt: new Date().toISOString().slice(0, 10), password: form.password || (form.role === "admin" ? "admin123" : "emp123") };
-      setUsers((current) => [newUser, ...current]);
-      if (newUser.role === "admin") {
-        updateAdminCredentials(newUser.username, newUser.password ?? "admin123");
-      }
-      toast({ title: "Utilisateur créé avec succès" });
+      createUser.mutate(
+        { data: { username: form.username, nom: form.nom, prenom: form.prenom, email: form.email, role: form.role, modules: form.modules, actif: form.actif, password: form.password } },
+        {
+          onSuccess: () => {
+            toast({ title: "Utilisateur créé avec succès" });
+            invalidate();
+            setOpen(false);
+            setForm({ ...EMPTY_FORM });
+            setEditingId(null);
+          },
+          onError: () => toast({ variant: "destructive", title: "Erreur", description: "Création impossible (nom d'utilisateur déjà pris ?)" }),
+        },
+      );
     }
-    setOpen(false);
-    setForm({ ...EMPTY_FORM });
-    setEditingId(null);
   };
 
   const handleDelete = async (id: number) => {
     if (!(await confirm({ title: "Supprimer l'utilisateur", description: "Supprimer définitivement cet utilisateur ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
-    setUsers((current) => current.filter((u) => u.id !== id));
-    setDeleteId(null);
-    toast({ title: "Utilisateur supprimé" });
+    deleteUser.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast({ title: "Utilisateur supprimé" });
+          invalidate();
+          setDeleteId(null);
+        },
+        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Suppression impossible" }),
+      },
+    );
   };
 
-  const toggleActif = (id: number) => {
-    setUsers((current) => current.map((u) => (u.id === id ? { ...u, actif: !u.actif } : u)));
+  const toggleActif = (user: UserRecord) => {
+    updateUser.mutate(
+      { id: user.id, data: { username: user.username, nom: user.nom, prenom: user.prenom, email: user.email, role: user.role, modules: user.modules, actif: !user.actif, password: null } },
+      {
+        onSuccess: () => invalidate(),
+        onError: () => toast({ variant: "destructive", title: "Erreur" }),
+      },
+    );
   };
 
   return (
@@ -154,7 +177,7 @@ export default function Utilisateurs() {
                 <div className="space-y-1"><Label>Nom *</Label><Input placeholder="ex: Diallo" value={form.nom} onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))} required /></div>
               </div>
               <div className="space-y-1"><Label>Adresse e-mail *</Label><Input type="email" placeholder="ex: amadou@ferme.com" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} required /></div>
-              <div className="space-y-1"><Label>Mot de passe admin</Label><Input type="password" placeholder="Nouveau mot de passe" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} /></div>
+              <div className="space-y-1"><Label>{editingId ? "Mot de passe (laisser vide pour conserver)" : "Mot de passe *"}</Label><Input type="password" placeholder={editingId ? "Nouveau mot de passe" : "Mot de passe"} value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} /></div>
               <div className="space-y-1"><Label>Rôle</Label><Select value={form.role} onValueChange={(v) => handleRoleChange(v as "admin" | "employee") }><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="admin">Administrateur (accès total)</SelectItem><SelectItem value="employee">Employé (accès limité)</SelectItem></SelectContent></Select></div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -166,29 +189,35 @@ export default function Utilisateurs() {
                 </div>
               </div>
               <div className="flex items-center gap-2"><Checkbox checked={form.actif} onCheckedChange={(checked) => setForm((f) => ({ ...f, actif: Boolean(checked) }))} /><Label>Compte actif</Label></div>
-              <Button type="submit" className="w-full">{editingId ? "Enregistrer" : "Créer"}</Button>
+              <Button type="submit" className="w-full" disabled={createUser.isPending || updateUser.isPending}>{editingId ? "Enregistrer" : "Créer"}</Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {users.map((user) => (
-          <Card key={user.id}>
-            <CardContent className="pt-4 flex items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap"><UserCircle2 className="h-5 w-5 text-primary" /><span className="font-semibold">{user.prenom} {user.nom}</span><Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge><Badge variant={user.actif ? "default" : "destructive"}>{user.actif ? "Actif" : "Inactif"}</Badge></div>
-                <div className="text-sm text-muted-foreground mt-1">{user.username} • {user.email}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => toggleActif(user.id)}>{user.actif ? "Désactiver" : "Activer"}</Button>
-                <Button variant="outline" size="sm" onClick={() => openEdit(user)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="destructive" size="sm" onClick={() => setDeleteId(user.id)}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {users.map((user) => (
+            <Card key={user.id}>
+              <CardContent className="pt-4 flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap"><UserCircle2 className="h-5 w-5 text-primary" /><span className="font-semibold">{user.prenom} {user.nom}</span><Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge><Badge variant={user.actif ? "default" : "destructive"}>{user.actif ? "Actif" : "Inactif"}</Badge></div>
+                  <div className="text-sm text-muted-foreground mt-1">{user.username} • {user.email}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => toggleActif(user)}>{user.actif ? "Désactiver" : "Activer"}</Button>
+                  <Button variant="outline" size="sm" onClick={() => openEdit(user)}><Pencil className="h-4 w-4" /></Button>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteId(user.id)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {deleteId !== null && (
         <Dialog open onOpenChange={(open) => !open && setDeleteId(null)}>

@@ -129,16 +129,29 @@ export default function Fournisseurs() {
             <CardContent className="p-0">
               <table className="w-full text-sm">
                 <thead className="border-b bg-muted/30">
-                  <tr>{["NOM", "CATÉGORIE", "TÉLÉPHONE", "TOTAL ACHATS", "STATUT"].map(h => <th key={h} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
+                  <tr>{["NOM", "CATÉGORIE", "TÉLÉPHONE", "TOTAL ACHATS", "STATUT", ""].map((h, i) => <th key={h || i} className="px-4 py-3 text-left font-medium text-muted-foreground">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y">
-                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={5} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : fournisseurs?.map(f => (
+                  {isLoading ? Array.from({ length: 3 }).map((_, i) => <tr key={i}><td colSpan={6} className="px-4 py-3"><Skeleton className="h-4 w-full" /></td></tr>) : fournisseurs?.map(f => (
                     <tr key={f.id} className="hover:bg-muted/20" data-testid={`row-fournisseur-${f.id}`}>
                       <td className="px-4 py-3 font-medium">{f.nom}</td>
                       <td className="px-4 py-3 text-muted-foreground">{f.categorie}</td>
                       <td className="px-4 py-3">{f.telephone ?? "—"}</td>
                       <td className="px-4 py-3 text-green-700">{f.statut === "Actif" ? "120 000 FCFA" : "13 000 FCFA"}</td>
                       <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded font-medium ${f.statut === "Actif" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}>{f.statut}</span></td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          data-testid={`button-delete-fournisseur-${f.id}`}
+                          onClick={async () => {
+                            if (!(await confirm({ title: "Supprimer", description: "Supprimer définitivement cet élément ? Cette action est irréversible.", confirmText: "Supprimer", destructive: true }))) return;
+                            deleteFournisseur.mutate({ id: f.id }, { onSuccess: () => { toast({ title: "Supprimé" }); invalidate(); }, onError: () => toast({ variant: "destructive", title: "Erreur" }) });
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
