@@ -1,1 +1,1 @@
-- [Auth & RBAC (signed token)](rbac-x-role-header.md) — login issues HMAC bearer token; role derived from verified token, not headers; reset-password still an open hole.
+- [Auth & RBAC (signed token)](rbac-x-role-header.md) — login issues HMAC bearer token; role derived from verified token, not headers; reset-password now server-validated (hashed code + expiry + lockout, no enumeration).

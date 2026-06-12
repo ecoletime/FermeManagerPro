@@ -9,22 +9,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PiggyBank } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLogin, useResetPassword } from "@workspace/api-client-react";
-
-const RESET_CODE_KEY = "ferme_admin_reset_code";
-const API_BASE = `${import.meta.env.BASE_URL}api`;
+import { useLogin, useResetPassword, useResetRequest } from "@workspace/api-client-react";
 
 type ResetStep = "request" | "verify" | "password";
-
-function generateCode() {
-  return String(Math.floor(10000 + Math.random() * 90000));
-}
 
 export default function Login() {
   const [_, setLocation] = useLocation();
   const { toast } = useToast();
   const loginMutation = useLogin();
   const resetMutation = useResetPassword();
+  const resetRequestMutation = useResetRequest();
   const [forgotOpen, setForgotOpen] = useState(false);
   const [resetStep, setResetStep] = useState<ResetStep>("request");
   const [forgotUsername, setForgotUsername] = useState("");
@@ -74,51 +68,37 @@ export default function Login() {
     setConfirmPassword("");
   };
 
-  const handleForgot = async (e?: React.FormEvent) => {
+  const handleForgot = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!forgotUsername.trim()) {
       toast({ variant: "destructive", title: "Erreur", description: "Entrez votre nom d'utilisateur" });
       return;
     }
-    const code = generateCode();
-    localStorage.setItem(RESET_CODE_KEY, JSON.stringify({ username: forgotUsername.trim(), code, expiresAt: Date.now() + 10 * 60 * 1000 }));
-    try {
-      const targetEmail = `${forgotUsername.trim()}@example.com`;
-      const response = await fetch(`${API_BASE}/auth/reset-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: targetEmail, code }),
-      });
-      if (!response.ok) throw new Error("email-failed");
-      toast({ title: "Code envoyé", description: `Le code a été envoyé à ${targetEmail}` });
-    } catch {
-      toast({ title: "Code généré", description: "L'envoi email a échoué, utilisez le code affiché dans le navigateur." });
-    }
-    setResetStep("verify");
+    resetRequestMutation.mutate(
+      { data: { username: forgotUsername.trim() } },
+      {
+        onSuccess: (result) => {
+          if (result.devCode) {
+            toast({ title: "Code généré", description: `Code de test (dev) : ${result.devCode}` });
+          } else if (result.sent) {
+            toast({ title: "Code envoyé", description: "Un code a été envoyé à votre adresse email." });
+          } else {
+            toast({ title: "Demande envoyée", description: "Si ce compte existe, un code a été envoyé par email." });
+          }
+          setResetStep("verify");
+        },
+        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Impossible d'envoyer le code" }),
+      },
+    );
   };
 
   const handleVerifyCode = (e?: React.FormEvent) => {
     e?.preventDefault();
-    try {
-      const raw = localStorage.getItem(RESET_CODE_KEY);
-      if (!raw) {
-        toast({ variant: "destructive", title: "Erreur", description: "Code expiré" });
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      if (Date.now() > parsed.expiresAt) {
-        localStorage.removeItem(RESET_CODE_KEY);
-        toast({ variant: "destructive", title: "Erreur", description: "Code expiré" });
-        return;
-      }
-      if (String(parsed.code) !== resetCode.trim()) {
-        toast({ variant: "destructive", title: "Erreur", description: "Code incorrect" });
-        return;
-      }
-      setResetStep("password");
-    } catch {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible de vérifier le code" });
+    if (!resetCode.trim()) {
+      toast({ variant: "destructive", title: "Erreur", description: "Entrez le code reçu" });
+      return;
     }
+    setResetStep("password");
   };
 
   const handleResetPassword = (e?: React.FormEvent) => {
@@ -131,16 +111,10 @@ export default function Login() {
       toast({ variant: "destructive", title: "Erreur", description: "Les mots de passe ne correspondent pas" });
       return;
     }
-    let username = forgotUsername.trim();
-    try {
-      const raw = localStorage.getItem(RESET_CODE_KEY);
-      if (raw) username = JSON.parse(raw).username ?? username;
-    } catch {}
     resetMutation.mutate(
-      { data: { username, password: newPassword } },
+      { data: { username: forgotUsername.trim(), code: resetCode.trim(), password: newPassword } },
       {
         onSuccess: () => {
-          localStorage.removeItem(RESET_CODE_KEY);
           setForgotOpen(false);
           setResetStep("request");
           setNewPassword("");
@@ -149,7 +123,7 @@ export default function Login() {
           setResetCode("");
           toast({ title: "Mot de passe mis à jour" });
         },
-        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Utilisateur introuvable" }),
+        onError: () => toast({ variant: "destructive", title: "Erreur", description: "Code invalide ou expiré" }),
       },
     );
   };

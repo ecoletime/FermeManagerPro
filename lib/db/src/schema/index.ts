@@ -12,3 +12,4 @@ export * from "./notifications";
 export * from "./journal-audit";
 export * from "./users";
 export * from "./system-settings";
+export * from "./password-reset";

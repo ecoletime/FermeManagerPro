@@ -1620,11 +1620,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /auth/reset-request:
+    post:
+      operationId: resetRequest
+      tags: [auth]
+      summary: Request a password reset code (sent by email)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetRequestBody"
+      responses:
+        "200":
+          description: Reset code generated (response is generic to avoid user enumeration)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResetRequestResult"
+
   /auth/reset-password:
     post:
       operationId: resetPassword
       tags: [auth]
-      summary: Reset a user's password by username
+      summary: Reset a password using a valid reset code
       requestBody:
         required: true
         content:
@@ -1637,9 +1656,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Utilisateur"
-        "404":
-          description: User not found
+                $ref: "#/components/schemas/ResetPasswordResult"
+        "400":
+          description: Invalid or expired code
           content:
             application/json:
               schema:
@@ -2913,11 +2932,39 @@ components:
           type: string
       required: [username, password]
 
+    ResetRequestBody:
+      type: object
+      properties:
+        username:
+          type: string
+      required: [username]
+
+    ResetRequestResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        sent:
+          type: boolean
+        devCode:
+          type: string
+          nullable: true
+      required: [ok, sent]
+
     ResetPasswordBody:
       type: object
       properties:
         username:
           type: string
+        code:
+          type: string
         password:
           type: string
-      required: [username, password]
+      required: [username, code, password]
+
+    ResetPasswordResult:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required: [ok]

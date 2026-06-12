@@ -1286,21 +1286,27 @@ export const LoginResponse = zod.object({
 });
 
 /**
- * @summary Reset a user's password by username
+ * @summary Request a password reset code (sent by email)
+ */
+export const ResetRequestBody = zod.object({
+  username: zod.string(),
+});
+
+export const ResetRequestResponse = zod.object({
+  ok: zod.boolean(),
+  sent: zod.boolean(),
+  devCode: zod.string().nullish(),
+});
+
+/**
+ * @summary Reset a password using a valid reset code
  */
 export const ResetPasswordBody = zod.object({
   username: zod.string(),
+  code: zod.string(),
   password: zod.string(),
 });
 
 export const ResetPasswordResponse = zod.object({
-  id: zod.number(),
-  username: zod.string(),
-  nom: zod.string(),
-  prenom: zod.string(),
-  email: zod.string(),
-  role: zod.string(),
-  modules: zod.array(zod.string()),
-  actif: zod.boolean(),
-  createdAt: zod.string(),
+  ok: zod.boolean(),
 });

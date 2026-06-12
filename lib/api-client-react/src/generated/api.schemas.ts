@@ -625,9 +625,24 @@ export interface LoginBody {
   password: string;
 }
 
+export interface ResetRequestBody {
+  username: string;
+}
+
+export interface ResetRequestResult {
+  ok: boolean;
+  sent: boolean;
+  devCode?: string | null;
+}
+
 export interface ResetPasswordBody {
   username: string;
+  code: string;
   password: string;
+}
+
+export interface ResetPasswordResult {
+  ok: boolean;
 }
 
 export type GetJournalAuditParams = {

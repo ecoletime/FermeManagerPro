@@ -21,8 +21,12 @@ client; `x-utilisateur` is kept for audit attribution only (not security).
 - `JWT_SECRET` is a required env var; the server fails fast at startup if it is missing.
 - Never reintroduce header-based role trust. Any new protected router must sit below the
   `requireAuth` gate in `routes/index.ts`; public routes (health, auth login/reset) go above it.
-- KNOWN REMAINING HOLE: `/auth/reset-password` is unauthenticated and resets by username alone
-  (the OTP/code check is client-side only, so bypassable via direct API call). This permits
-  account takeover (incl. admin) and undermines the auth boundary. Fix needs server-side
-  code/OTP storage + validation + rate limiting before relying on auth for real security.
-- Passwords are still stored plaintext (out of scope so far).
+- Password reset is now server-validated: `/auth/reset-request` stores a hashed 5-digit code
+  (`password_reset_codes` table, 10-min expiry, attempts counter) and emails it to the user's
+  real address; `/auth/reset-password` requires `{username, code, password}` and verifies the
+  code timing-safely with expiry + max-5-attempts lockout before changing the password. Both
+  endpoints return identical `{ok:true, sent:true}` shapes to resist user enumeration; `devCode`
+  is returned ONLY when `NODE_ENV !== 'production'`. Never re-add a client-side code check or
+  reset-by-username-alone path.
+- Passwords are still stored plaintext, and there is no login/reset rate limiting yet (only the
+  per-code attempts counter) — both out of scope so far.

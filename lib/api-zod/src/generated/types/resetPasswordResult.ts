@@ -6,8 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ResetPasswordBody {
-  username: string;
-  code: string;
-  password: string;
+export interface ResetPasswordResult {
+  ok: boolean;
 }
